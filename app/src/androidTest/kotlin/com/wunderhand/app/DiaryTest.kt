@@ -3,6 +3,7 @@ package com.wunderhand.app
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -125,6 +126,7 @@ class DiaryTest {
         booksAWalkInAndCancelsIt()
         looksSomebodyUpAndAddsAndRemovesAClient()
         putsAServiceOnTheMenuAndTakesItOff()
+        waitsFillsAndCounts()
         walksTheShop()
         signOut()
     }
@@ -311,6 +313,23 @@ class DiaryTest {
         waitFor("appointmentName")
         app.onNodeWithTag("appointmentName").assertTextContains("Walk-in")
         waitFor("cancelAppointment")
+
+        // The soonest time is often within the half hour, and then the till is open. Looked at, typed into, and
+        // left unpaid: a bill rung through cannot be un-rung, and this appointment is about to be cancelled.
+        if (isOnScreen("checkOut")) {
+            app.onNodeWithTag("checkOut").performClick()
+            waitFor("tillDue")
+            val before = app.onNodeWithTag("tillDue").fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString()
+            everyControlSaysWhatItIs("the till")
+            app.onNodeWithTag("till-tip").performScrollTo().performTextInput("2.50")
+            app.onNodeWithTag("till-tip").performImeAction()
+            app.waitForIdle()
+            val after = app.onNodeWithTag("tillDue").fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString()
+            assertTrue("what to ask for moves as a tip is typed: $before, then $after", before != after && after.startsWith("To pay, tip included"))
+            app.onNodeWithTag("markPaid").assertExists()
+            app.onNodeWithTag("till-close").performScrollTo().performClick()
+            app.waitUntil(10_000) { !isOnScreen("tillDue") }
+        }
         app.onNodeWithTag("cancelAppointment").performClick()
         app.onNodeWithTag("confirm").performClick()
         waitFor("closedLine")
@@ -379,6 +398,70 @@ class DiaryTest {
         app.onNodeWithText("Remove it").performClick()
         app.waitUntil(30_000) { added !in breaks() }
         assertTrue("no refusal was shown", !isOnScreen("diaryActionProblem"))
+    }
+
+    /**
+     * The waiting list, a gap, the till's way in, and the Money tab.
+     *
+     * Somebody is put on the list from their profile and taken off again, so
+     * the list ends as it began. A gap is opened and who fits it is read — and
+     * **not offered**: an offer on this server emails whoever is on the seeded
+     * list. Money is read for its shape, never its figures: the shop grows.
+     */
+    private fun waitsFillsAndCounts() {
+        // From a client's profile the form opens on them, with nothing to look up.
+        app.onNodeWithTag("tab-Clients").performClick()
+        app.waitUntil(20_000) { anyOnScreen("clientRow") }
+        app.onAllNodesWithTag("clientRow").onFirst().performClick()
+        waitFor("clientName")
+        val who = app.onNodeWithTag("clientName").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString("") { it.text }
+        app.onNodeWithTag("addToWaitlist").performScrollTo().performClick()
+        waitFor("waitlistClient")
+        app.onNodeWithTag("waitlistClient").assertContentDescriptionEquals("Client: $who")
+        app.waitUntil(20_000) { isOnScreen("waitlistPart-e") }
+        everyControlSaysWhatItIs("the waitlist form")
+        app.onNodeWithTag("waitlistPart-e").performScrollTo().performClick()
+        // The button waits for what the form chooses between: there is nothing to add them for until a service is known.
+        app.waitUntil(20_000) { app.onAllNodesWithTag("waitlistJoinSave").fetchSemanticsNodes().any { SemanticsProperties.Disabled !in it.config } }
+        app.onNodeWithTag("waitlistJoinSave").performClick()
+
+        // Back on the list, which says who was added, and has them on it.
+        app.waitUntil(20_000) { isOnScreen("waitlistNotice") || isOnScreen("waitlistJoinProblem") }
+        if (isOnScreen("waitlistJoinProblem")) {
+            val said = app.onNodeWithTag("waitlistJoinProblem").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
+            throw AssertionError("chairtime would not put $who on the list: $said")
+        }
+        app.onNodeWithTag("waitlistNotice").assertTextContains("$who is on the list.")
+        app.waitUntil(20_000) { app.onAllNodesWithContentDescription("Take $who off the list").fetchSemanticsNodes().isNotEmpty() }
+        everyControlSaysWhatItIs("the waiting list")
+        app.onAllNodesWithContentDescription("Take $who off the list").onFirst().performScrollTo().performClick()
+        app.onNodeWithTag("confirm").performClick()
+        app.waitUntil(20_000) { app.onAllNodesWithContentDescription("Take $who off the list").fetchSemanticsNodes().isEmpty() }
+        app.onNodeWithTag("waitlistNotice").assertTextContains("$who is off the list.")
+        app.onNodeWithTag("waitlist-close").performScrollTo().performClick()
+        app.waitUntil(10_000) { !isOnScreen("waitlistAdd") }
+        if (isOnScreen("backToClients")) app.onNodeWithTag("backToClients").performClick()
+
+        // A gap, if today has one with room for a finger: who fits it, best first. Read, and closed.
+        app.onNodeWithTag("tab-Diary").performClick()
+        waitFor("diaryHeading")
+        if (isOnScreen("fillGap")) {
+            app.onAllNodesWithTag("fillGap").onFirst().performScrollTo().performClick()
+            waitFor("gap-heading")
+            app.waitUntil(20_000) { anyOnScreen("gapCandidate") || isOnScreen("nobodyFits") || isOnScreen("gapProblem") }
+            assertTrue("a gap says who fits it, or that nobody does", !isOnScreen("gapProblem"))
+            everyControlSaysWhatItIs("a gap")
+            app.onNodeWithTag("gap-close").performScrollTo().performClick()
+            app.waitUntil(10_000) { !isOnScreen("gap-heading") }
+        }
+
+        // Money: whose it is, the month, and how it compares — or that there is nothing to compare yet.
+        app.onNodeWithTag("tab-Money").performClick()
+        waitFor("moneyMonth")
+        app.onNodeWithTag("moneyMonth").assertTextContains("£", substring = true)
+        app.onNodeWithTag("moneyComparison").assertExists()
+        app.onNodeWithTag("moneyDeposits").performScrollTo().assertExists()
+        everyControlSaysWhatItIs("the money")
     }
 
     /**

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -121,9 +122,19 @@ fun summaryText(summary: DaySummary, currency: String, utilisation: Double? = nu
     summary.gapsLabel?.let { append(" · "); withStyle(bold.copy(color = WHColors.Accent)) { append(it) } }
 }
 
-/** "3 waiting" — the list itself arrives with the waiting list, in A6. */
-private fun AnnotatedString.Builder.waiting(count: Int) {
-    if (count > 0) append(" · $count waiting")
+/**
+ * "3 waiting", which opens the list — the web's link to /waitlist. Its own
+ * button beside the day's sentence, not a word inside it: 48dp to the touch,
+ * and something a screen reader can land on.
+ */
+@Composable
+private fun WaitingLink(count: Int, style: androidx.compose.ui.text.TextStyle, onOpen: () -> Unit) {
+    if (count <= 0) return
+    Box(
+        Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onOpen)
+            .semantics { contentDescription = "$count waiting. Opens the waiting list" }.testTag("waitingLink"),
+        contentAlignment = Alignment.Center,
+    ) { Text("$count waiting", Modifier.clearAndSetSemantics { }, style = style.copy(fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline), color = WHColors.Ink) }
 }
 
 /** Eyebrow, "Today", the view switch and the sentence that sums the day up — on a phone. */
@@ -152,10 +163,10 @@ fun DiaryHeaderPhone(model: DiaryViewModel, state: DiaryState, modifier: Modifie
 
         val summary = DaySummary(state.shownMembers)
         if (state.mode != DiaryMode.Week && !summary.isClosed && state.members.isNotEmpty()) {
-            Text(
-                buildAnnotatedString { append(summaryText(summary, model.currency)); waiting(state.response?.waitingCount ?: 0) },
-                Modifier.testTag("diarySummary"), style = WHType.Summary, color = WHColors.Neutral700,
-            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+                Text(summaryText(summary, model.currency), Modifier.testTag("diarySummary"), style = WHType.Summary, color = WHColors.Neutral700)
+                WaitingLink(state.response?.waitingCount ?: 0, WHType.Summary) { model.showWaitlist(true) }
+            }
         }
     }
 }
@@ -180,10 +191,9 @@ fun DiaryHeaderWide(model: DiaryViewModel, state: DiaryState, modifier: Modifier
                         Text("Nobody is working", Modifier.padding(bottom = 4.dp), style = WHType.SummaryWide, color = WHColors.Neutral700)
                     } else {
                         val sold = response.week.firstOrNull { it.isoDate == response.date }?.takeIf { it.openMinutes > 0 }?.utilisation
-                        Text(
-                            buildAnnotatedString { append(summaryText(DaySummary(team.members), model.currency, sold)); waiting(response.waitingCount) },
-                            Modifier.padding(bottom = 4.dp).testTag("diarySummary"), style = WHType.SummaryWide, color = WHColors.Neutral700,
-                        )
+                        Text(summaryText(DaySummary(team.members), model.currency, sold), Modifier.padding(bottom = 4.dp).testTag("diarySummary"), style = WHType.SummaryWide, color = WHColors.Neutral700)
+                        // Lowered by what the button stands taller than its words, so the words sit on the sentence's line.
+                        Box(Modifier.offset(y = 10.dp)) { WaitingLink(response.waitingCount, WHType.SummaryWide) { model.showWaitlist(true) } }
                     }
                 }
             }

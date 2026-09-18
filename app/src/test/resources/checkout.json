@@ -1,0 +1,29 @@
+{
+  "bookingId": "b9923a76-654a-49a4-a290-c002eaae78ad",
+  "appointmentId": "d435caeb-5055-4b3b-8011-5cd54fa8782f",
+  "clientName": "ZZ Mobile Money Client",
+  "staffName": "Kit Alvarez",
+  "serviceName": "Skin fade",
+  "startsAt": "2026-10-03T09:30:00.000Z",
+  "currency": "GBP",
+  "owing": {
+    "subtotalPence": 2800,
+    "paidBeforePence": 0,
+    "extraPence": 0,
+    "tipPence": 0,
+    "balancePence": 2800,
+    "duePence": 2800,
+    "overpaidPence": 0
+  },
+  "settledAt": "2026-09-17T21:15:36.103Z",
+  "receipt": {
+    "subtotalPence": 2800,
+    "paidBeforePence": 0,
+    "extraPence": 1200,
+    "extraNote": "Pomade",
+    "tipPence": 500,
+    "takenPence": 4500,
+    "method": "card"
+  },
+  "openFrom": "2026-10-03T09:00:00.000Z"
+}

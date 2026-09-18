@@ -23,6 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import com.wunderhand.app.features.waitlist.GapWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -203,7 +207,7 @@ private fun TeamColumn(member: DiaryMember, range: Span, height: Dp, closed: Boo
         for (off in GridGeometry.offDuty(member.day.open, range)) OffDutyPanel(off, member, range, closed, model)
         // The web's stacking: gaps underneath, then breaks, then bookings — so a
         // gap that overlaps a booking never writes across it.
-        for (gap in member.day.gaps) GapOutline(gap, range, model)
+        for (gap in member.day.gaps) GapOutline(gap, range, model) { model.fillGap(GapWindow(member.id, gap.startsAt, gap.endsAt)) }
         // Their own break, or an owner's to remove: a colleague's is not theirs to tap.
         val mayRemove = model.me.staff.isOwner || member.id == model.me.staff.id
         for (block in member.day.breaks) BreakBlock(block, range, height, model, mayRemove)
@@ -254,17 +258,29 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, range: Span, gridHeight: Dp, 
     }
 }
 
-/** The outline says how long the stretch is. Offering it to the waiting list arrives with that list, in A6. */
+/**
+ * The outline says how long the stretch is. Where there is room for a finger —
+ * 48dp — it also offers it to the waiting list; a shorter stretch is left to
+ * tap-to-book, and can be filled from the day's list.
+ */
 @Composable
-private fun BoxScope.GapOutline(gap: DiaryGap, range: Span, model: DiaryViewModel) {
+private fun BoxScope.GapOutline(gap: DiaryGap, range: Span, model: DiaryViewModel, onFill: () -> Unit) {
     val height = maxOf(gap.minutes.dp - 2.dp, 2.dp)
     val shape = RoundedCornerShape(7.dp)
-    Box(
-        Modifier.offset(y = minutes(range.start, gap.startsAt) + 1.dp).padding(horizontal = 4.dp).fillMaxWidth().height(height).border(1.dp, WHColors.Divider, shape)
-            .clearAndSetSemantics { contentDescription = "${Durations.label(gap.minutes)} free from ${model.clock.time(gap.startsAt)}" },
-        contentAlignment = Alignment.Center,
-    ) {
-        if (height >= 16.dp) OneLine("${Durations.short(gap.minutes)} free", WHType.Meta, WHColors.Muted)
+    val spoken = "${Durations.label(gap.minutes)} free from ${model.clock.time(gap.startsAt)}"
+    Box(Modifier.offset(y = minutes(range.start, gap.startsAt) + 1.dp).padding(horizontal = 4.dp).fillMaxWidth().height(height).border(1.dp, WHColors.Divider, shape), contentAlignment = Alignment.Center) {
+        if (height >= 48.dp) {
+            Column(
+                Modifier.heightIn(min = 48.dp).clip(shape).clickable(role = Role.Button, onClick = onFill).padding(horizontal = 8.dp).testTag("fillGap")
+                    .clearAndSetSemantics { contentDescription = "Fill $spoken. Offers it to the waitlist"; role = Role.Button; onClick(null) { onFill(); true } },
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+            ) {
+                OneLine("${Durations.short(gap.minutes)} free", WHType.Meta, WHColors.Muted)
+                OneLine("+ Fill it", WHType.Meta.copy(fontWeight = FontWeight.SemiBold), WHColors.Accent)
+            }
+        } else if (height >= 16.dp) {
+            OneLine("${Durations.short(gap.minutes)} free", WHType.Meta, WHColors.Muted, Modifier.clearAndSetSemantics { contentDescription = spoken })
+        }
     }
 }
 

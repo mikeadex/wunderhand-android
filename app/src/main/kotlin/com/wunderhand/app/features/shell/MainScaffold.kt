@@ -33,6 +33,7 @@ import com.wunderhand.app.app.PageColumn
 import com.wunderhand.app.features.clients.ClientsScreen
 import com.wunderhand.app.features.diary.DiaryScreen
 import com.wunderhand.app.features.menu.MenuScreen
+import com.wunderhand.app.features.money.MoneyScreen
 import com.wunderhand.app.features.shop.ShopScreen
 import com.wunderhand.core.Me
 import com.wunderhand.design.EmptyNote
@@ -112,21 +113,10 @@ fun MainScaffold(model: AppModel, me: Me) {
                 AppTab.Diary -> DiaryScreen(model, me)
                 AppTab.Clients -> ClientsScreen(model, me)
                 AppTab.Menu -> MenuScreen(model, me)
-                AppTab.Money -> Coming("Money", "What the month has taken, against the last one. It arrives in milestone A6.")
+                AppTab.Money -> MoneyScreen(model, me)
                 AppTab.Shop -> ShopScreen(model, me, openMenu = { tab = AppTab.Menu })
             }
         }
-        }
-    }
-}
-
-/** A tab whose milestone has not been built yet, saying so plainly. */
-@Composable
-private fun Coming(title: String, says: String) {
-    PageColumn {
-        Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            ScreenHeader(title)
-            EmptyNote("Not built yet", says)
         }
     }
 }

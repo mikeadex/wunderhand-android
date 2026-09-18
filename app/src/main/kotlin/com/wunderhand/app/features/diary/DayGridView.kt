@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import com.wunderhand.app.features.waitlist.GapWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -105,7 +108,7 @@ fun DayGridView(member: DiaryMember, model: DiaryViewModel, state: DiaryState, n
             ) {
                 HourRules(ceil(hours).toInt(), start, model)
                 // Gaps underneath, then breaks, bookings on top, as the web's team grid stacks them.
-                for (gap in day.gaps) GapBlock(gap, start, model)
+                for (gap in day.gaps) GapBlock(gap, start, model) { model.fillGap(GapWindow(member.id, gap.startsAt, gap.endsAt)) }
                 for (block in day.breaks) BreakBlock(block, start, end, model, mayRemove = model.me.staff.isOwner || member.id == model.me.staff.id)
                 for (row in day.appointments) AppointmentBlock(row, start, model, state, now, day.slotIntervalMinutes)
                 if (now >= start && now <= end) NowLine(between(start, now), model.clock.time(now))
@@ -144,7 +147,7 @@ private fun BoxScope.NowLine(y: Dp, time: String) {
 }
 
 @Composable
-private fun BoxScope.GapBlock(gap: DiaryGap, start: Instant, model: DiaryViewModel) {
+private fun BoxScope.GapBlock(gap: DiaryGap, start: Instant, model: DiaryViewModel, onFill: () -> Unit) {
     val height = maxOf(between(gap.startsAt, gap.endsAt) - 4.dp, MIN_BLOCK)
     val radius = 14.dp
     Box(
@@ -156,11 +159,13 @@ private fun BoxScope.GapBlock(gap: DiaryGap, start: Instant, model: DiaryViewMod
                     style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))),
                 )
             }
-            .clearAndSetSemantics { contentDescription = "${Durations.label(gap.minutes)} free from ${model.clock.time(gap.startsAt)}" }
+            // The whole stretch is the button: it is the free time that is being offered.
+            .clickable(role = Role.Button, onClick = onFill).testTag("fillGap")
+            .clearAndSetSemantics { contentDescription = "${Durations.label(gap.minutes)} free from ${model.clock.time(gap.startsAt)}. Offers it to the waitlist"; role = Role.Button; onClick(null) { onFill(); true } }
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
-        OneLine("${Durations.label(gap.minutes)} free", WHType.CardMeta, WHColors.Accent)
+        OneLine("${Durations.label(gap.minutes)} free · Fill", WHType.CardMeta, WHColors.Accent)
     }
 }
 

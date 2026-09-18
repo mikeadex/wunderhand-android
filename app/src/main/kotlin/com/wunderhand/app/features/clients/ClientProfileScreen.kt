@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,6 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wunderhand.app.app.AppModel
+import com.wunderhand.app.features.waitlist.WaitingFor
+import com.wunderhand.app.features.waitlist.WaitlistSheet
 import com.wunderhand.app.features.booking.NewBookingScreen
 import com.wunderhand.app.features.booking.NewBookingStart
 import com.wunderhand.app.features.booking.NewBookingViewModel
@@ -96,6 +99,7 @@ fun ClientProfileScreen(id: String, app: AppModel, list: ClientsViewModel, wide:
     val scope = rememberCoroutineScope()
     val now by rememberNow(60_000)
     var isEditing by rememberSaveable(id) { mutableStateOf(false) }
+    var isWaitlisting by rememberSaveable(id) { mutableStateOf(false) }
     var rebooking by remember(id) { mutableStateOf<NewBookingStart?>(null) }
     var openVisit by rememberSaveable(id) { mutableStateOf<String?>(null) }
 
@@ -123,7 +127,7 @@ fun ClientProfileScreen(id: String, app: AppModel, list: ClientsViewModel, wide:
                     // Beside the list on an upright tablet the profile has about 490dp: one column. Two only with room for both.
                     val twoColumns = wide && maxWidth >= 720.dp
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = if (wide) 26.dp else 18.dp).padding(top = if (wide) 24.dp else 4.dp, bottom = 24.dp)) {
-                        Header(response, list, wide, twoColumns, onRebook = { rebook(response.client) }, onEdit = { isEditing = true })
+                        Header(response, list, wide, twoColumns, onRebook = { rebook(response.client) }, onWaitlist = { isWaitlisting = true }, onEdit = { isEditing = true })
                         if (response.paysInFull) PaysInFull(Modifier.padding(top = 12.dp))
                         state.notice?.let { NoticeLine(Notice(it, false), Modifier.padding(top = 14.dp)) }
 
@@ -161,6 +165,7 @@ fun ClientProfileScreen(id: String, app: AppModel, list: ClientsViewModel, wide:
 
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val profile = state.response?.client
+    if (isWaitlisting && profile != null) WaitlistSheet(app, list.clock, addFor = WaitingFor(profile.id, profile.name), onClose = { isWaitlisting = false })
     if (isEditing && profile != null) {
         ModalBottomSheet(onDismissRequest = { isEditing = false }, sheetState = sheet, containerColor = WHColors.Bg, dragHandle = null) {
             val form: ClientFormViewModel = viewModel(key = "client-form-${profile.id}") { ClientFormViewModel(profile, app.client, app::handle, createSavedStateHandle()) }
@@ -188,12 +193,14 @@ fun ClientProfileScreen(id: String, app: AppModel, list: ClientsViewModel, wide:
 }
 
 @Composable
-private fun Header(response: ClientProfileResponse, list: ClientsViewModel, wide: Boolean, twoColumns: Boolean, onRebook: () -> Unit, onEdit: () -> Unit) {
+private fun Header(response: ClientProfileResponse, list: ClientsViewModel, wide: Boolean, twoColumns: Boolean, onRebook: () -> Unit, onWaitlist: () -> Unit, onEdit: () -> Unit) {
     val client = response.client
     val status = response.status(list.clock)
     @Composable
     fun actions() {
         PrimaryButton("Rebook", onRebook, Modifier.testTag("rebook"), fill = false)
+        // For when the day they want is full: the next gap that suits them is offered to them.
+        WordsButton("Add to waitlist", onWaitlist, Modifier.testTag("addToWaitlist"))
         WordsButton("Edit", onEdit, Modifier.testTag("editClient"), color = WHColors.Neutral700)
     }
 
@@ -226,6 +233,8 @@ private fun Header(response: ClientProfileResponse, list: ClientsViewModel, wide
     )
 
     if (wide && !twoColumns) Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { actions() }
+    // On a phone Rebook and Edit are pinned under the screen; this sits with what is known about them.
+    if (!wide) Box(Modifier.padding(top = 4.dp).offset(x = (-8).dp)) { WordsButton("Add to waitlist", onWaitlist, Modifier.testTag("addToWaitlist")) }
 }
 
 @Composable

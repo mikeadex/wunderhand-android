@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 to A5 built** · 18 September 2026 · see [Progress](#progress) at the end
+Status: **A0 to A6 built** · 19 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -549,6 +549,26 @@ unfolded. Built in four commits: types and calls, Menu, Shop, leaving.
 | Found by running it | **The keyboard inset.** A form inside the tab bar floated a tab bar's height above the keyboard: the inset is measured from the bottom of the window and the page does not reach it. Taking the bar's height off then hid the button by exactly the gesture bar, which the scaffold had already taken off. `MainScaffold` now measures what is below the page, reads what is already consumed, and consumes the difference — flush to the pixel, and nothing taken off beside a rail. · Number pads have no way to be put away, so every money and number field has Done. · A footer beside a rail ran under the gesture bar. · Tags inside a bottom sheet are not resource ids (a sheet is its own window), which matters only to `adb`. |
 | **Not run** | Both ways out were read on the emulator and never pressed: `kit@fold.example` and Fold Barbers are what Apple's reviewer signs in to. They are covered by unit tests against a stub and by the network tests' paths and bodies. **Still to do before release: press them for real against a throwaway shop** — as the plan said, and for the same reason. Adding a person was likewise stopped at the form's own refusal, so the dev shop does not grow by a suspended "Zz" person a run. |
 | Left in the dev branch by the test | One archived "Zz Android Test" service and one retired extra per run, both hidden, as they should be. Booking rules are saved as they were found. |
+
+### A6: Waitlist, gaps, till and money (built 19 September 2026)
+The last of the screens: who is waiting, offering them a gap, ringing a bill through, and what the
+month took. 328 JVM tests; the emulator test now puts a client on the waiting list from their
+profile and takes them off, opens a gap and reads who fits it, opens the till on its own walk-in
+when the slot is soon enough, and reads the Money tab — folded and unfolded. Every tab is now real;
+the "Coming" placeholder is gone.
+
+| | |
+|---|---|
+| `:core` | `Waitlist.kt` and `Money.kt`, decoded from the `waitlist`, `gap`, `offer-sent`, `checkout` and `money` fixtures; the iOS cases ported one for one. `MoneyWords.comparison` is like for like — this month against the same span of last — and a fall rounds the way a rise does (Kotlin's `roundToInt` does not, for a negative half). `Owing.with(extra, tip)` is chairtime's own sum (`lib/money/checkout.ts`, checked line for line), so the figure can move as it is typed; what is *recorded* is always chairtime's. A scope or a payment method this build has not heard of is nobody's shop and its own word. |
+| `:network` | `WaitlistApi`, `MoneyApi`. Instants go out to the millisecond. `already_settled` is its own refusal — and only reads are ever retried, so a press of "Mark paid" is sent once whatever the signal does. |
+| The waiting list | From the diary's "2 waiting" — now its own 48dp button beside the day's sentence, not a word inside it — from a gap nobody fits, and from a client's profile, where the form opens on them with nothing to look up. Ordered by how long they have waited. The form: a client search that waits 250 ms for the typing to stop, what for, with whom, two calendar dates picked in UTC against the *shop's* today, days and times of day. Blank means any. Kept in `SavedStateHandle`. |
+| Fill it | On every free stretch of the agenda; the whole block on the phone's grid; "+ Fill it" inside a team-grid outline where there is room for a finger (48dp — a shorter stretch is left to tap-to-book). The best fits come ticked; they go out in chairtime's order whatever order they were ticked in. |
+| **What went out** | For somebody with no email, "Send" opens the phone's own messages app on *their number* with the words and the link already in it (`smsto:` with `sms_body`) — better than a share sheet, which would make the pro find the contact. With no number it falls back to the share sheet. **The app sends nothing**: whoever holds the phone presses send. |
+| The till | "Check out · £38" beside "Mark done" once they have arrived, for whoever sees the money; "Mark done" alone for anybody else. The bill, less what was paid, plus anything sold and a tip, with **"To pay" moving as it is typed** (iOS shows it only after). Overpaid says so out loud. Settled shows the receipt and no button: a second press cannot count the same money twice. What is typed survives the phone ringing. |
+| Money | The month, its comparison directly under it, and everything else as evidence: month by month, who earned it (an owner only), what sells, at the till (only for a shop that has used it), deposits, what discounting cost. Two columns unfolded. The owner sees the shop; anybody else sees "Your work" — **chairtime decides and sends only that**; nothing is fetched and hidden. Every figure is the shop's own takings: nothing on it is what Wunderhand costs. Bars are read out as "June, £4,844", not "Jun". |
+| Found by running it | The join form was keyed on the list's length, so it was rebuilt — ticks lost, button disabled — the moment the list behind it loaded. Now a visit counter. · A test tag after `clearAndSetSemantics` is wiped: caught twice more here, and the source is now grepped for it. · The emulator shows a 12-hour clock: "12:06" was six past midnight, which for a while looked like chairtime offering gaps in the past. It was not. |
+| **Not run** | **"Offer it" was never pressed**: on this server an offer emails whoever is on the seeded list, and that is not a test's to send. **"Mark paid and finish" was never pressed**: a bill rung through cannot be un-rung, and it would change the dev shop's takings for every other session using it. Both are covered by unit tests against a stub and by the network tests' paths and bodies; the till was opened on a live bill (yesterday's open walk-in: £38, a £4 tip typed, £42 to pay) and closed unpaid. The SMS hand-off was therefore not seen either. **Before release: one offer and one bill, for real, on a throwaway shop.** |
+| Left in the dev branch by the test | Nothing new: the client put on the waiting list is taken off again, and the walk-in is cancelled as before. |
 
 ### Running it locally
 ```sh

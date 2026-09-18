@@ -65,7 +65,9 @@ import com.wunderhand.core.SeriesView
 import com.wunderhand.core.ShopClock
 import com.wunderhand.design.ConfirmDialog
 import com.wunderhand.design.InkButton
+import com.wunderhand.app.features.money.TillSheet
 import com.wunderhand.design.PrimaryButton
+import com.wunderhand.design.SecondaryButton
 import com.wunderhand.design.RowDivider
 import com.wunderhand.design.WordsButton
 import com.wunderhand.design.SkeletonBlock
@@ -106,6 +108,7 @@ fun AppointmentSheet(
     val now by rememberNow()
     // Moving it is a second screen within the sheet, swapped in place.
     var isRescheduling by rememberSaveable(id) { mutableStateOf(false) }
+    var isTilling by rememberSaveable(id) { mutableStateOf(false) }
 
     LaunchedEffect(id) { model.load() }
 
@@ -132,7 +135,7 @@ fun AppointmentSheet(
                     state.notice?.let { NoticeLine(it, Modifier.padding(bottom = 16.dp)) }
                     AppointmentBody(response, model, state)
                 }
-                AppointmentActions(response, model, state, now, onReschedule = { isRescheduling = true }, onRebook)
+                AppointmentActions(response, model, state, now, onReschedule = { isRescheduling = true }, onTill = { isTilling = true }, onRebook)
             }
             state.loadFailure != null -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(state.loadFailure.orEmpty(), style = WHType.Body, color = WHColors.Neutral800)
@@ -146,6 +149,11 @@ fun AppointmentSheet(
                 SkeletonBlock(70.dp, Modifier.padding(top = 8.dp), radius = 12.dp)
             }
         }
+    }
+
+    // Rung through: this appointment is done now, and so the day underneath is not what it was.
+    if (isTilling && response != null) {
+        TillSheet(api, handle, response.appointment.bookingId, clock, onSettled = { model.load(); changed() }, onClose = { isTilling = false })
     }
 }
 
@@ -167,10 +175,10 @@ fun NoticeLine(notice: Notice, modifier: Modifier = Modifier) {
 
 /**
  * What can be done to the appointment now, pinned under it (chairtime
- * AppointmentDetail's footer). Check out arrives with the till, in A6.
+ * AppointmentDetail's footer). The till for whoever sees the money; Mark done for everyone.
  */
 @Composable
-private fun AppointmentActions(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, now: Instant, onReschedule: () -> Unit, onRebook: (NewBookingStart) -> Unit) {
+private fun AppointmentActions(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, now: Instant, onReschedule: () -> Unit, onTill: () -> Unit, onRebook: (NewBookingStart) -> Unit) {
     val appt = response.appointment
     val scope = rememberCoroutineScope()
     var confirming by remember { mutableStateOf<CloseOutcome?>(null) }
@@ -187,15 +195,22 @@ private fun AppointmentActions(response: AppointmentResponse, model: Appointment
             return@Column
         }
 
+        val toTake = response.bill?.toTakePence
         if (Arrival.hasArrived(appt.startsAt, now)) {
-            PrimaryButton("Mark done", { scope.launch { model.close(CloseOutcome.Completed) } }, Modifier.testTag("markDone"), enabled = idle, loading = state.busy == SheetAction.Done)
+            if (toTake != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The forward button is the till: it takes the money down and marks it done in one.
+                PrimaryButton("Check out · ${toTake.formatted(appt.currency)}", onTill, Modifier.weight(1f).testTag("checkOut"), enabled = idle)
+                SecondaryButton("Mark done", { scope.launch { model.close(CloseOutcome.Completed) } }, Modifier.testTag("markDone"), enabled = idle, loading = state.busy == SheetAction.Done)
+            } else {
+                PrimaryButton("Mark done", { scope.launch { model.close(CloseOutcome.Completed) } }, Modifier.testTag("markDone"), enabled = idle, loading = state.busy == SheetAction.Done)
+            }
         } else {
             // Not offered rather than offered and refused: marking a future
             // appointment done counts a visit that has not happened.
             val opens = model.clock.time(appt.startsAt.minus(Duration.ofMinutes(Arrival.EARLY_MINUTES)))
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = WHColors.Ink)) { append("Mark done opens when they arrive") }
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = WHColors.Ink)) { append(if (response.seesMoney) "Check out and Mark done open when they arrive" else "Mark done opens when they arrive") }
                     append(" — from $opens on the day.")
                 },
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(WHColors.Well).padding(horizontal = 16.dp, vertical = 12.dp).testTag("opensLater"),

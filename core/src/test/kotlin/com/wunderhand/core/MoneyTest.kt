@@ -111,7 +111,7 @@ class MoneyTest {
     @Test fun `an offer by hand is one message with its link whole`() {
         val link = OfferSent.Link("Wren Halloway", "07700 900123", null, "https://wunderhand.com/offer/abc")
         val text = WaitWords.text(link, "Fold Barbers")
-        assertTrue(text.startsWith("Hi Wren, a slot has come free at Fold Barbers."))
+        assertTrue(text.startsWith("Hi Wren, a slot has come free at Fold Barbers"))
         assertTrue(text.endsWith("https://wunderhand.com/offer/abc"))
         assertTrue(text.length < 160 + link.url.length)
     }

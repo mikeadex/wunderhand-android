@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import com.wunderhand.app.features.waitlist.GapWindow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,7 +82,7 @@ fun AgendaView(members: List<DiaryMember>, model: DiaryViewModel, now: Instant, 
         for (item in items) {
             when (item) {
                 is AgendaItem.Booked -> AgendaCard(item.appointment, item.who.takeIf { showWho }, model, now)
-                is AgendaItem.Free -> GapDivider(item.gap, if (showWho) item.who else emptyList(), model.clock)
+                is AgendaItem.Free -> GapDivider(item.gap, if (showWho) item.who else emptyList(), model.clock) { model.fillGap(GapWindow(item.staffIds.firstOrNull() ?: model.me.staff.id, item.gap.startsAt, item.gap.endsAt)) }
             }
         }
     }
@@ -186,20 +187,21 @@ private fun moneyLine(row: DiaryAppointment, price: Pence, currency: String): St
     }
 }
 
-/** "13:00 · 1h 15m free · Ade, Kit", between two cards. Offering it to the
- *  waiting list ("Fill it") arrives with that list, in A6 — a button that does
- *  nothing is worse than no button. */
+/** "13:00 · 1h 15m free · Ade, Kit", between two cards, and the way to offer it to whoever is waiting. */
 @Composable
-private fun GapDivider(gap: DiaryGap, who: List<String>, clock: ShopClock) {
+private fun GapDivider(gap: DiaryGap, who: List<String>, clock: ShopClock, onFill: () -> Unit) {
     val label = "${clock.time(gap.startsAt)} · ${Durations.short(gap.minutes)} free" + if (who.isEmpty()) "" else " · ${who.joinToString(", ")}"
     val spoken = "${Durations.label(gap.minutes)} free from ${clock.time(gap.startsAt)}" + if (who.isEmpty()) "" else " for ${who.joinToString(", ")}"
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(start = 58.dp).testTag("gap").clearAndSetSemantics { contentDescription = spoken },
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    Row(Modifier.fillMaxWidth().padding(start = 58.dp).testTag("gap"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Box(Modifier.weight(1f).height(1.dp).background(WHColors.Divider))
-        Text(label, Modifier.weight(4f, fill = false), style = WHType.Meta.copy(fontSize = WHType.StripDay.fontSize * 1.14f), color = WHColors.Muted, maxLines = 2, textAlign = TextAlign.Center)
-        Box(Modifier.weight(1f).height(1.dp).background(WHColors.Divider))
+        Text(label, Modifier.weight(4f, fill = false).clearAndSetSemantics { contentDescription = spoken }, style = WHType.Meta.copy(fontSize = WHType.StripDay.fontSize * 1.14f), color = WHColors.Muted, maxLines = 2, textAlign = TextAlign.Center)
+        // 48dp to the touch, though the words are small: this is pressed between clients.
+        Box(
+            Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onFill).padding(horizontal = 8.dp)
+                .semantics { contentDescription = "Fill $spoken. Offers it to the waitlist" }.testTag("fillGap"),
+            contentAlignment = Alignment.Center,
+        ) { Text("Fill it", Modifier.clearAndSetSemantics { }, style = WHType.Meta.copy(fontWeight = FontWeight.SemiBold), color = WHColors.Accent) }
+        Box(Modifier.weight(0.4f).height(1.dp).background(WHColors.Divider))
     }
 }
 

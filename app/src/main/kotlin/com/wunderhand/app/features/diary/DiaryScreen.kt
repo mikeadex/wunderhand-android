@@ -60,6 +60,8 @@ import com.wunderhand.core.SignalWords
 import com.wunderhand.app.features.booking.NewBookingScreen
 import com.wunderhand.app.features.booking.NewBookingStart
 import com.wunderhand.app.features.booking.NewBookingViewModel
+import com.wunderhand.app.features.waitlist.GapSheet
+import com.wunderhand.app.features.waitlist.WaitlistSheet
 import com.wunderhand.design.FooterBar
 import com.wunderhand.design.PrimaryButton
 import com.wunderhand.design.liftSmall
@@ -169,6 +171,10 @@ fun DiaryScreen(app: AppModel, me: Me) {
                 AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, Modifier.width(420.dp), onRebook = model::startBooking)
             }
         }
+
+        // Offering a free stretch to whoever is waiting, and the list of them.
+        state.gap?.let { window -> GapSheet(app, window, model.clock, me.shop.name, onClose = { model.fillGap(null) }) }
+        if (state.isShowingWaitlist) WaitlistSheet(app, model.clock, onClose = { model.showWaitlist(false) })
 
         state.newBooking?.let { start ->
             ModalBottomSheet(

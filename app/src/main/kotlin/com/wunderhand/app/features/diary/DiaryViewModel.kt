@@ -12,6 +12,7 @@ import com.wunderhand.core.ShopClock
 import com.wunderhand.network.ApiError
 import com.wunderhand.network.WunderhandApi
 import com.wunderhand.app.features.booking.NewBookingStart
+import com.wunderhand.app.features.waitlist.GapWindow
 import com.wunderhand.core.BookingCreated
 import com.wunderhand.core.DiaryAppointment
 import com.wunderhand.core.DiaryBreak
@@ -64,6 +65,9 @@ data class DiaryState(
     val isBlockingTime: Boolean = false,
     /** A new booking being made, and where it was started from. */
     val newBooking: NewBookingStart? = null,
+    /** A stretch of somebody's day being offered to the waiting list. */
+    val gap: GapWindow? = null,
+    val isShowingWaitlist: Boolean = false,
 ) {
     val isShowingRequestedDay: Boolean get() = date == null || response?.date == date
 
@@ -121,6 +125,7 @@ class DiaryViewModel(
             mode = saved.get<String>("mode")?.let { name -> DiaryMode.entries.firstOrNull { it.name == name } } ?: DiaryMode.Day,
             focusStaffId = saved["focus"],
             openAppointmentId = saved["open"],
+            gap = GapWindow.unpack(saved["gap"]),
             newBooking = saved.get<ArrayList<String>>("booking")?.let { f ->
                 NewBookingStart(f[0], f[1].ifEmpty { null }, f[2].toLongOrNull()?.let(Instant::ofEpochMilli), f[3].ifEmpty { null }, f[4].ifEmpty { null })
             },
@@ -240,6 +245,21 @@ class DiaryViewModel(
         // Kept where the system can hand it back: a booking half made should survive a phone call.
         saved["booking"] = start?.let { arrayListOf(it.id, it.staffId.orEmpty(), it.slot?.toEpochMilli()?.toString().orEmpty(), it.clientId.orEmpty(), it.clientName.orEmpty()) }
         _state.update { it.copy(newBooking = start) }
+    }
+
+    /** Offer a free stretch to whoever is waiting. Closed, the day is looked at again: an offer out changes who is waiting. */
+    fun fillGap(window: GapWindow?) {
+        saved["gap"] = window?.packed()
+        val wasOpen = _state.value.gap != null
+        _state.update { it.copy(gap = window) }
+        if (window == null && wasOpen) load()
+    }
+
+    /** The waiting list, from "3 waiting". Closed, the count may have changed. */
+    fun showWaitlist(showing: Boolean) {
+        val wasOpen = _state.value.isShowingWaitlist
+        _state.update { it.copy(isShowingWaitlist = showing) }
+        if (!showing && wasOpen) load()
     }
 
     /** A booking was made: close the flow, go to its day, and open it there. */

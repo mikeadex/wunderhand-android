@@ -161,5 +161,5 @@ object WaitWords {
      * no email for. The link is theirs alone and live for a day, so it goes in
      * whole; the words are short enough to be one message.
      */
-    fun text(link: OfferSent.Link, shopName: String): String = "Hi ${link.firstName}, a slot has come free at $shopName. It is yours if you want it — first to book gets it: ${link.url}"
+    fun text(link: OfferSent.Link, shopName: String): String = "Hi ${link.firstName}, a slot has come free at $shopName — take it here: ${link.url}"
 }
