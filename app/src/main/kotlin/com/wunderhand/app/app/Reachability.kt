@@ -3,6 +3,7 @@ package com.wunderhand.app.app
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
+import androidx.compose.runtime.staticCompositionLocalOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,3 +53,6 @@ class Reachability(context: Context) {
         if (online) _cameBack.update { it + 1 }
     }
 }
+
+/** The one [Reachability], for any screen that words a failure or reloads when the signal returns. */
+val LocalReachability = staticCompositionLocalOf<Reachability> { error("RootScreen provides this") }

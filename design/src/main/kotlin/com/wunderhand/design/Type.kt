@@ -49,6 +49,29 @@ object WHType {
     val BarAction = archivo(13.5, FontWeight.SemiBold)
     val Link = archivo(14.0, FontWeight.Medium)
 
+    // The diary
+    val DiaryTitle = archivo(28.0, FontWeight.Bold, trackingEm = -0.03, lineHeightEm = 1.1)
+    val DiaryTitleWide = archivo(32.0, FontWeight.Bold, trackingEm = -0.03, lineHeightEm = 1.1)
+    val Summary = archivo(13.5, FontWeight.Normal, lineHeightEm = 1.4)
+    val SummaryWide = archivo(15.0, FontWeight.Normal, lineHeightEm = 1.4)
+    val CardName = archivo(15.5, FontWeight.SemiBold)
+    val CardPrice = archivo(14.0, FontWeight.SemiBold)
+    val CardMeta = archivo(13.0, FontWeight.Normal)
+    val GutterTime = archivo(12.5, FontWeight.SemiBold)
+    val Tag = archivo(11.5, FontWeight.SemiBold)
+    val TagSmall = archivo(9.5, FontWeight.Bold, trackingEm = 0.06)
+    val StripDay = archivo(10.5, FontWeight.Normal)
+    val StripDate = archivo(16.0, FontWeight.SemiBold)
+    val GridName = archivo(12.5, FontWeight.SemiBold)
+    val GridMeta = archivo(11.5, FontWeight.Normal)
+    val GridHour = archivo(11.0, FontWeight.Normal)
+    val Tile = archivo(22.0, FontWeight.Medium)
+    val WeekRow = archivo(16.0, FontWeight.Medium)
+    val SheetName = archivo(28.0, FontWeight.Bold, trackingEm = -0.03, lineHeightEm = 1.1)
+    val SheetTotal = archivo(18.0, FontWeight.Bold)
+    val Medium14 = archivo(14.0, FontWeight.Normal, lineHeightEm = 1.45)
+    val Semi14 = archivo(14.0, FontWeight.SemiBold)
+
     /** The wordmark: Archivo 600, lowercase, pulled tight. */
     fun wordmark(size: Double) = archivo(size, FontWeight.SemiBold, trackingEm = -0.035, lineHeightEm = 1.0)
 }

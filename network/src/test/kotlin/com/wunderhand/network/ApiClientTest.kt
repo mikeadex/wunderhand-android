@@ -231,3 +231,32 @@ class ApiClientTest {
         assertNull(tokens.read())
     }
 }
+
+class DiaryCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun fixture(name: String) = checkNotNull(javaClass.getResourceAsStream("/$name.json")).bufferedReader().use { it.readText() }
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+
+    @Test fun `today is asked for without a date, so the shop decides what today is`() = runTest {
+        server.enqueue(MockResponse.Builder().code(200).body(fixture("diary")).build())
+        val day = client().diary(null)
+        assertEquals("/api/v1/diary", server.takeRequest().url.encodedPath)
+        assertEquals(7, day.week.size)
+    }
+
+    @Test fun `another day is asked for by the shop's calendar date`() = runTest {
+        server.enqueue(MockResponse.Builder().code(200).body(fixture("diary")).build())
+        client().diary("2026-09-21")
+        assertEquals("2026-09-21", server.takeRequest().url.queryParameter("date"))
+    }
+
+    @Test fun `an appointment is asked for by its id`() = runTest {
+        server.enqueue(MockResponse.Builder().code(200).body(fixture("appointment")).build())
+        val response = client().appointment("appt-1")
+        assertEquals("/api/v1/appointments/appt-1", server.takeRequest().url.encodedPath)
+        assertTrue(response.appointment.lineItems.isNotEmpty())
+    }
+}

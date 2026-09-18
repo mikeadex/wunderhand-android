@@ -1,7 +1,9 @@
 package com.wunderhand.core
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import java.io.File
+import java.time.Instant
 
 /**
  * The little the app keeps on the phone so it can open without an answer.
@@ -12,8 +14,8 @@ import java.io.File
  * in front of a fresh answer, and never silently, because the screen says
  * how old what it shows is.
  *
- * **What is kept.** Who this is, the shop they work for, and (from A1) one
- * diary day per shop. It lives in the app's private files, which Android
+ * **What is kept.** Who this is, the shop they work for, and one diary day
+ * per shop: names, times, services, the day's sums. It lives in the app's private files, which Android
  * encrypts at rest and which the backup rules leave out, and all of it is
  * thrown away at sign-out and when the shop changes. Medical notes are never
  * part of it — they are never kept on the phone at all.
@@ -47,6 +49,22 @@ class OfflineCache(private val directory: File) {
     fun save(me: Me) = write(Me.serializer(), me, whoFile)
 
     fun savedMe(): Me? = read(Me.serializer(), whoFile)
+
+    /** A kept day, and when it was loaded — for the words over a stale screen. */
+    @Serializable
+    data class SavedDay(@Serializable(with = InstantSerializer::class) val at: Instant, val response: DiaryResponse)
+
+    // The shop's id is a UUID from chairtime, so it is already a safe file name.
+    private fun dayFile(shopId: String) = File(directory, "diary-$shopId.json")
+
+    /** Keep this day. */
+    fun save(response: DiaryResponse, at: Instant, shopId: String) =
+        write(SavedDay.serializer(), SavedDay(at, response), dayFile(shopId))
+
+    /** The day kept for this shop, when it is the day being asked for. A day
+     *  kept yesterday is no use this morning, so it is ignored rather than shown. */
+    fun savedDay(shopId: String, date: String): SavedDay? =
+        read(SavedDay.serializer(), dayFile(shopId))?.takeIf { it.response.date == date }
 
     /** At sign-out, and when the shop changes: nothing of one shop's day is
      *  left on a phone that has moved to another. */

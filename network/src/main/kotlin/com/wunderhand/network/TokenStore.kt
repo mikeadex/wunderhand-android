@@ -27,3 +27,13 @@ interface SessionApi {
     suspend fun signOut()
     suspend fun me(): com.wunderhand.core.Me
 }
+
+/** The day, and one appointment in it. */
+interface DiaryApi {
+    /** The diary screen for a day, as the shop's calendar date; today when null. */
+    suspend fun diary(date: String?): com.wunderhand.core.DiaryResponse
+    suspend fun appointment(id: String): com.wunderhand.core.AppointmentResponse
+}
+
+/** Everything the app asks of chairtime. `ApiClient` is the real one. */
+interface WunderhandApi : SessionApi, DiaryApi

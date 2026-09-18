@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 built** · 18 September 2026 · see [Progress](#progress) at the end
+Status: **A0 and A1 built** · 18 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -450,8 +450,29 @@ and signs out. 58 tests: 57 on the JVM with no emulator, 1 on the emulator again
 | `:design` | The `.desk` palette with the iOS contrast fixes already in, Archivo at four weights (OFL text beside it), `WunderhandTheme` (fixed scheme, no dynamic colour, light only), and the components A0 needs: `Lockup`, `ScreenHeader`, `Eyebrow`, `PrimaryButton`, `FooterBar`, `WHField`, `NoteCard`, `WHCard`, `SignalBar`, `EmptyNote`. Touch targets are 48 dp even where the words are small. |
 | Icons | `scripts/sync-brand.sh` writes the same 23 Lucide icons as **VectorDrawables** (Lucide's circles, rects and lines rewritten as the paths they are — a VectorDrawable knows nothing else), the mark for the lockup, and the launcher icon as an **adaptive icon, all vector**: the shears from `lib/brand/mark.ts` at 54 dp, inside the 66 dp circle every launcher promises, over the red plate, plus the monochrome layer for themed icons. And `play/icon-512.png`. |
 | Session | `AppModel` as iOS: launching, signed out, choosing a shop, signed in, unreachable, upgrade required. A passing failure keeps the screen and says so in a bar; a phone that has been here before opens on what it last saw; the signal coming back asks again by itself. 12 tests against a server that answers on cue. |
-| Screens | Sign in (the web's words for every refusal; the password is held in a `ViewModel`, never in saved state), Which shop?, and a Today stand-in drawn from `GET /me` in the shop's date. Checked unfolded (expanded width), folded (compact) and at 200% font scale. |
+| Screens | Sign in (the web's words for every refusal; the password is held in a `ViewModel`, never in saved state), Which shop?, and a Today stand-in drawn from `GET /me` in the shop's date (replaced by the diary in A1). Checked unfolded (expanded width), folded (compact) and at 200% font scale. |
 | Not in A0 after all | Navigation, the adaptive scaffolds and the tab bar arrive with the diary in A1, where there is something to navigate between. Their versions are already in the catalog. |
+
+### A1: Diary, view only (built 18 September 2026)
+The diary, read from chairtime, in both layouts: on a phone the agenda for the whole shop, one
+person's day by the hour, and the week; on a tablet the team's columns, the week and the list — with
+the appointment opening over it or beside it. 96 JVM tests and one test on the emulator that signs
+in, reads the diary, opens an appointment, survives a rebuilt activity, checks every control has
+words for a screen reader, and signs out. It passes folded and unfolded.
+
+| | |
+|---|---|
+| `:core` | `DiaryResponse` and everything under it, `AppointmentResponse`, and the diary's logic ported with its tests case for case: `Agenda` (the same gap across people is one line; a booking comes before a gap at the same minute), `DaySummary`, `WeekSummary`, `GridGeometry`, `Intervals`, `IsoDay`, `DiaryWords`. Later fields (`toTakePence`, `atClient`, `repeat`) default, so an older server still decodes; a test strips every `…Pence` key from the fixture and the day still reads. `OfflineCache` keeps one day per shop, and only hands it back for the day it is. |
+| `:network` | `diary(date)` — today is asked for with no date, so the shop decides what today is — and `appointment(id)`. `WunderhandApi` is what the app depends on, so screens are tested against something that answers on cue. |
+| `DiaryViewModel` | As iOS's `DiaryModel`: a person changes the date, a load never does; the day on screen stays (dimmed) until the one asked for arrives; a failed reload keeps the day and says how old it is; no signal at launch opens on the day this phone last saw, but never yesterday's as today; a session that has ended goes to the app, not onto the diary. The date, the view, the person and the open appointment come back after the system kills the app. 14 tests. |
+| Tabs | `NavigationSuiteScaffold`: a bar on a phone, a rail from medium width up, chosen by the window. Clients, Menu and Money say which milestone builds them; Shop holds who is signed in, Switch shop and Sign out until A5. |
+| Two widths, three rules | **840 dp** of *window* (not of what the rail leaves) is the team grid. **1000 dp** is an appointment *beside* the grid; below that — an unfolded Pixel Fold is 841 dp — it is a sheet over it, because a panel left five columns a letter wide each. And a column is never narrower than 112 dp: the grid scrolls sideways instead. Past six people each keeps 150 dp, as on the web. |
+| The week strip | Seven days share a phone's width; at 130% type and up each takes the room its words need and the strip scrolls. The tablet's strip drops to name, date and bar where "27 · £1,836" will not fit whole — cut off at "27 ·" it said less than nothing. |
+| Found by looking | The web stacks gaps under breaks under bookings; drawn in time order, a gap that overlapped a booking wrote "45m free" across somebody's name. · A quarter-hour block clipped its own name. · The week's "Taken" tile showed **£2,040.2** for £2,040.25: a figure is never cut short, so it shrinks to fit (`TextAutoSize`). · **After sign-out the sign-in form still held the last email and password** — the form belongs to the activity, not the screen. It now forgets both the moment sign-in works; a test holds it there. |
+| Money scope | Checked as `ade@fold.example` on the dev branch: Ade's own price shows, no colleague's does, the summary has no takings, and the alert reads "Deposits are not being collected" with no sum. Nothing was needed in the app — the server sends none and every screen already reads `null` as "not yours to see". |
+| Grids stop growing at 130% type | A time grid is a picture of the day. Day and Week scale the whole way. |
+| Accessibility | Every card, block and day reads as one sentence ("09:00 to 09:45, Ellis Warner, Root tint, with Ade Balogun, £68"); eyebrows are uppercased where drawn, so TalkBack reads words; every target is 48 dp. The emulator test fails if any pressable thing has no words. Test tags are exposed as resource ids for UI Automator. |
+| Left for their own milestones, on purpose | "Fill it" on a gap, and the waiting count as a link (A6). New booking, Block time, drag to move, and the appointment's actions — check out, reschedule, cancel, record consent, start or stop a repeat (A2, A3). The sheet shows the consent wording and a series' dates now; the buttons arrive with what they do. A control that does nothing is worse than no control. |
 
 ### Running it locally
 ```sh

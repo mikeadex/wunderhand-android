@@ -77,6 +77,12 @@ class SignInForm : ViewModel() {
         viewModelScope.launch {
             try {
                 model.signIn(email, password)
+                /* This form outlives the session it started — it belongs to the
+                 * activity, not to the screen. So it forgets what was typed the
+                 * moment it has worked: a password is not left in memory, and the
+                 * next person to see this screen does not find the last one's. */
+                email = ""
+                password = ""
                 error = null
             } catch (refusal: ApiError) {
                 error = refusal.message

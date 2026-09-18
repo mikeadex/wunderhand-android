@@ -1,6 +1,8 @@
 package com.wunderhand.network
 
+import com.wunderhand.core.AppointmentResponse
 import com.wunderhand.core.ChairtimeJson
+import com.wunderhand.core.DiaryResponse
 import com.wunderhand.core.Me
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +57,7 @@ class ApiClient(
     private val wait: suspend (Duration) -> Unit = { delay(it) },
     /** Loud, for whoever is debugging; silent in a release build. */
     private val log: (String) -> Unit = {},
-) : SessionApi {
+) : WunderhandApi {
     val baseUrl: HttpUrl = baseUrl.toHttpUrl()
     private val http: OkHttpClient = http ?: makeHttp()
     private val clientHeader = "android/$build"
@@ -109,6 +111,11 @@ class ApiClient(
     // region API v1
 
     override suspend fun me(): Me = get("api/v1/me")
+
+    override suspend fun diary(date: String?): DiaryResponse =
+        get("api/v1/diary", if (date == null) emptyMap() else mapOf("date" to date))
+
+    override suspend fun appointment(id: String): AppointmentResponse = get("api/v1/appointments/$id")
 
     // endregion
     // region Plumbing

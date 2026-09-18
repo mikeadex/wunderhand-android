@@ -3,7 +3,7 @@ package com.wunderhand.app.app
 import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.network.ApiError
-import com.wunderhand.network.SessionApi
+import com.wunderhand.network.WunderhandApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,9 +33,9 @@ sealed interface Phase {
  */
 class AppModel(
     private val settings: Settings,
-    private val cache: OfflineCache,
+    val cache: OfflineCache,
     private val builtInServer: String,
-    private val connect: (baseUrl: String) -> SessionApi,
+    private val connect: (baseUrl: String) -> WunderhandApi,
 ) {
     private val _phase = MutableStateFlow<Phase>(Phase.Launching)
     val phase: StateFlow<Phase> = _phase.asStateFlow()
@@ -46,11 +46,16 @@ class AppModel(
     private val _trouble = MutableStateFlow<String?>(null)
     val trouble: StateFlow<String?> = _trouble.asStateFlow()
 
+    /** A screen already saying it — the diary's bar over a day it kept, which
+     *  says the same thing and more. Two bars about one lost connection read
+     *  as two problems. */
+    val aScreenIsSayingIt = MutableStateFlow(false)
+
     private val _server = MutableStateFlow(builtInServer)
     /** Where this build is talking to. */
     val server: StateFlow<String> = _server.asStateFlow()
 
-    var client: SessionApi = connect(builtInServer)
+    var client: WunderhandApi = connect(builtInServer)
         private set
 
     /** The last answer about who this is. Kept so a moment without signal
