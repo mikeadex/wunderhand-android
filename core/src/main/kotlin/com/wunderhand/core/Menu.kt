@@ -317,6 +317,17 @@ data class StepDraft(val label: String = "", val minutes: String = "", val staff
             val busy = used.filter { it.second }.sumOf { it.first }
             return if (held > busy) "Holds the chair for ${Durations.short(held)}, but only takes ${Durations.short(busy)} of your time." else null
         }
+
+        /** "35m is sellable." — the minutes somebody else can be booked into. Null when there are none. */
+        fun sellable(rows: List<StepDraft>): String? {
+            val free = rows.filter { !it.staffBusy }.sumOf { it.wholeMinutes?.takeIf { m -> m > 0 } ?: 0 }
+            return if (free > 0) "${Durations.short(free)} is sellable." else null
+        }
+
+        /** The steps as they read now, not as they were saved: what the bar draws. */
+        fun preview(rows: List<StepDraft>): List<MenuServiceResponse.Segment> = rows.mapIndexedNotNull { i, r ->
+            r.wholeMinutes?.takeIf { it > 0 }?.let { MenuServiceResponse.Segment(i + 1, it, r.staffBusy, r.label.trim().ifEmpty { null }) }
+        }
     }
 }
 

@@ -132,6 +132,12 @@ fun WHField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     /** False for a box that grows: notes, a formula. */
     singleLine: Boolean = true,
+    /** Said before what is typed and not part of it: "£". */
+    prefix: String? = null,
+    /** The field a refusal is about: outlined, so the sentence above has somewhere to point. */
+    isProblem: Boolean = false,
+    /** Shown while the field is empty: what blank will mean. */
+    placeholder: String? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -140,12 +146,16 @@ fun WHField(
             .fillMaxWidth()
             .clip(Card)
             .background(WHColors.Surface)
-            .border(1.dp, if (focused) WHColors.Ink else WHColors.Divider, Card)
+            .border(1.dp, if (isProblem) WHColors.Accent else if (focused) WHColors.Ink else WHColors.Divider, Card)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // The field itself carries the label for a screen reader; said twice is noise.
         Text(label.uppercase(), modifier = Modifier.clearAndSetSemantics { }, style = WHType.FieldLabel, color = WHColors.Neutral700)
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (prefix != null) Text(prefix, Modifier.clearAndSetSemantics { }, style = WHType.FieldValue, color = WHColors.Neutral700)
+        Box(Modifier.weight(1f)) {
+        if (placeholder != null && value.isEmpty()) Text(placeholder, Modifier.clearAndSetSemantics { }, style = WHType.FieldValue, color = WHColors.Neutral500, maxLines = 1)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -160,6 +170,8 @@ fun WHField(
             interactionSource = interaction,
             cursorBrush = SolidColor(WHColors.Accent),
         )
+        }
+        }
     }
 }
 

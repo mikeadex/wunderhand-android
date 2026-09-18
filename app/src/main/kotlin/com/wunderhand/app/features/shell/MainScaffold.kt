@@ -22,6 +22,7 @@ import com.wunderhand.app.app.AppModel
 import com.wunderhand.app.app.PageColumn
 import com.wunderhand.app.features.clients.ClientsScreen
 import com.wunderhand.app.features.diary.DiaryScreen
+import com.wunderhand.app.features.menu.MenuScreen
 import com.wunderhand.core.Me
 import com.wunderhand.design.EmptyNote
 import com.wunderhand.design.ScreenHeader
@@ -88,7 +89,7 @@ fun MainScaffold(model: AppModel, me: Me) {
             when (tab) {
                 AppTab.Diary -> DiaryScreen(model, me)
                 AppTab.Clients -> ClientsScreen(model, me)
-                AppTab.Menu -> Coming("Menu", "The services the shop sells, who performs them and at what price. It arrives in milestone A5.")
+                AppTab.Menu -> MenuScreen(model, me)
                 AppTab.Money -> Coming("Money", "What the month has taken, against the last one. It arrives in milestone A6.")
                 AppTab.Shop -> ShopStandIn(model, me)
             }

@@ -1,0 +1,51 @@
+{
+  "service": {
+    "id": "3fdb3722-ea47-4561-8cf7-4f2b6f6b53d9",
+    "name": "ZZ Mobile Service",
+    "description": null,
+    "categoryName": null,
+    "pricingMode": "fixed",
+    "pricePence": 3200,
+    "hourlyRatePence": null,
+    "minutes": 90,
+    "durationMode": "fixed",
+    "minMinutes": null,
+    "maxMinutes": null,
+    "categoryId": null,
+    "prerequisiteServiceId": null,
+    "requiresResourceTypeId": null,
+    "isArchived": false,
+    "depositPence": null,
+    "depositPercent": null,
+    "bookableOnline": true,
+    "locationMode": "at_venue",
+    "prerequisiteName": null,
+    "prerequisiteLeadHours": null,
+    "minAgeYears": null,
+    "requiresConsent": false,
+    "resourceTypeName": null
+  },
+  "segments": [
+    {
+      "seq": 1,
+      "minutes": 20,
+      "staffBusy": true,
+      "label": "Apply"
+    },
+    {
+      "seq": 2,
+      "minutes": 35,
+      "staffBusy": false,
+      "label": null
+    },
+    {
+      "seq": 3,
+      "minutes": 35,
+      "staffBusy": true,
+      "label": "Rinse"
+    }
+  ],
+  "performers": [],
+  "addons": [],
+  "timesBooked": 0
+}

@@ -1,0 +1,39 @@
+{
+  "extras": [
+    {
+      "id": "72aa2642-b6f3-4f67-ba0f-a3e45a9cca9f",
+      "name": "Beard trim",
+      "pricePence": 1000,
+      "minutes": 15,
+      "offered": false
+    },
+    {
+      "id": "f041dcf0-9485-436e-acbc-782230c841d6",
+      "name": "Hot towel finish",
+      "pricePence": 500,
+      "minutes": 5,
+      "offered": false
+    },
+    {
+      "id": "f49b0929-3398-40b5-a980-0429a00f00dc",
+      "name": "Aftercare pomade",
+      "pricePence": 1200,
+      "minutes": 0,
+      "offered": false
+    },
+    {
+      "id": "5bb54a8a-d726-4b5e-8d0e-b85ce0ba4302",
+      "name": "Colour improvement",
+      "pricePence": 400,
+      "minutes": 10,
+      "offered": false
+    },
+    {
+      "id": "56e0c038-deae-4e83-9de7-02dfb25cc6d1",
+      "name": "ZZ Mobile Extra",
+      "pricePence": 500,
+      "minutes": 10,
+      "offered": true
+    }
+  ]
+}

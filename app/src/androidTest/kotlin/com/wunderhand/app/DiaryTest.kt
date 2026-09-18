@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wunderhand.app.app.MainActivity
@@ -121,6 +123,7 @@ class DiaryTest {
         blocksTimeAndTakesItBack()
         booksAWalkInAndCancelsIt()
         looksSomebodyUpAndAddsAndRemovesAClient()
+        putsAServiceOnTheMenuAndTakesItOff()
         signOut()
     }
 
@@ -172,6 +175,102 @@ class DiaryTest {
         app.onNodeWithTag("removeClient").performScrollTo().performClick()
         app.onNodeWithTag("confirm").performClick()
         app.waitUntil(20_000) { !isOnScreen("clientForm") && app.onAllNodesWithText(name).fetchSemanticsNodes().isEmpty() }
+    }
+
+    /**
+     * The Menu tab: the list, a service's page, and a service made from
+     * nothing — named and priced, its time broken into steps with a gap in the
+     * middle, somebody to do it, an extra made for it and retired — then
+     * archived, so the menu ends as it began.
+     */
+    private fun putsAServiceOnTheMenuAndTakesItOff() {
+        app.onNodeWithTag("tab-Menu").performClick()
+        app.waitUntil(20_000) { anyOnScreen("menuService") }
+        app.onNodeWithTag("menuCount").assertTextContains("SERVICE", substring = true)
+        everyControlSaysWhatItIs("the menu")
+
+        app.onAllNodesWithTag("menuService").onFirst().performClick()
+        waitFor("serviceSummary")
+        app.onNodeWithTag("serviceSummary").assertTextContains("booked", substring = true)
+        everyControlSaysWhatItIs("a service's page")
+        if (isOnScreen("serviceBack")) app.onNodeWithTag("serviceBack").performClick()
+
+        // A form with no name is told so before chairtime hears of it.
+        val name = "Zz Android Test ${System.currentTimeMillis() % 100_000}"
+        app.onNodeWithTag("addService").performClick()
+        waitFor("serviceNameField")
+        everyControlSaysWhatItIs("the service form")
+        app.onNodeWithTag("saveService").performClick()
+        app.onNodeWithTag("serviceFormProblem").assertTextContains("A name is needed")
+        app.onNodeWithTag("serviceNameField").performTextInput(name)
+        app.onNodeWithTag("servicePriceField").performScrollTo().performTextInput("12.50")
+        app.onNodeWithTag("servicePriceField").performImeAction()
+        app.waitForIdle()
+        app.onNodeWithTag("saveService").performClick()
+
+        // Straight to its own page, which says the one thing wrong with it.
+        app.waitUntil(20_000) { app.onAllNodesWithTag("serviceHeading").fetchSemanticsNodes().any { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == name } } }
+        app.onNodeWithTag("serviceSummary").assertTextContains("£12.50", substring = true)
+        app.onNodeWithTag("nobodyAssigned").assertExists()
+
+        // Twenty on, thirty five off: the middle is somebody else's to book.
+        app.onNodeWithTag("changeSteps").performScrollTo().performClick()
+        waitFor("saveSteps")
+        everyControlSaysWhatItIs("the steps")
+        app.onNodeWithTag("stepMinutes-0").performTextReplacement("20")
+        // The keyboard away first, so the button is pressed where it has come to rest.
+        app.onNodeWithTag("stepMinutes-0").performImeAction()
+        app.waitForIdle()
+        app.onNodeWithTag("addStep").performScrollTo().performClick()
+        waitFor("stepLabel-1")
+        app.onNodeWithTag("stepLabel-1").performScrollTo().performTextInput("Develop")
+        app.onNodeWithTag("stepMinutes-1").performTextReplacement("35")
+        app.onNodeWithTag("stepMinutes-1").performImeAction()
+        app.waitForIdle()
+        app.onNodeWithTag("stepBusy-1").performScrollTo().performClick()
+        app.onNodeWithTag("stepsSummary").performScrollTo().assertExists()
+        app.onNodeWithText("35m is sellable.").assertExists()
+        app.onNodeWithTag("saveSteps").performClick()
+        app.waitUntil(20_000) { !isOnScreen("saveSteps") }
+        app.onNodeWithTag("serviceSummary").assertTextContains("55m", substring = true)
+
+        // Somebody to do it, at the standard price.
+        app.onNodeWithTag("choosePerformers").performScrollTo().performClick()
+        waitFor("performer-0")
+        everyControlSaysWhatItIs("who does it")
+        app.onNodeWithTag("performer-0").performClick()
+        app.onNodeWithTag("savePerformers").performClick()
+        app.waitUntil(20_000) { !isOnScreen("savePerformers") }
+        app.waitUntil(10_000) { !isOnScreen("nobodyAssigned") && isOnScreen("performer") }
+
+        // An extra made for it, then retired: it is the shop's, so it would otherwise outlive the service.
+        app.onNodeWithTag("changeExtras").performScrollTo().performClick()
+        waitFor("addExtra")
+        app.onNodeWithTag("addExtra").performScrollTo().performClick()
+        waitFor("extraName")
+        everyControlSaysWhatItIs("the extra form")
+        val extra = "$name extra"
+        app.onNodeWithTag("extraName").performTextInput(extra)
+        app.onNodeWithTag("extraPrice").performTextInput("3")
+        app.onNodeWithTag("extraPrice").performImeAction()
+        app.waitForIdle()
+        app.onNodeWithTag("saveExtra").performClick()
+        app.waitUntil(20_000) { isOnScreen("addExtra") && app.onAllNodesWithContentDescription("Change $extra").fetchSemanticsNodes().isNotEmpty() }
+        everyControlSaysWhatItIs("the extras")
+        app.onNodeWithContentDescription("Change $extra").performScrollTo().performClick()
+        waitFor("retireExtra")
+        app.onNodeWithTag("retireExtra").performScrollTo().performClick()
+        app.onNodeWithTag("confirm").performClick()
+        app.waitUntil(20_000) { isOnScreen("addExtra") && app.onAllNodesWithContentDescription("Change $extra").fetchSemanticsNodes().isEmpty() }
+        app.onNodeWithTag("extras-close").performScrollTo().performClick()
+        app.waitUntil(10_000) { !isOnScreen("addExtra") }
+
+        // And off the menu again.
+        app.onNodeWithTag("editService").performClick()
+        waitFor("archiveService")
+        app.onNodeWithTag("archiveService").performScrollTo().performClick()
+        app.onNodeWithTag("confirm").performClick()
+        app.waitUntil(20_000) { !isOnScreen("serviceForm") && anyOnScreen("menuService") && app.onAllNodesWithText(name).fetchSemanticsNodes().isEmpty() }
     }
 
     /**

@@ -122,6 +122,13 @@ class ServiceDraftTest {
         assertEquals("Holds the chair for 55m, but only takes 20m of your time.", StepDraft.summary(listOf(StepDraft("Apply", "20"), StepDraft("Develop", "35", false))))
         assertNull(StepDraft.summary(listOf(StepDraft("Cut", "45"))))
     }
+
+    @Test fun `the minutes a pro is free are the ones that can be sold`() {
+        val rows = listOf(StepDraft("Apply", "20", true), StepDraft("Develop", "35", false), StepDraft("", "", true), StepDraft("Finish", "35", true))
+        assertEquals("35m is sellable.", StepDraft.sellable(rows))
+        assertNull(StepDraft.sellable(rows.filter { it.staffBusy }))
+        assertEquals(listOf(1, 2, 4), StepDraft.preview(rows).map { it.seq })
+    }
 }
 
 class ShopTest {

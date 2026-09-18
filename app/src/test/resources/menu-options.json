@@ -1,0 +1,63 @@
+{
+  "categories": [
+    {
+      "id": "801134ea-60d5-4338-a6e9-738472dc7d75",
+      "name": "Barber"
+    }
+  ],
+  "services": [
+    {
+      "id": "660dc077-23b3-420d-a161-e4957aefc48b",
+      "name": "Clean shave"
+    },
+    {
+      "id": "b3aabc9b-02ad-4618-9834-a192ea5843bf",
+      "name": "Root tint"
+    },
+    {
+      "id": "58fdad4f-a037-4e2c-86f4-53ac009ad190",
+      "name": "Skin fade"
+    },
+    {
+      "id": "dfacd1db-a704-4541-a962-66b1e4a87660",
+      "name": "ZZ UI service aa36bd"
+    },
+    {
+      "id": "ba06af0c-2c95-41e1-b2fd-60f400ffe010",
+      "name": "ZZ UI service ec6e7c"
+    }
+  ],
+  "resourceTypes": [
+    {
+      "id": "a9d7fd76-f873-43c0-87d1-8515417c28d3",
+      "name": "Chair"
+    }
+  ],
+  "staff": [
+    {
+      "id": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+      "name": "Ade Balogun",
+      "roleTitle": "Barber"
+    },
+    {
+      "id": "95d32e80-01b2-4e83-afc2-90e433f45286",
+      "name": "Dez Mwangi",
+      "roleTitle": "Barber"
+    },
+    {
+      "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+      "name": "Kit Alvarez",
+      "roleTitle": "Owner"
+    },
+    {
+      "id": "017e0b0b-c611-402e-a0e8-9fb03c6ea8cd",
+      "name": "Sam Reilly",
+      "roleTitle": "Barber"
+    },
+    {
+      "id": "6fe813c9-23f0-4801-972a-b154fc1228d7",
+      "name": "Tomas Novak",
+      "roleTitle": "Barber"
+    }
+  ]
+}
