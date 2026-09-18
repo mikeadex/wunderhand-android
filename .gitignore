@@ -1,0 +1,26 @@
+# Build
+.gradle/
+build/
+**/build/
+.kotlin/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Android Studio
+.idea/
+*.iml
+.DS_Store
+
+# Never in git: what signs the app, and what lets a server reach its phones.
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+*.p8
+*.pem

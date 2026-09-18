@@ -1,0 +1,20 @@
+{
+  "staffId": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+  "from": "2026-10-03T08:00:00.000Z",
+  "to": "2026-10-03T09:30:00.000Z",
+  "gapMinutes": 90,
+  "suggested": 2,
+  "waitingCount": 3,
+  "candidates": [
+    {
+      "entryId": "4f2090bb-b686-4e0b-8fbb-894b9e15eeb4",
+      "clientId": "4b946b09-0c40-4f9f-aa3a-4701bfb7cbbc",
+      "clientName": "ZZ Mobile Money Client",
+      "serviceName": "Skin fade",
+      "startsAt": "2026-10-03T08:00:00.000Z",
+      "waitingSince": "2026-09-17T21:15:27.751Z",
+      "leftoverMinutes": 45,
+      "closesExactly": false
+    }
+  ]
+}

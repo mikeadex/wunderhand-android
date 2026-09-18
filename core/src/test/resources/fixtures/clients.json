@@ -1,0 +1,84 @@
+{
+  "clients": [
+    {
+      "id": "3903974d-2562-4d12-9aa5-99f065b2e0f0",
+      "name": "Bo Tremaine",
+      "phone": null,
+      "visitCount": 7,
+      "spendPence": 5600,
+      "noShowCount": 0,
+      "averageIntervalDays": 41,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false
+    },
+    {
+      "id": "1862a134-2c40-47b8-b1ca-f224fc584c4f",
+      "name": "Cass Mbeki",
+      "phone": null,
+      "visitCount": 4,
+      "spendPence": 44800,
+      "noShowCount": 0,
+      "averageIntervalDays": 48,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false
+    },
+    {
+      "id": "8ee80b26-ffad-4e09-bbae-d13d98645b26",
+      "name": "Ellis Warner",
+      "phone": null,
+      "visitCount": 1,
+      "spendPence": 30800,
+      "noShowCount": 0,
+      "averageIntervalDays": 32,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false
+    },
+    {
+      "id": "7c3e6f80-5629-4055-8bec-2ba85defee87",
+      "name": "Femi Adeyinka",
+      "phone": null,
+      "visitCount": 9,
+      "spendPence": 36400,
+      "noShowCount": 0,
+      "averageIntervalDays": 37,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false
+    },
+    {
+      "id": "fde35e49-5f9f-4f8a-b71e-278d9e68c904",
+      "name": "Ines Duarte",
+      "phone": null,
+      "visitCount": 2,
+      "spendPence": 28000,
+      "noShowCount": 0,
+      "averageIntervalDays": 45,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false
+    },
+    {
+      "id": "226650a5-4d4e-44ac-9996-1f42653994a8",
+      "name": "Jonah Pike",
+      "phone": null,
+      "visitCount": 5,
+      "spendPence": 19600,
+      "noShowCount": 0,
+      "averageIntervalDays": 48,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false
+    }
+  ],
+  "counts": {
+    "all": 28,
+    "regulars": 10,
+    "due": 1,
+    "lapsed": 0,
+    "no_shows": 0
+  },
+  "limit": 200
+}

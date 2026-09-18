@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Written by scripts/sync-brand.sh. Change the script, not this file. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="27" android:translateY="27" android:scaleX="0.54" android:scaleY="0.54">
+        <path android:pathData="M8 22a14 14 0 1 0 28 0a14 14 0 1 0 -28 0ZM14.4 22a7.6 7.6 0 1 0 15.2 0a7.6 7.6 0 1 0 -15.2 0Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+        <path android:pathData="M57.8 20a17.2 17.2 0 1 0 34.4 0a17.2 17.2 0 1 0 -34.4 0ZM64.6 20a10.4 10.4 0 1 0 20.8 0a10.4 10.4 0 1 0 -20.8 0Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+        <path android:pathData="M26.08 32.77L45.98 55.63L52.02 50.37L32.11 27.52Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+        <path android:pathData="M63.32 28.36L45.86 50.52L52.14 55.48L69.6 33.32Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+        <path android:pathData="M43.38 49.93L55.23 98.51A1.8 1.8 0 0 0 58.77 97.89L53.23 48.19Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+        <path android:pathData="M44.77 48.19L39.23 97.89A1.8 1.8 0 0 0 42.77 98.51L54.62 49.93Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+        <path android:pathData="M43.8 53a5.2 5.2 0 1 0 10.4 0a5.2 5.2 0 1 0 -10.4 0Z" android:fillColor="#FFF6F5F4" android:fillType="evenOdd" />
+    </group>
+</vector>

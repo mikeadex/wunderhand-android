@@ -1,0 +1,45 @@
+{
+  "isOwner": true,
+  "team": {
+    "count": 24,
+    "withoutLogin": 0
+  },
+  "outlets": {
+    "count": 2,
+    "streetPrivate": 0
+  },
+  "hours": {
+    "days": 5
+  },
+  "rules": {
+    "slotIntervalMinutes": 15,
+    "bufferMinutes": 10,
+    "noticeHours": 2,
+    "horizonWeeks": 12,
+    "paymentHoldMinutes": 12,
+    "waitlistHoldMinutes": 20
+  },
+  "policy": {
+    "standardDepositPence": 1000,
+    "freeCancellationHours": 24,
+    "lateCancellationPercent": 50,
+    "noShowPercent": 50,
+    "payInFullAfterNoShows": 2,
+    "clientFacingWording": null,
+    "wordingVersion": "v11"
+  },
+  "reminders": {
+    "anyOn": false,
+    "on": []
+  },
+  "payments": {
+    "connected": false
+  },
+  "plan": {
+    "seats": 6,
+    "outlets": 2
+  },
+  "site": {
+    "domain": null
+  }
+}

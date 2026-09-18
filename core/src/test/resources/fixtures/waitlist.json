@@ -1,0 +1,20 @@
+{
+  "waiting": [
+    {
+      "id": "11df756c-5489-4e0a-9901-b937fa677914",
+      "clientId": "4b946b09-0c40-4f9f-aa3a-4701bfb7cbbc",
+      "clientName": "ZZ Mobile Money Client",
+      "clientPhone": "+447700900777",
+      "serviceId": "58fdad4f-a037-4e2c-86f4-53ac009ad190",
+      "serviceName": "Skin fade",
+      "staffId": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+      "staffName": "Kit Alvarez",
+      "earliest": null,
+      "latest": "2030-01-15T00:00:00.000Z",
+      "flexibilityLabel": "Thu, Fri, evenings",
+      "status": "waiting",
+      "waitingSince": "2026-09-17T21:15:23.843Z",
+      "hasLiveOffer": false
+    }
+  ]
+}

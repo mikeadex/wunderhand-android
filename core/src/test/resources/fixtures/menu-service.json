@@ -1,0 +1,89 @@
+{
+  "service": {
+    "id": "58fdad4f-a037-4e2c-86f4-53ac009ad190",
+    "name": "Skin fade",
+    "description": null,
+    "categoryName": "Barber",
+    "pricingMode": "fixed",
+    "pricePence": 2800,
+    "hourlyRatePence": null,
+    "minutes": 45,
+    "durationMode": "fixed",
+    "minMinutes": null,
+    "maxMinutes": null,
+    "categoryId": "801134ea-60d5-4338-a6e9-738472dc7d75",
+    "prerequisiteServiceId": null,
+    "requiresResourceTypeId": "a9d7fd76-f873-43c0-87d1-8515417c28d3",
+    "isArchived": false,
+    "depositPence": 500,
+    "depositPercent": null,
+    "bookableOnline": true,
+    "locationMode": "at_venue",
+    "prerequisiteName": null,
+    "prerequisiteLeadHours": null,
+    "minAgeYears": null,
+    "requiresConsent": false,
+    "resourceTypeName": "Chair"
+  },
+  "segments": [
+    {
+      "seq": 1,
+      "minutes": 45,
+      "staffBusy": true,
+      "label": "Cut"
+    }
+  ],
+  "performers": [
+    {
+      "id": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+      "name": "Ade Balogun",
+      "pricePence": 2800,
+      "overridePence": null
+    },
+    {
+      "id": "95d32e80-01b2-4e83-afc2-90e433f45286",
+      "name": "Dez Mwangi",
+      "pricePence": 2800,
+      "overridePence": null
+    },
+    {
+      "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+      "name": "Kit Alvarez",
+      "pricePence": 2800,
+      "overridePence": null
+    },
+    {
+      "id": "017e0b0b-c611-402e-a0e8-9fb03c6ea8cd",
+      "name": "Sam Reilly",
+      "pricePence": 2800,
+      "overridePence": null
+    },
+    {
+      "id": "6fe813c9-23f0-4801-972a-b154fc1228d7",
+      "name": "Tomas Novak",
+      "pricePence": 2800,
+      "overridePence": null
+    }
+  ],
+  "addons": [
+    {
+      "id": "72aa2642-b6f3-4f67-ba0f-a3e45a9cca9f",
+      "name": "Beard trim",
+      "pricePence": 1000,
+      "minutes": 15
+    },
+    {
+      "id": "f041dcf0-9485-436e-acbc-782230c841d6",
+      "name": "Hot towel finish",
+      "pricePence": 500,
+      "minutes": 5
+    },
+    {
+      "id": "f49b0929-3398-40b5-a980-0429a00f00dc",
+      "name": "Aftercare pomade",
+      "pricePence": 1200,
+      "minutes": 0
+    }
+  ],
+  "timesBooked": 1657
+}

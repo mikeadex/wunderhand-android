@@ -1,0 +1,35 @@
+{
+  "user": {
+    "id": "xqIJQGw1ysIn0K7Lygsk14xEEZrqAAt0",
+    "email": "kit@fold.example"
+  },
+  "staff": {
+    "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+    "name": "Kit Alvarez",
+    "isOwner": true
+  },
+  "shop": {
+    "id": "8d907be5-635f-4f90-88af-06320565a918",
+    "name": "Fold Barbers",
+    "slug": "fold-barbers",
+    "timezone": "Europe/London",
+    "currency": "GBP",
+    "status": "active",
+    "capabilities": {
+      "signIn": true,
+      "publicBooking": true,
+      "proBooking": true,
+      "takePayments": true,
+      "messaging": true,
+      "addSeats": true
+    }
+  },
+  "shops": [
+    {
+      "id": "8d907be5-635f-4f90-88af-06320565a918",
+      "name": "Fold Barbers",
+      "slug": "fold-barbers",
+      "staffId": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3"
+    }
+  ]
+}

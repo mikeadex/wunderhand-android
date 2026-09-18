@@ -1,0 +1,71 @@
+{
+  "appointment": {
+    "kind": "appointment",
+    "id": "7cf8c035-d42a-45fe-8347-e4423376e54c",
+    "bookingId": "ac34614b-7979-47ec-9059-4ee3721d580c",
+    "startsAt": "2026-08-22T08:00:00.000Z",
+    "endsAt": "2026-08-22T08:45:00.000Z",
+    "minutes": 45,
+    "status": "completed",
+    "clientName": "Marguerite Okafor",
+    "clientVisitCount": 0,
+    "serviceName": "Skin fade",
+    "pricePence": 2800,
+    "replyCount": 0,
+    "repeats": false,
+    "depositMissing": false,
+    "depositPaidPence": null,
+    "atClient": false,
+    "clientPostcode": null,
+    "clientId": "d5dff624-c74a-4da4-8d3b-3a0f38a22783",
+    "serviceId": "58fdad4f-a037-4e2c-86f4-53ac009ad190",
+    "staffId": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+    "staffName": "Ade Balogun",
+    "completedAt": null,
+    "clientAddress": null,
+    "travelMinutes": null,
+    "needsConsent": false,
+    "project": null,
+    "standingFormula": null,
+    "clientNotes": null,
+    "averageIntervalDays": null,
+    "depositState": "not_required",
+    "depositPence": null,
+    "currency": "GBP",
+    "totalPence": 2800,
+    "listPricePence": 2800,
+    "promotionPence": 0,
+    "promotionName": null,
+    "lineItems": [
+      {
+        "name": "Skin fade",
+        "pricePence": 2800
+      }
+    ]
+  },
+  "seesMoney": true,
+  "bill": {
+    "chargePence": 2800,
+    "discountPence": 0,
+    "depositPaid": false,
+    "toTakePence": 2800
+  },
+  "replies": [],
+  "series": null,
+  "consentWording": null,
+  "repeat": {
+    "intervals": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12
+    ],
+    "suggestedWeeks": 4,
+    "keepAhead": 3
+  }
+}

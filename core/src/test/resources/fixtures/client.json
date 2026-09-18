@@ -1,0 +1,24 @@
+{
+  "client": {
+    "id": "2bf27fb9-7045-4fd1-a77b-e9e1913ae050",
+    "name": "ZZ Mobile Clients Renamed",
+    "phone": "+447700900999",
+    "visitCount": 0,
+    "spendPence": 0,
+    "noShowCount": 0,
+    "averageIntervalDays": null,
+    "lastVisitAt": null,
+    "nextAppointmentAt": null,
+    "overdue": false,
+    "email": null,
+    "dateOfBirth": null,
+    "notes": null,
+    "standingFormula": "6/0 + 20vol, 35 min"
+  },
+  "due": false,
+  "regular": false,
+  "paysInFull": false,
+  "hasHealthRecord": false,
+  "history": [],
+  "projects": []
+}

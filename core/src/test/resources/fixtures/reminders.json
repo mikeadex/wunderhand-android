@@ -1,0 +1,24 @@
+{
+  "slots": [
+    {
+      "position": 0,
+      "minutesBefore": 10080,
+      "enabled": false
+    },
+    {
+      "position": 0,
+      "minutesBefore": 1440,
+      "enabled": false
+    },
+    {
+      "position": 0,
+      "minutesBefore": 120,
+      "enabled": false
+    }
+  ],
+  "anyOn": false,
+  "recent": {
+    "sent": 0,
+    "failed": 0
+  }
+}

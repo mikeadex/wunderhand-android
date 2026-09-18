@@ -1,0 +1,27 @@
+{
+  "outlet": {
+    "id": "1c1a6781-68be-429c-bcd8-6c51c3ff61ba",
+    "name": "ZZ Mobile Outlet",
+    "addressLine1": "1 Test Street",
+    "city": "London",
+    "postcode": "E8 1AA",
+    "timezone": "Europe/London",
+    "servesRadiusMiles": 15,
+    "defaultTravelMinutes": 40,
+    "addressPrivate": true
+  },
+  "travelBands": [
+    {
+      "upToMiles": 3,
+      "feePence": 0
+    },
+    {
+      "upToMiles": 8,
+      "feePence": 500
+    },
+    {
+      "upToMiles": 15,
+      "feePence": 1000
+    }
+  ]
+}

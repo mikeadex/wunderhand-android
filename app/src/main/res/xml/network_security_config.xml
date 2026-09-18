@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The store build: HTTPS only, everywhere. The debug build has its own copy
+     of this file (src/debug) that lets it reach a dev server on this Mac. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

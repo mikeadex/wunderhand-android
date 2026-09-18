@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only what the window needs before Compose draws: the ground colour, so
+     the app does not flash white on the way in, and dark icons in the bars.
+     Everything else is WunderhandTheme, in :design. -->
+<resources>
+    <color name="wh_bg">#F6F5F4</color>
+
+    <style name="Theme.Wunderhand" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/wh_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
