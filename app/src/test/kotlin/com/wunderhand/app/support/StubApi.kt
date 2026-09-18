@@ -90,4 +90,13 @@ open class StubApi : WunderhandApi {
     override suspend fun agreeToClose(password: String): com.wunderhand.core.ShopCloseResult = unexpected("agreeToClose")
     override suspend fun refuseToClose() { unexpected("refuseToClose") }
     override suspend fun withdrawClose() { unexpected("withdrawClose") }
+    override suspend fun waitlist(): com.wunderhand.core.WaitlistResponse = unexpected("waitlist")
+    override suspend fun waitlistOptions(): com.wunderhand.core.WaitlistOptions = unexpected("waitlistOptions")
+    override suspend fun joinWaitlist(request: com.wunderhand.core.WaitlistJoinRequest): com.wunderhand.core.WaitlistJoined = unexpected("joinWaitlist")
+    override suspend fun leaveWaitlist(id: String) { unexpected("leaveWaitlist") }
+    override suspend fun gap(staffId: String, from: java.time.Instant, to: java.time.Instant): com.wunderhand.core.GapResponse = unexpected("gap")
+    override suspend fun offerGap(staffId: String, from: java.time.Instant, to: java.time.Instant, entryIds: List<String>): com.wunderhand.core.OfferSent = unexpected("offerGap")
+    override suspend fun checkout(bookingId: String): com.wunderhand.core.CheckoutResponse = unexpected("checkout")
+    override suspend fun settle(bookingId: String, request: com.wunderhand.core.TillRequest): com.wunderhand.core.SettledResponse = unexpected("settle")
+    override suspend fun money(): com.wunderhand.core.MoneyResponse = unexpected("money")
 }

@@ -242,6 +242,23 @@ class ApiClient(
     override suspend fun refuseToClose() { post<Map<String, String>, Ack>("api/v1/shop/close/refuse", emptyMap()) }
     override suspend fun withdrawClose() { delete<Ack>("api/v1/shop/close") }
 
+    // The waiting list and gaps
+
+    override suspend fun waitlist(): WaitlistResponse = get("api/v1/waitlist")
+    override suspend fun waitlistOptions(): WaitlistOptions = get("api/v1/waitlist/options")
+    override suspend fun joinWaitlist(request: WaitlistJoinRequest): WaitlistJoined = post("api/v1/waitlist", request)
+    override suspend fun leaveWaitlist(id: String) { delete<Ack>("api/v1/waitlist/$id") }
+    override suspend fun gap(staffId: String, from: Instant, to: Instant): GapResponse =
+        get("api/v1/gaps", mapOf("staff" to staffId, "from" to instant(from), "to" to instant(to)))
+    override suspend fun offerGap(staffId: String, from: Instant, to: Instant, entryIds: List<String>): OfferSent =
+        post("api/v1/gaps/offer", OfferRequest(staffId, instant(from), instant(to), entryIds))
+
+    // The till and money
+
+    override suspend fun checkout(bookingId: String): CheckoutResponse = get("api/v1/checkout/$bookingId")
+    override suspend fun settle(bookingId: String, request: TillRequest): SettledResponse = post("api/v1/checkout/$bookingId", request)
+    override suspend fun money(): MoneyResponse = get("api/v1/money")
+
     // endregion
     // region Plumbing
 

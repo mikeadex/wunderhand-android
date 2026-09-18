@@ -542,3 +542,65 @@ class ShopAndLeavingCallsTest {
         assertEquals("password", (error as ApiError.Validation).field)
     }
 }
+
+class WaitlistAndMoneyCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+    private fun reply(code: Int, body: String) = server.enqueue(MockResponse.Builder().code(code).body(body).build())
+    private val from = java.time.Instant.parse("2026-09-18T13:00:00Z")
+    private val to = java.time.Instant.parse("2026-09-18T14:30:00Z")
+
+    @Test fun `a gap is asked for by whose it is and when, to the millisecond`() = runTest {
+        reply(200, """{"staffId":"s1","from":"2026-09-18T13:00:00.000Z","to":"2026-09-18T14:30:00.000Z","gapMinutes":90,"suggested":2,"waitingCount":4,"candidates":[]}""")
+        assertEquals(90, client().gap("s1", from, to).gapMinutes)
+        server.takeRequest().url.let {
+            assertEquals("/api/v1/gaps", it.encodedPath)
+            assertEquals("s1", it.queryParameter("staff"))
+            assertEquals("2026-09-18T13:00:00.000Z", it.queryParameter("from"))
+            assertEquals("2026-09-18T14:30:00.000Z", it.queryParameter("to"))
+        }
+    }
+
+    @Test fun `an offer names the window and who it goes to`() = runTest {
+        reply(200, """{"broadcastId":"b1","emailWorking":true,"sent":[{"name":"Wren Halloway","phone":"07700900123","email":null,"url":"https://wunderhand.com/offer/abc"}]}""")
+        val sent = client().offerGap("s1", from, to, listOf("e1", "e2"))
+        assertEquals(1, sent.toText.size)
+        server.takeRequest().let {
+            assertEquals("/api/v1/gaps/offer", it.url.encodedPath)
+            assertEquals("""{"staffId":"s1","from":"2026-09-18T13:00:00.000Z","to":"2026-09-18T14:30:00.000Z","entryIds":["e1","e2"]}""", it.body!!.utf8())
+        }
+    }
+
+    @Test fun `joining says only what was chosen, and leaving is a delete`() = runTest {
+        reply(200, """{"id":"w1"}"""); reply(200, "{}")
+        val client = client()
+        client.joinWaitlist(com.wunderhand.core.WaitlistJoinRequest("c1", "sv1", days = listOf(4, 5), parts = listOf("e")))
+        assertEquals("""{"clientId":"c1","serviceId":"sv1","days":[4,5],"parts":["e"]}""", server.takeRequest().body!!.utf8())
+        client.leaveWaitlist("w1")
+        server.takeRequest().let { assertEquals("DELETE", it.method); assertEquals("/api/v1/waitlist/w1", it.url.encodedPath) }
+    }
+
+    @Test fun `the till is rung through once, and a second press is its own refusal`() = runTest {
+        reply(200, """{"settledAt":"2026-09-18T14:00:00.000Z","receipt":{"subtotalPence":2800,"takenPence":3100,"tipPence":300,"method":"card"}}""")
+        reply(409, """{"error":{"code":"already_settled","message":"This has already been checked out."}}""")
+        val client = client()
+        assertEquals(3100, client.settle("b1", com.wunderhand.core.TillRequest(tipPence = 300, method = "card")).receipt.takenPence.value)
+        server.takeRequest().let {
+            assertEquals("/api/v1/checkout/b1", it.url.encodedPath)
+            assertEquals("""{"extraPence":0,"tipPence":300,"method":"card"}""", it.body!!.utf8())
+        }
+        val error = try { client.settle("b1", com.wunderhand.core.TillRequest()); null } catch (e: ApiError) { e }
+        assertTrue(error is ApiError.AlreadySettled)
+        // Money is never asked for twice on the app's own initiative.
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test fun `money is one question, and chairtime decides whose`() = runTest {
+        reply(200, """{"scope":"mine","shopName":"Fold Barbers","currency":"GBP"}""")
+        assertTrue(!client().money().isShop)
+        assertEquals("/api/v1/money", server.takeRequest().url.encodedPath)
+    }
+}

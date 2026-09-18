@@ -129,5 +129,24 @@ interface LeavingApi {
     suspend fun withdrawClose()
 }
 
+/** The waiting list, and filling a gap from it. */
+interface WaitlistApi {
+    suspend fun waitlist(): com.wunderhand.core.WaitlistResponse
+    suspend fun waitlistOptions(): com.wunderhand.core.WaitlistOptions
+    suspend fun joinWaitlist(request: com.wunderhand.core.WaitlistJoinRequest): com.wunderhand.core.WaitlistJoined
+    suspend fun leaveWaitlist(id: String)
+    /** Who could take a window in somebody's diary. */
+    suspend fun gap(staffId: String, from: java.time.Instant, to: java.time.Instant): com.wunderhand.core.GapResponse
+    suspend fun offerGap(staffId: String, from: java.time.Instant, to: java.time.Instant, entryIds: List<String>): com.wunderhand.core.OfferSent
+}
+
+/** The till, and what the month took. Nothing here moves money: it is the note of money that moved. */
+interface MoneyApi {
+    suspend fun checkout(bookingId: String): com.wunderhand.core.CheckoutResponse
+    suspend fun settle(bookingId: String, request: com.wunderhand.core.TillRequest): com.wunderhand.core.SettledResponse
+    /** The shop's for an owner; their own for anybody else — chairtime decides which, and sends only that. */
+    suspend fun money(): com.wunderhand.core.MoneyResponse
+}
+
 /** Everything the app asks of chairtime. `ApiClient` is the real one. */
-interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi, MenuApi, ShopApi, LeavingApi
+interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi, MenuApi, ShopApi, LeavingApi, WaitlistApi, MoneyApi
