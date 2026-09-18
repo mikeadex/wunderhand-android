@@ -469,3 +469,76 @@ class ClientCallsTest {
         assertEquals("eraze", server.takeRequest().url.queryParameter("confirm"))
     }
 }
+
+class ShopAndLeavingCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+    private fun reply(code: Int, body: String) = server.enqueue(MockResponse.Builder().code(code).body(body).build())
+    private val person = """{"person":{"id":"p1","name":"Ade Balogun","employment":"employed","accountStatus":"none","isBookable":true,"hasLogin":false,"isOwner":false},"outletIds":[],"outlets":[],"viewerIsOwner":true,"isYou":false}"""
+
+    @Test fun `somebody else's hours are asked for by who and where`() = runTest {
+        reply(200, """{"staff":[],"outlets":[],"days":[]}"""); reply(200, """{"staff":[],"outlets":[],"days":[]}""")
+        val client = client()
+        client.hours()
+        assertNull(server.takeRequest().url.query)
+        client.hours("s1", "o1")
+        server.takeRequest().url.let { assertEquals("s1", it.queryParameter("staff")); assertEquals("o1", it.queryParameter("outlet")) }
+    }
+
+    @Test fun `an owner-only read comes back as not owner, in chairtime's words`() = runTest {
+        reply(403, """{"error":{"code":"not_owner","message":"Only an owner can change the menu."}}""")
+        val error = try { client().menuOptions(); null } catch (e: ApiError) { e }
+        assertTrue(error is ApiError.NotOwner)
+        assertEquals("Only an owner can change the menu.", error?.message)
+    }
+
+    @Test fun `an invitation goes to an address, or to nobody for somebody coming back`() = runTest {
+        reply(200, person.dropLast(1) + ""","outcome":"invited","message":"Invitation sent."}"""); reply(200, person.dropLast(1) + ""","outcome":"restored","message":"They are back."}""")
+        val client = client()
+        assertEquals("Invitation sent.", client.invite("p1", "ade@example.com").message)
+        server.takeRequest().let { assertEquals("/api/v1/shop/team/p1/invite", it.url.encodedPath); assertEquals("""{"email":"ade@example.com"}""", it.body!!.utf8()) }
+        client.invite("p1", null)
+        assertEquals("{}", server.takeRequest().body!!.utf8())
+    }
+
+    @Test fun `who sees the money is its own act, at its own address`() = runTest {
+        reply(200, person)
+        client().setOwner("p1", true)
+        server.takeRequest().let { assertEquals("PUT", it.method); assertEquals("/api/v1/shop/team/p1/owner", it.url.encodedPath); assertEquals("""{"owner":true}""", it.body!!.utf8()) }
+    }
+
+    @Test fun `steps are saved as the whole list, in order`() = runTest {
+        reply(200, """{"service":{"id":"s1","name":"Tint","minutes":55},"segments":[]}""")
+        client().saveSteps("s1", com.wunderhand.core.StepsWrite(listOf(com.wunderhand.core.StepsWrite.Step("Apply", 20, true), com.wunderhand.core.StepsWrite.Step("Develop", 35, false))))
+        server.takeRequest().let {
+            assertEquals("/api/v1/menu/s1/steps", it.url.encodedPath)
+            assertEquals("""{"steps":[{"label":"Apply","minutes":20,"staffBusy":true},{"label":"Develop","minutes":35,"staffBusy":false}]}""", it.body!!.utf8())
+        }
+    }
+
+    @Test fun `deleting a login sends the password typed again, once`() = runTest {
+        reply(200, """{"deleted":true,"shopsLeft":2}""")
+        assertEquals(2, client().deleteLogin("hunter2").shopsLeft)
+        server.takeRequest().let { assertEquals("/api/v1/me/delete", it.url.encodedPath); assertEquals("""{"password":"hunter2"}""", it.body!!.utf8()) }
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun `closing a shop asks, agrees, refuses and withdraws at their own addresses`() = runTest {
+        reply(200, """{"closed":true,"deleteAfter":"2026-10-18T09:00:00.000Z","upcoming":2}"""); reply(200, """{"closed":true}"""); reply(200, "{}"); reply(200, "{}")
+        val client = client()
+        assertTrue(client.closeShop("pw", "fold-barbers").closed)
+        server.takeRequest().let { assertEquals("POST", it.method); assertEquals("/api/v1/shop/close", it.url.encodedPath); assertEquals("""{"password":"pw","confirm":"fold-barbers"}""", it.body!!.utf8()) }
+        client.agreeToClose("pw"); assertEquals("/api/v1/shop/close/agree", server.takeRequest().url.encodedPath)
+        client.refuseToClose(); assertEquals("/api/v1/shop/close/refuse", server.takeRequest().url.encodedPath)
+        client.withdrawClose(); server.takeRequest().let { assertEquals("DELETE", it.method); assertEquals("/api/v1/shop/close", it.url.encodedPath) }
+    }
+
+    @Test fun `a wrong password is said, and nothing was closed`() = runTest {
+        reply(422, """{"error":{"code":"validation","message":"That password is not right. Nothing was closed.","field":"password"}}""")
+        val error = try { client().closeShop("wrong", "fold-barbers"); null } catch (e: ApiError) { e }
+        assertEquals("password", (error as ApiError.Validation).field)
+    }
+}

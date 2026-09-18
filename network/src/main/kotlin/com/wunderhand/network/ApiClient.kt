@@ -1,28 +1,6 @@
 package com.wunderhand.network
 
-import com.wunderhand.core.AppointmentResponse
-import com.wunderhand.core.BlockCreated
-import com.wunderhand.core.BookingCreated
-import com.wunderhand.core.BookingRequest
-import com.wunderhand.core.BookingServiceResponse
-import com.wunderhand.core.BookingServicesResponse
-import com.wunderhand.core.BookingSlotsResponse
-import com.wunderhand.core.BlockRequest
-import com.wunderhand.core.ClientFilter
-import com.wunderhand.core.ClientInput
-import com.wunderhand.core.ClientProfileResponse
-import com.wunderhand.core.ClientSaved
-import com.wunderhand.core.ClientsResponse
-import com.wunderhand.core.CloseOutcome
-import com.wunderhand.core.HealthResponse
-import com.wunderhand.core.HealthSaved
-import com.wunderhand.core.CloseResponse
-import com.wunderhand.core.RepeatStarted
-import com.wunderhand.core.RepeatStopped
-import com.wunderhand.core.SlotsResponse
-import com.wunderhand.core.ChairtimeJson
-import com.wunderhand.core.DiaryResponse
-import com.wunderhand.core.Me
+import com.wunderhand.core.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -214,6 +192,55 @@ class ApiClient(
     override suspend fun eraseHealth(clientId: String, confirmation: String) {
         delete<Ack>("api/v1/clients/$clientId/health", mapOf("confirm" to confirmation))
     }
+
+    // The menu
+
+    override suspend fun menu(): MenuResponse = get("api/v1/menu")
+    override suspend fun menuService(id: String): MenuServiceResponse = get("api/v1/menu/$id")
+    override suspend fun menuOptions(): MenuOptions = get("api/v1/menu/options")
+    override suspend fun createService(write: ServiceWrite): MenuServiceResponse = post("api/v1/menu", write)
+    override suspend fun updateService(id: String, write: ServiceWrite): MenuServiceResponse = put("api/v1/menu/$id", write)
+    override suspend fun archiveService(id: String) { delete<SavedId>("api/v1/menu/$id") }
+    override suspend fun saveSteps(serviceId: String, write: StepsWrite): MenuServiceResponse = put("api/v1/menu/$serviceId/steps", write)
+    override suspend fun savePerformers(serviceId: String, write: PerformersWrite): MenuServiceResponse = put("api/v1/menu/$serviceId/performers", write)
+    override suspend fun extras(serviceId: String): ExtrasResponse = get("api/v1/menu/$serviceId/extras")
+    override suspend fun saveExtraLinks(serviceId: String, write: ExtraLinksWrite): ExtrasResponse = put("api/v1/menu/$serviceId/extras", write)
+    override suspend fun createExtra(write: ExtraWrite): SavedId = post("api/v1/menu/extras", write)
+    override suspend fun updateExtra(id: String, write: ExtraWrite): SavedId = put("api/v1/menu/extras/$id", write)
+    override suspend fun retireExtra(id: String) { delete<SavedId>("api/v1/menu/extras/$id") }
+
+    // The shop
+
+    override suspend fun shop(): ShopResponse = get("api/v1/shop")
+    override suspend fun hours(staffId: String?, outletId: String?): HoursResponse =
+        get("api/v1/shop/hours", buildMap { staffId?.let { put("staff", it) }; outletId?.let { put("outlet", it) } })
+    override suspend fun saveHours(write: HoursWrite): HoursResponse = put("api/v1/shop/hours", write)
+    override suspend fun rules(): BookingRules = get("api/v1/shop/rules")
+    override suspend fun saveRules(rules: BookingRules): BookingRules = put("api/v1/shop/rules", rules)
+    override suspend fun policy(): PolicyResponse = get("api/v1/shop/policy")
+    override suspend fun savePolicy(write: PolicyWrite): PolicyResponse = put("api/v1/shop/policy", write)
+    override suspend fun reminders(): RemindersResponse = get("api/v1/shop/reminders")
+    override suspend fun saveReminders(write: RemindersWrite): RemindersResponse = put("api/v1/shop/reminders", write)
+    override suspend fun team(): TeamResponse = get("api/v1/shop/team")
+    override suspend fun teamPerson(id: String): TeamPersonResponse = get("api/v1/shop/team/$id")
+    override suspend fun addTeamPerson(write: TeamPersonWrite): TeamPersonResponse = post("api/v1/shop/team", write)
+    override suspend fun updateTeamPerson(id: String, write: TeamPersonWrite): TeamPersonResponse = put("api/v1/shop/team/$id", write)
+    override suspend fun removeTeamPerson(id: String): TeamPersonResponse = delete("api/v1/shop/team/$id")
+    override suspend fun invite(staffId: String, email: String?): InviteResponse = post("api/v1/shop/team/$staffId/invite", InviteWrite(email))
+    override suspend fun setOwner(staffId: String, owner: Boolean): TeamPersonResponse = put("api/v1/shop/team/$staffId/owner", OwnerWrite(owner))
+    override suspend fun outlets(): OutletsResponse = get("api/v1/shop/outlets")
+    override suspend fun outlet(id: String): OutletResponse = get("api/v1/shop/outlets/$id")
+    override suspend fun addOutlet(write: OutletWrite): OutletResponse = post("api/v1/shop/outlets", write)
+    override suspend fun updateOutlet(id: String, write: OutletWrite): OutletResponse = put("api/v1/shop/outlets/$id", write)
+
+    // Leaving
+
+    override suspend fun deleteLogin(password: String): LoginDeleted = post("api/v1/me/delete", PasswordWrite(password))
+    override suspend fun shopClosing(): ShopClosing = get("api/v1/shop/close")
+    override suspend fun closeShop(password: String, confirm: String): ShopCloseResult = post("api/v1/shop/close", CloseShopWrite(password, confirm))
+    override suspend fun agreeToClose(password: String): ShopCloseResult = post("api/v1/shop/close/agree", PasswordWrite(password))
+    override suspend fun refuseToClose() { post<Map<String, String>, Ack>("api/v1/shop/close/refuse", emptyMap()) }
+    override suspend fun withdrawClose() { delete<Ack>("api/v1/shop/close") }
 
     // endregion
     // region Plumbing

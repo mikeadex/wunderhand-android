@@ -76,5 +76,58 @@ interface ClientsApi {
     suspend fun eraseHealth(clientId: String, confirmation: String)
 }
 
+/** The menu: reading it is anybody's, changing it is an owner's. */
+interface MenuApi {
+    suspend fun menu(): com.wunderhand.core.MenuResponse
+    suspend fun menuService(id: String): com.wunderhand.core.MenuServiceResponse
+    /** What the service form chooses between. An owner's: anybody else is answered `not_owner`, so they are not asked for. */
+    suspend fun menuOptions(): com.wunderhand.core.MenuOptions
+    suspend fun createService(write: com.wunderhand.core.ServiceWrite): com.wunderhand.core.MenuServiceResponse
+    suspend fun updateService(id: String, write: com.wunderhand.core.ServiceWrite): com.wunderhand.core.MenuServiceResponse
+    suspend fun archiveService(id: String)
+    suspend fun saveSteps(serviceId: String, write: com.wunderhand.core.StepsWrite): com.wunderhand.core.MenuServiceResponse
+    suspend fun savePerformers(serviceId: String, write: com.wunderhand.core.PerformersWrite): com.wunderhand.core.MenuServiceResponse
+    suspend fun extras(serviceId: String): com.wunderhand.core.ExtrasResponse
+    suspend fun saveExtraLinks(serviceId: String, write: com.wunderhand.core.ExtraLinksWrite): com.wunderhand.core.ExtrasResponse
+    suspend fun createExtra(write: com.wunderhand.core.ExtraWrite): com.wunderhand.core.SavedId
+    suspend fun updateExtra(id: String, write: com.wunderhand.core.ExtraWrite): com.wunderhand.core.SavedId
+    suspend fun retireExtra(id: String)
+}
+
+/** The shop's settings, its team and its outlets. */
+interface ShopApi {
+    suspend fun shop(): com.wunderhand.core.ShopResponse
+    suspend fun hours(staffId: String? = null, outletId: String? = null): com.wunderhand.core.HoursResponse
+    suspend fun saveHours(write: com.wunderhand.core.HoursWrite): com.wunderhand.core.HoursResponse
+    suspend fun rules(): com.wunderhand.core.BookingRules
+    suspend fun saveRules(rules: com.wunderhand.core.BookingRules): com.wunderhand.core.BookingRules
+    suspend fun policy(): com.wunderhand.core.PolicyResponse
+    suspend fun savePolicy(write: com.wunderhand.core.PolicyWrite): com.wunderhand.core.PolicyResponse
+    suspend fun reminders(): com.wunderhand.core.RemindersResponse
+    suspend fun saveReminders(write: com.wunderhand.core.RemindersWrite): com.wunderhand.core.RemindersResponse
+    suspend fun team(): com.wunderhand.core.TeamResponse
+    suspend fun teamPerson(id: String): com.wunderhand.core.TeamPersonResponse
+    suspend fun addTeamPerson(write: com.wunderhand.core.TeamPersonWrite): com.wunderhand.core.TeamPersonResponse
+    suspend fun updateTeamPerson(id: String, write: com.wunderhand.core.TeamPersonWrite): com.wunderhand.core.TeamPersonResponse
+    suspend fun removeTeamPerson(id: String): com.wunderhand.core.TeamPersonResponse
+    /** @param email null for somebody coming back, whose login still exists. */
+    suspend fun invite(staffId: String, email: String?): com.wunderhand.core.InviteResponse
+    suspend fun setOwner(staffId: String, owner: Boolean): com.wunderhand.core.TeamPersonResponse
+    suspend fun outlets(): com.wunderhand.core.OutletsResponse
+    suspend fun outlet(id: String): com.wunderhand.core.OutletResponse
+    suspend fun addOutlet(write: com.wunderhand.core.OutletWrite): com.wunderhand.core.OutletResponse
+    suspend fun updateOutlet(id: String, write: com.wunderhand.core.OutletWrite): com.wunderhand.core.OutletResponse
+}
+
+/** The two ways out. The password is typed again for each, sent once, and kept nowhere. */
+interface LeavingApi {
+    suspend fun deleteLogin(password: String): com.wunderhand.core.LoginDeleted
+    suspend fun shopClosing(): com.wunderhand.core.ShopClosing
+    suspend fun closeShop(password: String, confirm: String): com.wunderhand.core.ShopCloseResult
+    suspend fun agreeToClose(password: String): com.wunderhand.core.ShopCloseResult
+    suspend fun refuseToClose()
+    suspend fun withdrawClose()
+}
+
 /** Everything the app asks of chairtime. `ApiClient` is the real one. */
-interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi
+interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi, MenuApi, ShopApi, LeavingApi
