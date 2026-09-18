@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -129,6 +130,8 @@ fun WHField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    /** False for a box that grows: notes, a formula. */
+    singleLine: Boolean = true,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -148,7 +151,9 @@ fun WHField(
             onValueChange = onValueChange,
             modifier = inputModifier.fillMaxWidth().heightIn(min = 24.dp).semantics { contentDescription = label },
             textStyle = WHType.FieldValue.copy(color = WHColors.Ink),
-            singleLine = true,
+            singleLine = singleLine,
+            minLines = if (singleLine) 1 else 2,
+            maxLines = if (singleLine) 1 else 8,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
@@ -229,6 +234,36 @@ fun EmptyNote(title: String, says: String, modifier: Modifier = Modifier) {
     Column(modifier.widthIn(max = 520.dp).semantics(mergeDescendants = true) { }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, style = WHType.EmptyTitle, color = WHColors.Ink)
         Text(says, style = WHType.Body, color = WHColors.Neutral700)
+    }
+}
+
+// endregion
+
+// region Panels
+
+/** A titled card of rows, as the web's profile panels are. */
+@Composable
+fun Panel(title: String, modifier: Modifier = Modifier, action: String? = null, actionTag: String = "", onAction: () -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Column(modifier.fillMaxWidth().shadow(1.dp, shape, ambientColor = WHColors.Shadow, spotColor = WHColors.Shadow).clip(shape).background(WHColors.Surface)) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(title.uppercase(), Modifier.weight(1f).semantics { contentDescription = title; heading() }, style = WHType.Eyebrow, color = WHColors.Eyebrow)
+            if (action != null) {
+                Box(Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onAction).padding(horizontal = 8.dp).testTag(actionTag), contentAlignment = Alignment.Center) {
+                    Text(action, style = WHType.GutterTime, color = WHColors.Neutral700)
+                }
+            }
+        }
+        content()
+    }
+}
+
+/** A row in a panel: padded, full width, with a rule between it and what is above. */
+@Composable
+fun PanelRow(modifier: Modifier = Modifier, vertical: androidx.compose.ui.unit.Dp = 12.dp, content: @Composable () -> Unit) {
+    Column(modifier.fillMaxWidth()) {
+        RowDivider()
+        Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = vertical)) { content() }
     }
 }
 

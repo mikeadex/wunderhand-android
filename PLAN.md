@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 to A3 built** · 18 September 2026 · see [Progress](#progress) at the end
+Status: **A0 to A4 built** · 18 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -292,9 +292,9 @@ under-18 client is refused a tattoo sitting.
 - Search, filter chips (All, Regulars, Due, Lapsed, No-shows), profile with the stats sentence and
   history, Edit, Rebook, the client form.
 - **Health record:** `FLAG_SECURE`, never cached, behind `BiometricPrompt`.
-- A new client from the phone's contacts through the system **contact picker**
-  (`ActivityResultContracts.PickContact`) — one contact, handed over by the user, so **no
-  `READ_CONTACTS` permission** and nothing to declare.
+- A new client from the phone's contacts through the system's own picker — one line, handed over by
+  the user, so **no `READ_CONTACTS` permission** and nothing to declare. (Built as "pick a number",
+  not "pick a contact": see Progress.)
 - Medium and expanded: list–detail.
 
 **Done when:** create, edit, delete and health changes match the web, and each health read is in
@@ -510,6 +510,24 @@ the way through and cancels it from its sheet, folded and unfolded.
 | Who it is for | As on the web and the iPhone, a booking started from the diary is a walk-in; one started from somebody's appointment is theirs. Choosing a client arrives with clients, in A4, from their profile's Rebook. |
 | Checked by hand | Booked Saturday 09:00 with Tomas as a walk-in: the flow closed, the diary moved to Saturday, the appointment opened — then cancelled it from its sheet: chip, sentence and footer all said so, and a walk-in rightly had no "Book them again". That was A2's cancel for real, too. |
 | Found by the emulator test | The sheet's notice was a live region with no words of its own — its sentence sat in a child — so TalkBack would have announced nothing when "Cancelled." appeared. The sentence is merged into it now. |
+
+### A4: Clients (built 18 September 2026)
+The list with its search and filters, a profile, the form, medical notes behind the phone's own
+lock, and a new client from the phone's contacts. 205 JVM tests; the emulator test now searches for
+nobody, opens a profile and its medical notes, and adds a client and removes them again, folded and
+unfolded.
+
+| | |
+|---|---|
+| `:core` | `ClientRow`, `ClientProfileResponse`, `ClientInput`, `HealthResponse`, decoded from the `clients`, `client` and `health` fixtures; `NotesLock` (two minutes, and a clock moved back is not a way in); `ContactFill`; `ClientWords`. The iOS cases ported one for one. |
+| `:network` | `ClientsApi`. The list asks only for what is set; the typed erase word is sent as typed, because it is chairtime's to judge. |
+| The list | Search waits 300 ms for the typing to stop (tested with a virtual clock); a filter asks at once and keeps what is typed; the count is "9 people", or "The first 200" with a sentence that everybody past it is still there. On a tablet the list keeps its own 340 dp pane and the person opens beside it. It comes back after process death to who was open — **but never straight into their medical notes**. |
+| A profile | The four numbers as one sentence, what is coming (soonest first) and what happened, pieces in progress, and on file: the formula, the notes, and medical notes as a way in, never their contents. Rebook starts a booking that is theirs; a visit opens its appointment; an owner gets a price column and anybody else gets no column of dashes. "Add to waitlist" arrives with the waiting list, in A6. |
+| The form | Kept in `SavedStateHandle`; a field chairtime refuses is outlined so the sentence has somewhere to point; a date of birth is a calendar date picked in UTC, so no travelling phone turns the 4th into the 3rd; the notes hint says plainly that allergies do not belong there. |
+| **Medical notes** | Nothing is fetched — so nothing is written to the access log — until the phone says yes. `BiometricGate`: a fingerprint or face where there is one, the screen lock otherwise; the app learns only yes or no. Android does not say *which* biometric, so the words are "your fingerprint or face". A phone with no screen lock opens them and says it cannot lock them. One gate for the process: `ON_STOP`, signing out and changing shop all close it. While the screen is up the window is `FLAG_SECURE` — **checked: the system returned a zero-byte screenshot**. The boxes live in a ViewModel with no saved state, so turning the phone keeps half a sentence and leaving the screen loses everything; the keyboard is told not to learn from them. |
+| **From your contacts — a number, not a contact** | Built first with `PickContact`, which failed on the emulator: Android's grant for a picked contact covers its own row — a name — and reading its numbers is a `SecurityException` without permission to read every contact on the phone. So it picks a *number* (`ACTION_PICK` on `Phone.CONTENT_TYPE`), which comes with the name: what a shop knows a client by, and the number *they* chose rather than one guessed from a label. Email and date of birth are typed. Still no permission, still nothing to declare. Checked with a made-up contact: "Filled the name and mobile from your contacts. Check them before adding." |
+| Found by running it | `androidx.biometric` 1.1.0 brings `fragment` 1.2, which is older than the Activity Result API and throws "Can only use lower 16 bits for requestCode" the moment anything is launched for a result. `fragment` is now named in the catalog, with why. · `MainActivity` is a `FragmentActivity` only because the biometric prompt asks for one. |
+| Left in the dev branch by the test | One access-log line per run (opening medical notes is a reading, and is written down — that is the feature), and hidden "Zz Android Test" clients: removing a client hides them, as it should. |
 
 ### Running it locally
 ```sh

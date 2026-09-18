@@ -8,7 +8,14 @@ import com.wunderhand.core.BookingServiceResponse
 import com.wunderhand.core.BookingServicesResponse
 import com.wunderhand.core.BookingSlotsResponse
 import com.wunderhand.core.BlockRequest
+import com.wunderhand.core.ClientFilter
+import com.wunderhand.core.ClientInput
+import com.wunderhand.core.ClientProfileResponse
+import com.wunderhand.core.ClientSaved
+import com.wunderhand.core.ClientsResponse
 import com.wunderhand.core.CloseOutcome
+import com.wunderhand.core.HealthResponse
+import com.wunderhand.core.HealthSaved
 import com.wunderhand.core.CloseResponse
 import com.wunderhand.core.RepeatStarted
 import com.wunderhand.core.RepeatStopped
@@ -180,6 +187,33 @@ class ApiClient(
 
     override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): BookingCreated =
         post("api/v1/bookings", BookingRequest(serviceId, staffId, instant(startsAt), clientId, addonIds, overridePrerequisite))
+
+    // Clients
+
+    override suspend fun clients(filter: ClientFilter, query: String): ClientsResponse =
+        // Only what is set is asked for: "all" and an empty search are the list as it comes.
+        send("GET", "api/v1/clients", buildList {
+            if (filter != ClientFilter.All) add("filter" to filter.raw)
+            query.trim().takeIf { it.isNotEmpty() }?.let { add("q" to it) }
+        }, null, ClientsResponse.serializer())
+
+    override suspend fun client(id: String): ClientProfileResponse = get("api/v1/clients/$id")
+
+    override suspend fun createClient(input: ClientInput): ClientSaved = post("api/v1/clients", input)
+
+    override suspend fun updateClient(id: String, input: ClientInput): ClientSaved = put("api/v1/clients/$id", input)
+
+    override suspend fun removeClient(id: String) {
+        delete<ClientSaved>("api/v1/clients/$id")
+    }
+
+    override suspend fun health(clientId: String): HealthResponse = get("api/v1/clients/$clientId/health")
+
+    override suspend fun saveHealth(clientId: String, record: Map<String, String>): HealthSaved = put("api/v1/clients/$clientId/health", record)
+
+    override suspend fun eraseHealth(clientId: String, confirmation: String) {
+        delete<Ack>("api/v1/clients/$clientId/health", mapOf("confirm" to confirmation))
+    }
 
     // endregion
     // region Plumbing

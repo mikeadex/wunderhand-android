@@ -138,6 +138,16 @@ class AppModelTest {
         assertEquals(Phase.UpgradeRequired("Update Wunderhand to carry on."), model.phase.value)
     }
 
+    /** Whoever unlocked medical notes did so for the last shop, and the last person. */
+    @Test fun `signing out, or changing shop, locks what was unlocked`() = runTest {
+        var locked = 0
+        val model = AppModel(settings, cache(), "http://server", connect = { FakeApi { atTwoShops } }, onLeaving = { locked++ })
+        model.start(allowServerOverride = false)
+        model.choose("shop-2"); assertEquals(1, locked)
+        model.switchShop(); assertEquals(2, locked)
+        model.signOut(); assertEquals(3, locked)
+    }
+
     @Test fun `signing out leaves nothing of the shop on the phone`() = runTest {
         settings.shop = kit.shop.id
         val api = FakeApi { kit }

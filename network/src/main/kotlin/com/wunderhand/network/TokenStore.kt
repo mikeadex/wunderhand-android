@@ -62,5 +62,19 @@ interface BookingApi {
     suspend fun book(serviceId: String, staffId: String, startsAt: java.time.Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): com.wunderhand.core.BookingCreated
 }
 
+/** Clients, and the medical notes kept apart from them. */
+interface ClientsApi {
+    suspend fun clients(filter: com.wunderhand.core.ClientFilter = com.wunderhand.core.ClientFilter.All, query: String = ""): com.wunderhand.core.ClientsResponse
+    suspend fun client(id: String): com.wunderhand.core.ClientProfileResponse
+    suspend fun createClient(input: com.wunderhand.core.ClientInput): com.wunderhand.core.ClientSaved
+    suspend fun updateClient(id: String, input: com.wunderhand.core.ClientInput): com.wunderhand.core.ClientSaved
+    suspend fun removeClient(id: String)
+    /** Opening medical notes. chairtime writes this reading to the access log. */
+    suspend fun health(clientId: String): com.wunderhand.core.HealthResponse
+    suspend fun saveHealth(clientId: String, record: Map<String, String>): com.wunderhand.core.HealthSaved
+    /** @param confirmation the word typed to mean it. chairtime checks it, not the app. */
+    suspend fun eraseHealth(clientId: String, confirmation: String)
+}
+
 /** Everything the app asks of chairtime. `ApiClient` is the real one. */
-interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi
+interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi

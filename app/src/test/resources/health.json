@@ -1,0 +1,55 @@
+{
+  "clientName": "ZZ Mobile Clients Overdue",
+  "configured": true,
+  "unreadable": false,
+  "fields": [
+    {
+      "key": "allergies",
+      "label": "Allergies",
+      "hint": "PPD, latex, nickel, nuts — anything that changes what you can use."
+    },
+    {
+      "key": "skinConditions",
+      "label": "Skin and scalp",
+      "hint": "Eczema, psoriasis, keloid scarring, recent sunburn."
+    },
+    {
+      "key": "medications",
+      "label": "Medication",
+      "hint": "Roaccutane, blood thinners, anything affecting healing."
+    },
+    {
+      "key": "medicalHistory",
+      "label": "Other medical history",
+      "hint": "Pregnancy, diabetes, epilepsy, heart condition, recent surgery."
+    },
+    {
+      "key": "patchTestNotes",
+      "label": "Patch test",
+      "hint": "When it was done, what was used, how the skin reacted."
+    }
+  ],
+  "record": {
+    "allergies": "PPD — reacted to a box dye",
+    "skinConditions": null,
+    "medications": null,
+    "medicalHistory": "None",
+    "patchTestNotes": "Clear at 48h"
+  },
+  "updatedAt": "2026-09-17T21:17:16.278Z",
+  "updatedByName": "Kit Alvarez",
+  "retainUntil": "2034-09-17T21:17:16.278Z",
+  "consents": [],
+  "accessLog": [
+    {
+      "at": "2026-09-17T21:17:17.862Z",
+      "who": "Kit Alvarez",
+      "what": "opened medical notes"
+    },
+    {
+      "at": "2026-09-17T21:17:16.278Z",
+      "who": "Kit Alvarez",
+      "what": "recorded medical notes"
+    }
+  ]
+}

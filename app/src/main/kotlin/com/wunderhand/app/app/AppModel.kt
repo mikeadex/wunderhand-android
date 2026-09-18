@@ -36,6 +36,8 @@ class AppModel(
     val cache: OfflineCache,
     private val builtInServer: String,
     private val connect: (baseUrl: String) -> WunderhandApi,
+    /** Signing out, or changing shop: anything unlocked for the last one is locked again. */
+    private val onLeaving: () -> Unit = {},
 ) {
     private val _phase = MutableStateFlow<Phase>(Phase.Launching)
     val phase: StateFlow<Phase> = _phase.asStateFlow()
@@ -104,6 +106,7 @@ class AppModel(
     }
 
     suspend fun choose(shopId: String) {
+        onLeaving()
         // Another shop's diary is not this one's to show while it loads.
         cache.clear()
         settings.setChosenShopId(shopId)
@@ -112,12 +115,14 @@ class AppModel(
 
     /** Back to "Which shop?", from the shop somebody is in. */
     suspend fun switchShop() {
+        onLeaving()
         cache.clear()
         settings.setChosenShopId(null)
         refresh()
     }
 
     suspend fun signOut() {
+        onLeaving()
         cache.clear()
         lastMe = null
         client.signOut()

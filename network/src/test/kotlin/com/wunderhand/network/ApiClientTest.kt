@@ -410,3 +410,62 @@ class BookingCallsTest {
         assertEquals("/api/v1/booking/services/s1", server.takeRequest().url.encodedPath)
     }
 }
+
+class ClientCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun fixture(name: String) = checkNotNull(javaClass.getResourceAsStream("/$name.json")).bufferedReader().use { it.readText() }
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+    private fun reply(code: Int, body: String) = server.enqueue(MockResponse.Builder().code(code).body(body).build())
+
+    @Test fun `the client list asks only for what is set`() = runTest {
+        reply(200, fixture("clients")); reply(200, fixture("clients"))
+        val client = client()
+        client.clients()
+        assertNull(server.takeRequest().url.query)
+        client.clients(com.wunderhand.core.ClientFilter.NoShows, "  wren ")
+        val url = server.takeRequest().url
+        assertEquals("no_shows", url.queryParameter("filter"))
+        assertEquals("wren", url.queryParameter("q"))
+    }
+
+    @Test fun `changing a client sends the whole form, and a new one is posted`() = runTest {
+        reply(200, """{"id":"c1"}"""); reply(200, """{"id":"c2"}""")
+        val client = client()
+        val input = com.wunderhand.core.ClientInput(name = "Wren Halloway", phone = "07700 900123")
+        client.updateClient("c1", input)
+        server.takeRequest().let {
+            assertEquals("PUT", it.method); assertEquals("/api/v1/clients/c1", it.url.encodedPath)
+            assertEquals("""{"name":"Wren Halloway","phone":"07700 900123","email":"","dateOfBirth":"","notes":"","standingFormula":""}""", it.body!!.utf8())
+        }
+        assertEquals("c2", client.createClient(input).id)
+        server.takeRequest().let { assertEquals("POST", it.method); assertEquals("/api/v1/clients", it.url.encodedPath) }
+    }
+
+    @Test fun `a taken mobile comes back against the phone field`() = runTest {
+        reply(422, """{"error":{"code":"validation","message":"Somebody already has that mobile.","field":"phone"}}""")
+        val error = try { client().createClient(com.wunderhand.core.ClientInput(name = "W")); null } catch (e: ApiError) { e }
+        assertEquals("phone", (error as ApiError.Validation).field)
+    }
+
+    @Test fun `medical notes are read, saved and erased at their own address`() = runTest {
+        reply(200, fixture("health")); reply(200, """{"saved":true,"retainUntil":"2034-09-16T00:00:00.000Z"}"""); reply(200, "{}")
+        val client = client()
+        assertTrue(client.health("c1").hasContent)
+        assertEquals("/api/v1/clients/c1/health", server.takeRequest().url.encodedPath)
+        assertTrue(client.saveHealth("c1", mapOf("allergies" to "PPD")).retainUntil != null)
+        server.takeRequest().let { assertEquals("PUT", it.method); assertEquals("""{"allergies":"PPD"}""", it.body!!.utf8()) }
+        client.eraseHealth("c1", "erase")
+        server.takeRequest().let { assertEquals("DELETE", it.method); assertEquals("erase", it.url.queryParameter("confirm")) }
+    }
+
+    /** The word is chairtime's to check: the app sends what was typed and says what comes back. */
+    @Test fun `erasing carries the typed word, right or wrong`() = runTest {
+        reply(422, """{"error":{"code":"validation","message":"Type erase to confirm.","field":"confirm"}}""")
+        val error = try { client().eraseHealth("c1", "eraze"); null } catch (e: ApiError) { e }
+        assertEquals("Type erase to confirm.", error?.message)
+        assertEquals("eraze", server.takeRequest().url.queryParameter("confirm"))
+    }
+}

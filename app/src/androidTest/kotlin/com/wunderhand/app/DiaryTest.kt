@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -119,7 +120,58 @@ class DiaryTest {
 
         blocksTimeAndTakesItBack()
         booksAWalkInAndCancelsIt()
+        looksSomebodyUpAndAddsAndRemovesAClient()
         signOut()
+    }
+
+    /**
+     * The Clients tab: the list, a search that finds nobody, a profile, its
+     * medical notes behind the phone's lock — an emulator has none, and says
+     * so — and a client added and removed again, so the list ends as it began.
+     */
+    private fun looksSomebodyUpAndAddsAndRemovesAClient() {
+        app.onNodeWithTag("tab-Clients").performClick()
+        app.waitUntil(20_000) { anyOnScreen("clientRow") }
+        app.onNodeWithTag("clientsHeading").assertTextContains("Clients")
+        everyControlSaysWhatItIs("the client list")
+
+        // Nobody is called this. The empty list says so in words, not with a blank.
+        app.onNodeWithTag("clientSearch").performTextInput("zzqx-nobody")
+        waitFor("noClients")
+        app.onNodeWithText("Nobody by that name").assertExists()
+        app.onNodeWithContentDescription("Clear the search").performClick()
+        app.waitUntil(20_000) { anyOnScreen("clientRow") }
+
+        app.onAllNodesWithTag("clientRow").onFirst().performClick()
+        waitFor("clientName")
+        app.onNodeWithTag("clientStats").assertTextContains("visit", substring = true)
+        everyControlSaysWhatItIs("a client's profile")
+
+        // Medical notes: asked for, never part of the profile.
+        app.onNodeWithTag("medicalNotes").performScrollTo().performClick()
+        waitFor("healthHeading")
+        app.waitUntil(20_000) { isOnScreen("notesLocked") || isOnScreen("healthAccessLog") }
+        if (isOnScreen("healthAccessLog")) assertTrue("a phone with no lock says it cannot lock them", isOnScreen("notesUnprotected"))
+        everyControlSaysWhatItIs("medical notes")
+        app.onNodeWithTag("backFromHealth").performClick()
+        waitFor("clientName")
+        if (isOnScreen("backToClients")) app.onNodeWithTag("backToClients").performClick()
+
+        // Somebody new, then gone again.
+        val name = "Zz Android Test ${System.currentTimeMillis() % 100_000}"
+        app.onNodeWithTag("addClient").performClick()
+        waitFor("clientNameField")
+        everyControlSaysWhatItIs("the client form")
+        app.onNodeWithTag("clientNameField").performTextInput(name)
+        app.onNodeWithTag("saveClient").performClick()
+        app.waitUntil(20_000) { app.onAllNodesWithTag("clientName").fetchSemanticsNodes().any { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == name } } }
+        app.onNodeWithTag("clientStatus").assertExists()
+
+        app.onAllNodesWithTag("editClient").onFirst().performClick()
+        waitFor("removeClient")
+        app.onNodeWithTag("removeClient").performScrollTo().performClick()
+        app.onNodeWithTag("confirm").performClick()
+        app.waitUntil(20_000) { !isOnScreen("clientForm") && app.onAllNodesWithText(name).fetchSemanticsNodes().isEmpty() }
     }
 
     /**

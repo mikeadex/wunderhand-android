@@ -48,7 +48,7 @@ class SignInFormTest {
         override suspend fun setServerOverride(url: String?) {}
     }
 
-    private fun model(api: Api) = AppModel(NoSettings, OfflineCache(File(folder.root, "offline")), "http://server") { api }
+    private fun model(api: Api) = AppModel(NoSettings, OfflineCache(File(folder.root, "offline")), "http://server", connect = { api })
 
     @Test fun `nothing typed is said at once, and nothing is sent`() {
         val api = Api(accepts = true, kit)

@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.wunderhand.app.app.AppModel
 import com.wunderhand.app.app.PageColumn
+import com.wunderhand.app.features.clients.ClientsScreen
 import com.wunderhand.app.features.diary.DiaryScreen
 import com.wunderhand.core.Me
 import com.wunderhand.design.EmptyNote
@@ -86,7 +87,7 @@ fun MainScaffold(model: AppModel, me: Me) {
         key(me.shop.id, me.staff.id) {
             when (tab) {
                 AppTab.Diary -> DiaryScreen(model, me)
-                AppTab.Clients -> Coming("Clients", "Everybody the shop looks after: who is due, who has lapsed, and what each of them has. It arrives in milestone A4.")
+                AppTab.Clients -> ClientsScreen(model, me)
                 AppTab.Menu -> Coming("Menu", "The services the shop sells, who performs them and at what price. It arrives in milestone A5.")
                 AppTab.Money -> Coming("Money", "What the month has taken, against the last one. It arrives in milestone A6.")
                 AppTab.Shop -> ShopStandIn(model, me)
