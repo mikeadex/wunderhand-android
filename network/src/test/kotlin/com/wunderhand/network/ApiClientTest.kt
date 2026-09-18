@@ -260,3 +260,98 @@ class DiaryCallsTest {
         assertTrue(response.appointment.lineItems.isNotEmpty())
     }
 }
+
+/** Running the day: what is sent, where, and what a refusal comes back as. */
+class ActionCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+    private fun reply(code: Int, body: String) = server.enqueue(MockResponse.Builder().code(code).body(body).build())
+    private val at = java.time.Instant.parse("2026-09-16T10:15:00Z")
+
+    @Test fun `moves with an instant chairtime reads`() = runTest {
+        reply(200, "{}")
+        client().move("a1", at)
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/v1/appointments/a1/move", sent.url.encodedPath)
+        assertEquals("""{"startsAt":"2026-09-16T10:15:00.000Z"}""", sent.body!!.utf8())
+    }
+
+    @Test fun `resizes by the end`() = runTest {
+        reply(200, "{}")
+        client().resize("a1", at)
+        val sent = server.takeRequest()
+        assertEquals("/api/v1/appointments/a1/resize", sent.url.encodedPath)
+        assertEquals("""{"endsAt":"2026-09-16T10:15:00.000Z"}""", sent.body!!.utf8())
+    }
+
+    @Test fun `a clash comes back as slot taken, in chairtime's words`() = runTest {
+        reply(409, """{"error":{"code":"slot_taken","message":"Someone got there first."}}""")
+        val error = try { client().move("a1", at); null } catch (e: ApiError) { e }
+        assertTrue(error is ApiError.SlotTaken)
+        assertEquals("Someone got there first.", error?.message)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun `closing sends the outcome and reads the refund`() = runTest {
+        reply(200, """{"outcome":"cancelled","refund":{"refundPence":1000,"keptPence":0}}""")
+        val closed = client().close("a1", com.wunderhand.core.CloseOutcome.Cancelled)
+        val sent = server.takeRequest()
+        assertEquals("/api/v1/appointments/a1/close", sent.url.encodedPath)
+        assertEquals("""{"outcome":"cancelled"}""", sent.body!!.utf8())
+        assertEquals(1000, closed.refund?.refundPence?.value)
+    }
+
+    @Test fun `a no-show is chairtime's word for it, not Kotlin's`() = runTest {
+        reply(200, """{"outcome":"no_show","refund":null}""")
+        client().close("a1", com.wunderhand.core.CloseOutcome.NoShow)
+        assertEquals("""{"outcome":"no_show"}""", server.takeRequest().body!!.utf8())
+    }
+
+    @Test fun `too early to mark done is its own refusal`() = runTest {
+        reply(409, """{"error":{"code":"too_early","message":"Mark done opens when they arrive."}}""")
+        val error = try { client().close("a1", com.wunderhand.core.CloseOutcome.Completed); null } catch (e: ApiError) { e }
+        assertTrue(error is ApiError.TooEarly)
+    }
+
+    @Test fun `later days are asked for from a date`() = runTest {
+        reply(200, """{"currentStartsAt":"2026-09-16T09:00:00.000Z","days":[]}""")
+        client().slots("a1", from = "2026-09-24")
+        val sent = server.takeRequest()
+        assertEquals("/api/v1/appointments/a1/slots", sent.url.encodedPath)
+        assertEquals("2026-09-24", sent.url.queryParameter("from"))
+    }
+
+    @Test fun `a repeat is started in weeks and stopped with or without what it booked`() = runTest {
+        reply(200, """{"booked":3,"skipped":1}""")
+        reply(200, """{"cancelled":0}""")
+        reply(200, """{"cancelled":2}""")
+        val client = client()
+        assertEquals(3, client.startRepeat("a1", 4).booked)
+        assertEquals("""{"intervalWeeks":4}""", server.takeRequest().body!!.utf8())
+        client.stopRepeat("a1", cancelUpcoming = false)
+        server.takeRequest().let { assertEquals("DELETE", it.method); assertNull(it.url.queryParameter("cancelUpcoming")) }
+        assertEquals(2, client.stopRepeat("a1", cancelUpcoming = true).cancelled)
+        assertEquals("1", server.takeRequest().url.queryParameter("cancelUpcoming"))
+    }
+
+    @Test fun `consent is recorded against the appointment`() = runTest {
+        reply(200, "{}")
+        client().recordConsent("a1")
+        assertEquals("/api/v1/appointments/a1/consent", server.takeRequest().url.encodedPath)
+    }
+
+    @Test fun `time is blocked, and unblocked by its id`() = runTest {
+        reply(200, """{"id":"b1","date":"2026-09-16"}""")
+        reply(200, "{}")
+        val client = client()
+        val created = client.blockTime(com.wunderhand.core.BlockRequest("s1", com.wunderhand.core.BlockRequest.Kind.Break, "2026-09-16", "13:00", "13:30", "Dentist"))
+        assertEquals("b1", created.id)
+        assertEquals("""{"staffId":"s1","kind":"break","date":"2026-09-16","from":"13:00","to":"13:30","note":"Dentist"}""", server.takeRequest().body!!.utf8())
+        client.unblock("b1")
+        server.takeRequest().let { assertEquals("DELETE", it.method); assertEquals("/api/v1/blocks/b1", it.url.encodedPath) }
+    }
+}

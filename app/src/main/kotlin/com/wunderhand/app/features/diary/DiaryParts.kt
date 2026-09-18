@@ -58,6 +58,7 @@ import com.wunderhand.design.Eyebrow
 import com.wunderhand.design.LoadBar
 import com.wunderhand.design.PrimaryButton
 import com.wunderhand.design.ScreenHeader
+import com.wunderhand.design.SecondaryButton
 import com.wunderhand.design.SkeletonBlock
 import com.wunderhand.design.WHCard
 import com.wunderhand.design.WHChip
@@ -188,6 +189,8 @@ fun DiaryHeaderWide(model: DiaryViewModel, state: DiaryState, modifier: Modifier
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (!state.weekContainsToday) TextButton("Back to today", WHColors.Neutral700, model::showToday)
+            // "New booking", the filled one, joins this in A3.
+            if (state.members.isNotEmpty()) SecondaryButton("Block time", { model.blockingTime(true) }, Modifier.testTag("blockTime"), minHeight = 48.dp)
             WHSegmented(
                 listOf(DiaryMode.Day to "Day", DiaryMode.Week to "Week", DiaryMode.List to "List"),
                 state.mode, model::setMode, Modifier.testTag("diaryMode"), compact = false,

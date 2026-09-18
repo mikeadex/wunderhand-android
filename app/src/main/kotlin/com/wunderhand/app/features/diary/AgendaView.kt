@@ -194,7 +194,7 @@ private fun GapDivider(gap: DiaryGap, who: List<String>, clock: ShopClock) {
     val label = "${clock.time(gap.startsAt)} · ${Durations.short(gap.minutes)} free" + if (who.isEmpty()) "" else " · ${who.joinToString(", ")}"
     val spoken = "${Durations.label(gap.minutes)} free from ${clock.time(gap.startsAt)}" + if (who.isEmpty()) "" else " for ${who.joinToString(", ")}"
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(start = 58.dp).clearAndSetSemantics { contentDescription = spoken }.testTag("gap"),
+        Modifier.fillMaxWidth().heightIn(min = 32.dp).padding(start = 58.dp).testTag("gap").clearAndSetSemantics { contentDescription = spoken },
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(Modifier.weight(1f).height(1.dp).background(WHColors.Divider))

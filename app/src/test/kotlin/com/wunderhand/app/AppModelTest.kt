@@ -7,7 +7,7 @@ import com.wunderhand.core.ChairtimeJson
 import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.network.ApiError
-import com.wunderhand.network.WunderhandApi
+import com.wunderhand.app.support.StubApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -34,11 +34,10 @@ class AppModelTest {
         override suspend fun setServerOverride(url: String?) { server = url }
     }
 
-    private class FakeApi(var token: Boolean = true, var answer: () -> Me) : WunderhandApi {
-        override suspend fun diary(date: String?) = error("not the session's business")
-        override suspend fun appointment(id: String) = error("not the session's business")
-        override val hasToken get() = token
-        override var tenantId: String? = null
+    private class FakeApi(var token: Boolean = true, var answer: () -> Me) : StubApi() {
+        override var hasToken: Boolean
+            get() = token
+            set(value) { token = value }
         val askedFor = mutableListOf<String?>()
         override suspend fun signIn(email: String, password: String) { token = true }
         override suspend fun signOut() { token = false }

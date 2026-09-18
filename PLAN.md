@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 and A1 built** · 18 September 2026 · see [Progress](#progress) at the end
+Status: **A0, A1 and A2 built** · 18 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -473,6 +473,27 @@ words for a screen reader, and signs out. It passes folded and unfolded.
 | Grids stop growing at 130% type | A time grid is a picture of the day. Day and Week scale the whole way. |
 | Accessibility | Every card, block and day reads as one sentence ("09:00 to 09:45, Ellis Warner, Root tint, with Ade Balogun, £68"); eyebrows are uppercased where drawn, so TalkBack reads words; every target is 48 dp. The emulator test fails if any pressable thing has no words. Test tags are exposed as resource ids for UI Automator. |
 | Left for their own milestones, on purpose | "Fill it" on a gap, and the waiting count as a link (A6). New booking, Block time, drag to move, and the appointment's actions — check out, reschedule, cancel, record consent, start or stop a repeat (A2, A3). The sheet shows the consent wording and a series' dates now; the buttons arrive with what they do. A control that does nothing is worse than no control. |
+
+### A2: Diary actions (built 18 September 2026)
+Running the day from the phone: mark done, did not turn up, cancel, move it, record consent, start
+and stop a repeat, block time off and take it back — and on a grid, hold a booking to pick it up or
+drag its handle to change how long it takes. 130 JVM tests; the emulator test now also opens the
+move screen and blocks half an hour on a quiet day six weeks out, sees it, and removes it, folded
+and unfolded. Everything it changes it puts back.
+
+| | |
+|---|---|
+| `:core` | `CloseOutcome`, `CloseResponse`, `SlotsResponse`, `RepeatStarted`/`Stopped`, `BlockRequest`, `Arrival`, `DragSnap` — the iOS cases ported — and `ActionWords`: every sentence the sheet says after something was done, in one place with tests. `CloseResponse.outcome` is kept as the word it arrived as: the app knows what it asked for, and a word added later must not make a finished action look failed. |
+| `:network` | `ActionsApi`: close, slots, move, resize, consent, repeat, stop repeat, block, unblock. Instants go out as the iPhone writes them, UTC to the millisecond. Tested for the path, the body and the refusal each one can meet. None is ever retried: they change the day. |
+| `AppointmentModel` | As iOS: one thing at a time; the sentence and the appointment it describes arrive together; a refusal is said as a problem **and everything is reloaded anyway**, since a refusal usually means something changed elsewhere. A time taken while somebody was looking stays on the times, which are asked for again. |
+| The sheet's footer | Mark done from half an hour before (before that, a grey line saying when it opens — not offered rather than offered and refused); Reschedule; Did not turn up once it has started; Cancel appointment. The two that end it are red words behind a question whose way out is "Keep it" — never a bare Cancel beside "Cancel appointment". **Check out** arrives with the till (A6) and **Book them again** with new bookings (A3). |
+| Dragging | `BlockDrag`, shared by both grids. Hold 0.35 s (Android's own long press is nearer half a second) to lift, with a haptic; the handle stretches at once. Both snap to the shop's slot. The lifted block shows where it would land; dropped, it stays there dimmed until chairtime answers; a clash puts it back with chairtime's sentence above the day. Nothing is checked in the app. **For somebody who cannot drag** — TalkBack, a switch, a keyboard — the block carries four named actions: earlier, later, longer, shorter, one step of the grid each. |
+| Block time | Kind, who, date, from, to, note — sent as the shop's wall clock in words, so nothing here converts a timezone. The footer rides above the keyboard. |
+| The ownership rule, again | chairtime lets somebody block and unblock their own time, and an owner anybody's. So a non-owner is not asked "Who", and a colleague's break is not tappable: the app does not offer what would be refused. |
+| **Better than the other two, on purpose** | The web's phone grid and the iPhone's never draw a break — so blocked time looks like unexplained empty space, and somebody who blocks the wrong hour on a phone cannot take it back without a laptop. Here the phone's grid draws breaks, and a tap offers to remove one. Worth taking back to iOS and the web. |
+| Found by the emulator test | **Tap a day, then Block time before it had loaded, and the wrong day was blocked** — the sheet took its date from the day still on screen. It is now the day asked for (`dayInHand`), with a test. · The new phone footer was added outside the column and took the diary's place: caught because the test runs folded too. · A test tag written after `clearAndSetSemantics` is cleared with everything else; three were. · chairtime refuses a block that overlaps another with its double-booking sentence — "Nothing has been booked" — so the sheet says "Something is already in the diary then" instead. |
+| A question for chairtime | The block sheet's own words (from the web) say "Appointments already there stay put", and blocking over an appointment does work — but blocking over another *block* is refused by `time_off_no_overlap`, and **the web's block action does not catch that**, so on the web it is an error page. Not touched from here. |
+| One leftover, cleaned up | A failed run left a block on Kit's Tuesday in the dev branch; removed by hand from the app. The test now blocks six weeks out, names its note "Android test — safe to remove", and reports chairtime's words if it is refused. |
 
 ### Running it locally
 ```sh

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -82,6 +83,7 @@ class DiaryTest {
         assertTrue("an open day in the week", days.isNotEmpty())
         val busy = days.firstOrNull { day ->
             app.onNodeWithTag(day).performScrollTo().performClick()
+            waitFor("showing-" + day.removePrefix("week-"))
             app.waitUntil(20_000) { isOnScreen("agenda") || isOnScreen("teamGrid") || isOnScreen("emptyDay") || isOnScreen("closedDay") }
             runCatching { app.waitUntil(3_000) { anyOnScreen("appointment-") } }.isSuccess.also { found ->
                 if (!found) { app.onNodeWithText("Week").performClick(); waitFor("weekList") }
@@ -97,13 +99,88 @@ class DiaryTest {
         app.onNodeWithTag("toTake").assertExists()
         everyControlSaysWhatItIs("an open appointment")
 
+        // Underneath it, what can be done now — or a plain line about why nothing can.
+        assertTrue("the sheet's footer", isOnScreen("markDone") || isOnScreen("opensLater") || isOnScreen("closedLine"))
+        if (isOnScreen("reschedule")) {
+            // Where it could move to. Looked at, not used: the seed stays as it was found.
+            app.onNodeWithTag("reschedule").performClick()
+            waitFor("moveScreen")
+            app.waitUntil(20_000) { isOnScreen("slot") || isOnScreen("laterDays") || isOnScreen("slotsProblem") }
+            everyControlSaysWhatItIs("the move screen")
+            app.onNodeWithTag("backToAppointment").performClick()
+            waitFor("appointmentName")
+        }
+
         // A rotation, a fold: the activity is rebuilt; the session, the day and the open appointment are not.
         app.activityRule.scenario.recreate()
         waitFor("appointmentName")
         app.onNodeWithContentDescription("Close appointment").performClick()
         app.waitUntil(10_000) { !isOnScreen("appointmentName") }
 
+        blocksTimeAndTakesItBack()
         signOut()
+    }
+
+    /**
+     * Block half an hour, see it in the day, remove it: the day ends as it began.
+     *
+     * On a day six weeks out with nobody booked, because chairtime refuses a
+     * block over something already there — and the seed's busy days are busy
+     * at lunchtime.
+     */
+    private fun blocksTimeAndTakesItBack() {
+        app.onNodeWithText("Week").performClick()
+        waitFor("weekList")
+        repeat(6) {
+            if (isOnScreen("nextWeek")) app.onNodeWithTag("nextWeek").performScrollTo().performClick()
+            else app.onNodeWithContentDescription("Next week").performClick()
+            app.waitForIdle()
+        }
+        fun quietDays() = app.onAllNodes(tagStartsWith("week-")).fetchSemanticsNodes()
+            .filter { node -> node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { ", 0 booked" in it } }
+            .map { it.config[SemanticsProperties.TestTag] }
+        app.waitUntil(20_000) { quietDays().isNotEmpty() }
+
+        // Breaks are drawn on a grid: the team's on a tablet, your own on a phone —
+        // so on a phone it has to be a day the person signed in works.
+        val day = quietDays().firstOrNull { tag ->
+            app.onNodeWithTag(tag).performScrollTo().performClick()
+            // Until the day asked for is the day on screen: the last one stays up, dimmed, while it loads.
+            waitFor("showing-" + tag.removePrefix("week-"))
+            // A day with nobody booked is still an agenda on a phone: everybody's free time is on it.
+            app.waitUntil(20_000) { isOnScreen("teamGrid") || isOnScreen("agenda") || isOnScreen("emptyDay") || isOnScreen("closedDay") }
+            if (isOnScreen("teamGrid")) return@firstOrNull true
+            app.onNodeWithText("Grid").performClick()
+            runCatching { app.waitUntil(3_000) { isOnScreen("dayGrid") } }.isSuccess.also { works ->
+                if (!works) { app.onNodeWithText("Week").performClick(); waitFor("weekList") }
+            }
+        }
+        assertTrue("a quiet working day six weeks out", day != null)
+
+        fun breaks() = app.onAllNodes(tagStartsWith("break-")).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }.toSet()
+        val before = breaks()
+
+        // In the header on a tablet, where it scrolls with the day; pinned under it on a phone, where it does not.
+        runCatching { app.onNodeWithTag("blockTime").performScrollTo() }
+        app.onNodeWithTag("blockTime").performClick()
+        waitFor("blockThisTime")
+        everyControlSaysWhatItIs("the block-time sheet")
+        app.onNodeWithTag("blockNote").performTextInput("Android test — safe to remove")
+        // Done on the keyboard puts it away, so the button is pressed where it has come to rest.
+        app.onNodeWithTag("blockNote").performImeAction()
+        app.waitForIdle()
+        app.onNodeWithTag("blockThisTime").performClick()
+
+        app.waitUntil(30_000) { (breaks() - before).isNotEmpty() || isOnScreen("blockProblem") }
+        if (isOnScreen("blockProblem")) {
+            val said = app.onNodeWithTag("blockProblem").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
+            throw AssertionError("chairtime refused the block: $said")
+        }
+        val added = (breaks() - before).single()
+        app.onNodeWithTag(added).performScrollTo().performClick()
+        app.onNodeWithText("Remove it").performClick()
+        app.waitUntil(30_000) { added !in breaks() }
+        assertTrue("no refusal was shown", !isOnScreen("diaryActionProblem"))
     }
 
     private fun signOut() {

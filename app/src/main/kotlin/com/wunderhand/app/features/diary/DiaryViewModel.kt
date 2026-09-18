@@ -10,7 +10,9 @@ import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.core.ShopClock
 import com.wunderhand.network.ApiError
-import com.wunderhand.network.DiaryApi
+import com.wunderhand.network.WunderhandApi
+import com.wunderhand.core.DiaryAppointment
+import com.wunderhand.core.DiaryBreak
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,6 +32,11 @@ import java.time.Instant
  */
 enum class DiaryMode { Day, Grid, Week, List }
 
+/** A change made by hand on a grid, waiting for chairtime's answer. */
+data class PendingChange(val appointmentId: String, val edge: Edge, val at: Instant) {
+    enum class Edge { Start, End }
+}
+
 /** Everything the diary screen draws from. */
 data class DiaryState(
     /** The shop's calendar date asked for; null is today where the shop is.
@@ -47,8 +54,22 @@ data class DiaryState(
     /** When what is on screen was last true. A day kept through a failed
      *  reload is worth reading, but never worth mistaking for now. */
     val loadedAt: Instant? = null,
+    /** A drag let go of and not yet answered: the block stays where it was
+     *  dropped, dimmed, until chairtime says yes or no. */
+    val pending: PendingChange? = null,
+    /** Why a move, a resize or an unblock was refused. */
+    val actionProblem: String? = null,
+    val isBlockingTime: Boolean = false,
 ) {
     val isShowingRequestedDay: Boolean get() = date == null || response?.date == date
+
+    /**
+     * The day something done now is about: the one asked for, not the one
+     * still on screen while it loads. Tap Thursday, tap Block time, and it is
+     * Thursday that gets blocked. Null only before anything has loaded, when
+     * it is today.
+     */
+    val dayInHand: String? get() = date ?: response?.date
 
     /** A day on screen that chairtime could not confirm. */
     val isShowingAKeptDay: Boolean get() = response != null && failure != null
@@ -79,7 +100,7 @@ data class DiaryState(
  */
 class DiaryViewModel(
     val me: Me,
-    private val api: DiaryApi,
+    val api: WunderhandApi,
     private val cache: OfflineCache,
     private val handle: suspend (ApiError) -> Unit,
     private val saved: SavedStateHandle = SavedStateHandle(),
@@ -149,6 +170,58 @@ class DiaryViewModel(
         val wanted = _state.value.date ?: clock.isoDate(now())
         val kept = withContext(io) { cache.savedDay(me.shop.id, wanted) } ?: return
         _state.update { it.copy(response = kept.response, loadedAt = kept.at) }
+    }
+
+    // endregion
+    // region Changing the day
+
+    /**
+     * Move an appointment to a new start — a drag on a grid. Nothing is
+     * checked here: chairtime's exclusion constraint decides, and a clash
+     * comes back as a sentence with the appointment where it was.
+     */
+    fun move(appointment: DiaryAppointment, to: Instant) =
+        change(PendingChange(appointment.id, PendingChange.Edge.Start, to)) { api.move(appointment.id, to) }
+
+    /** Stretch or shorten an appointment by its end — the handle on a grid. */
+    fun resize(appointment: DiaryAppointment, to: Instant) =
+        change(PendingChange(appointment.id, PendingChange.Edge.End, to)) { api.resize(appointment.id, to) }
+
+    fun unblock(block: DiaryBreak) = change(null) { api.unblock(block.id) }
+
+    private fun change(pending: PendingChange?, body: suspend () -> Unit): Job? {
+        if (_state.value.pending != null) return null
+        _state.update { it.copy(pending = pending, actionProblem = null) }
+        return viewModelScope.launch {
+            try {
+                body()
+            } catch (error: ApiError) {
+                if (error is ApiError.Unauthorized || error is ApiError.NotMember || error is ApiError.UpgradeRequired) {
+                    _state.update { it.copy(pending = null) }
+                    handle(error)
+                    return@launch
+                }
+                _state.update { it.copy(actionProblem = error.message) }
+            }
+            // Whether it worked or not, the day is shown as chairtime now has
+            // it — and only then does the block stop being where it was dropped.
+            load().join()
+            _state.update { it.copy(pending = null) }
+        }
+    }
+
+    /** A refusal met by a sheet over the diary that is the whole app's business. */
+    suspend fun handleElsewhere(error: ApiError) = handle(error)
+
+    fun dismissActionProblem() = _state.update { it.copy(actionProblem = null) }
+
+    fun blockingTime(showing: Boolean) = _state.update { it.copy(isBlockingTime = showing) }
+
+    /** After time was blocked: show the day it was blocked on. */
+    fun blocked(on: String) {
+        _state.update { it.copy(isBlockingTime = false) }
+        val s = _state.value
+        if (on != (s.date ?: s.response?.date)) show(on) else load()
     }
 
     // endregion

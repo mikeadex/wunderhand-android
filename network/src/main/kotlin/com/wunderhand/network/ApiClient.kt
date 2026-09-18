@@ -1,6 +1,13 @@
 package com.wunderhand.network
 
 import com.wunderhand.core.AppointmentResponse
+import com.wunderhand.core.BlockCreated
+import com.wunderhand.core.BlockRequest
+import com.wunderhand.core.CloseOutcome
+import com.wunderhand.core.CloseResponse
+import com.wunderhand.core.RepeatStarted
+import com.wunderhand.core.RepeatStopped
+import com.wunderhand.core.SlotsResponse
 import com.wunderhand.core.ChairtimeJson
 import com.wunderhand.core.DiaryResponse
 import com.wunderhand.core.Me
@@ -27,6 +34,9 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -116,6 +126,38 @@ class ApiClient(
         get("api/v1/diary", if (date == null) emptyMap() else mapOf("date" to date))
 
     override suspend fun appointment(id: String): AppointmentResponse = get("api/v1/appointments/$id")
+
+    // Running the day
+
+    override suspend fun close(appointmentId: String, outcome: CloseOutcome): CloseResponse =
+        post("api/v1/appointments/$appointmentId/close", mapOf("outcome" to outcome.raw))
+
+    override suspend fun slots(appointmentId: String, from: String?): SlotsResponse =
+        get("api/v1/appointments/$appointmentId/slots", if (from == null) emptyMap() else mapOf("from" to from))
+
+    override suspend fun move(appointmentId: String, to: Instant) {
+        post<Map<String, String>, Ack>("api/v1/appointments/$appointmentId/move", mapOf("startsAt" to instant(to)))
+    }
+
+    override suspend fun resize(appointmentId: String, endsAt: Instant) {
+        post<Map<String, String>, Ack>("api/v1/appointments/$appointmentId/resize", mapOf("endsAt" to instant(endsAt)))
+    }
+
+    override suspend fun recordConsent(appointmentId: String) {
+        post<Map<String, String>, Ack>("api/v1/appointments/$appointmentId/consent", emptyMap())
+    }
+
+    override suspend fun startRepeat(appointmentId: String, intervalWeeks: Int): RepeatStarted =
+        post("api/v1/appointments/$appointmentId/repeat", mapOf("intervalWeeks" to intervalWeeks))
+
+    override suspend fun stopRepeat(appointmentId: String, cancelUpcoming: Boolean): RepeatStopped =
+        delete("api/v1/appointments/$appointmentId/repeat", if (cancelUpcoming) mapOf("cancelUpcoming" to "1") else emptyMap())
+
+    override suspend fun blockTime(request: BlockRequest): BlockCreated = post("api/v1/blocks", request)
+
+    override suspend fun unblock(id: String) {
+        delete<Ack>("api/v1/blocks/$id")
+    }
 
     // endregion
     // region Plumbing
@@ -232,6 +274,10 @@ class ApiClient(
 
     companion object {
         private val JSON = "application/json".toMediaType()
+        private val INSTANT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC)
+
+        /** An instant as chairtime reads it, and as the iPhone writes it: UTC, to the millisecond. */
+        fun instant(value: Instant): String = INSTANT.format(value)
 
         /** No cookies, no cache, and an answer within twenty seconds or none. */
         fun makeHttp(): OkHttpClient = OkHttpClient.Builder()

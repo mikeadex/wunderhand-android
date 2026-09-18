@@ -35,5 +35,23 @@ interface DiaryApi {
     suspend fun appointment(id: String): com.wunderhand.core.AppointmentResponse
 }
 
+/**
+ * Running the day: what can be done to an appointment, and to the time around
+ * it. Nothing here checks a rule first — chairtime decides, and a refusal
+ * comes back as a sentence.
+ */
+interface ActionsApi {
+    suspend fun close(appointmentId: String, outcome: com.wunderhand.core.CloseOutcome): com.wunderhand.core.CloseResponse
+    /** Where it could move to: the next open days with the same person. */
+    suspend fun slots(appointmentId: String, from: String? = null): com.wunderhand.core.SlotsResponse
+    suspend fun move(appointmentId: String, to: java.time.Instant)
+    suspend fun resize(appointmentId: String, endsAt: java.time.Instant)
+    suspend fun recordConsent(appointmentId: String)
+    suspend fun startRepeat(appointmentId: String, intervalWeeks: Int): com.wunderhand.core.RepeatStarted
+    suspend fun stopRepeat(appointmentId: String, cancelUpcoming: Boolean): com.wunderhand.core.RepeatStopped
+    suspend fun blockTime(request: com.wunderhand.core.BlockRequest): com.wunderhand.core.BlockCreated
+    suspend fun unblock(id: String)
+}
+
 /** Everything the app asks of chairtime. `ApiClient` is the real one. */
-interface WunderhandApi : SessionApi, DiaryApi
+interface WunderhandApi : SessionApi, DiaryApi, ActionsApi

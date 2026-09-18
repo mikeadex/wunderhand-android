@@ -3,14 +3,13 @@ package com.wunderhand.app
 import androidx.lifecycle.SavedStateHandle
 import com.wunderhand.app.features.diary.DiaryMode
 import com.wunderhand.app.features.diary.DiaryViewModel
-import com.wunderhand.core.AppointmentResponse
 import com.wunderhand.core.ChairtimeJson
 import com.wunderhand.core.DiaryResponse
 import com.wunderhand.core.IsoDay
 import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.network.ApiError
-import com.wunderhand.network.DiaryApi
+import com.wunderhand.app.support.StubApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -41,10 +40,9 @@ class DiaryViewModelTest {
     private val me = ChairtimeJson.decodeFromString(Me.serializer(), text("me"))
     private val day = ChairtimeJson.decodeFromString(DiaryResponse.serializer(), text("diary"))
 
-    private class FakeDiary(var answer: (String?) -> DiaryResponse) : DiaryApi {
+    private open class FakeDiary(var answer: (String?) -> DiaryResponse) : StubApi() {
         val askedFor = mutableListOf<String?>()
         override suspend fun diary(date: String?): DiaryResponse { askedFor += date; return answer(date) }
-        override suspend fun appointment(id: String): AppointmentResponse = error("not asked for here")
     }
 
     private val handled = mutableListOf<ApiError>()
@@ -73,6 +71,22 @@ class DiaryViewModelTest {
         model.show(next)
         assertEquals(listOf(null, next), api.askedFor)
         assertEquals(next, model.state.value.response?.date)
+    }
+
+    /** Found by the emulator test: it tapped a day, then Block time before the
+     *  day had loaded, and blocked the day that was still on screen. */
+    @Test fun `what is done next is about the day asked for, not the one still on screen`() = runTest {
+        val next = IsoDay.shift(day.date, 1)
+        val slow = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val api = object : FakeDiary({ day }) {
+            override suspend fun diary(date: String?): DiaryResponse { if (date != null) slow.await(); return super.diary(date) }
+        }
+        val model = model(api)
+        assertEquals(day.date, model.state.value.dayInHand)
+        model.show(next)
+        assertEquals(day.date, model.state.value.response?.date) // still on screen, dimmed
+        assertEquals(next, model.state.value.dayInHand)
+        slow.complete(Unit)
     }
 
     @Test fun `tapping the day already shown asks nothing`() = runTest {

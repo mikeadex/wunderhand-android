@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,13 +31,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -47,11 +56,17 @@ import com.wunderhand.core.AppointmentResponse
 import com.wunderhand.core.Bill
 import com.wunderhand.core.DiaryWords
 import com.wunderhand.core.Durations
-import com.wunderhand.core.Loadable
+import com.wunderhand.core.ActionWords
+import com.wunderhand.core.Arrival
+import com.wunderhand.core.CloseOutcome
 import com.wunderhand.core.RepeatOptions
 import com.wunderhand.core.SeriesView
 import com.wunderhand.core.ShopClock
+import com.wunderhand.design.ConfirmDialog
+import com.wunderhand.design.InkButton
+import com.wunderhand.design.PrimaryButton
 import com.wunderhand.design.RowDivider
+import com.wunderhand.design.WordsButton
 import com.wunderhand.design.SkeletonBlock
 import com.wunderhand.design.WHCard
 import com.wunderhand.design.WHColors
@@ -60,9 +75,11 @@ import com.wunderhand.design.WHIcons
 import com.wunderhand.design.WHType
 import com.wunderhand.design.liftSmall
 import com.wunderhand.network.ApiError
-import com.wunderhand.network.DiaryApi
+import com.wunderhand.network.WunderhandApi
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.Duration
 import java.time.Instant
 
 /**
@@ -72,28 +89,32 @@ import java.time.Instant
  * The order is the order of the job: who and when, then the money — "what do
  * I take?" is asked with the client at the desk — then anything that has to
  * happen before they sit down, what is known about them, and last whether it
- * repeats. What can be done to it — check out, move, cancel — arrives with
- * the diary's actions, in A2.
+ * repeats. The actions sit pinned underneath: the one filled button means
+ * forward; ending an appointment badly is quiet red words.
+ *
+ * @param changed the day underneath is no longer what it was.
  */
 @Composable
-fun AppointmentSheet(id: String, api: DiaryApi, clock: ShopClock, handle: suspend (ApiError) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    var loaded by remember(id) { mutableStateOf<Loadable<AppointmentResponse>>(Loadable.Loading) }
+fun AppointmentSheet(
+    id: String, api: WunderhandApi, clock: ShopClock, changed: suspend () -> Unit, handle: suspend (ApiError) -> Unit,
+    onClose: () -> Unit, modifier: Modifier = Modifier,
+) {
+    val model = remember(id) { AppointmentModel(id, api, clock, changed, handle) }
+    val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val now by rememberNow()
+    // Moving it is a second screen within the sheet, swapped in place.
+    var isRescheduling by rememberSaveable(id) { mutableStateOf(false) }
 
-    suspend fun load() {
-        loaded = Loadable.Loading
-        loaded = try {
-            Loadable.Loaded(api.appointment(id))
-        } catch (error: ApiError) {
-            if (error is ApiError.Unauthorized || error is ApiError.NotMember || error is ApiError.UpgradeRequired) handle(error)
-            Loadable.Failed(error.message)
-        }
+    LaunchedEffect(id) { model.load() }
+
+    val response = state.response
+    if (isRescheduling && response != null) {
+        RescheduleScreen(response.appointment, model, state, onDone = { isRescheduling = false; model.forgetSlots() }, modifier)
+        return
     }
-    LaunchedEffect(id) { load() }
 
     Column(modifier.fillMaxSize().background(WHColors.Bg).testTag("appointmentSheet")) {
-        val response = loaded.valueOrNull
         Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 20.dp).heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Box(
                 Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClose).semantics { contentDescription = "Close appointment" }.testTag("closeAppointment"),
@@ -104,13 +125,17 @@ fun AppointmentSheet(id: String, api: DiaryApi, clock: ShopClock, handle: suspen
         }
         RowDivider()
 
-        when (val state = loaded) {
-            is Loadable.Loaded -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 32.dp)) {
-                AppointmentBody(state.value, clock)
+        when {
+            response != null -> {
+                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 24.dp)) {
+                    state.notice?.let { NoticeLine(it, Modifier.padding(bottom = 16.dp)) }
+                    AppointmentBody(response, model, state)
+                }
+                AppointmentActions(response, model, state, now, onReschedule = { isRescheduling = true })
             }
-            is Loadable.Failed -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(state.message, style = WHType.Body, color = WHColors.Neutral800)
-                TextButton("Try again", WHColors.Ink, { scope.launch { load() } })
+            state.loadFailure != null -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(state.loadFailure.orEmpty(), style = WHType.Body, color = WHColors.Neutral800)
+                TextButton("Try again", WHColors.Ink, { scope.launch { model.load() } })
             }
             else -> Column(Modifier.padding(20.dp).semantics { contentDescription = "Loading the appointment" }, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 SkeletonBlock(12.dp, width = 180.dp)
@@ -123,8 +148,85 @@ fun AppointmentSheet(id: String, api: DiaryApi, clock: ShopClock, handle: suspen
     }
 }
 
+/** What happened, or why it did not: a dot and a sentence above the appointment. */
 @Composable
-private fun AppointmentBody(response: AppointmentResponse, clock: ShopClock) {
+fun NoticeLine(notice: Notice, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        modifier.fillMaxWidth().then(if (notice.isProblem) Modifier else Modifier.liftSmall(shape)).clip(shape)
+            .background(if (notice.isProblem) WHColors.Accent100 else WHColors.Surface).padding(horizontal = 14.dp, vertical = 10.dp)
+            // Said as it appears, so somebody who cannot see the sheet change still hears that it did.
+            .semantics { liveRegion = LiveRegionMode.Polite }.testTag("sheetNotice"),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(Modifier.padding(top = 6.dp).size(7.dp).clip(CircleShape).background(if (notice.isProblem) WHColors.Accent else WHColors.Ink))
+        Text(notice.text, Modifier.weight(1f), style = WHType.Summary, color = WHColors.Ink)
+    }
+}
+
+/**
+ * What can be done to the appointment now, pinned under it (chairtime
+ * AppointmentDetail's footer). Check out arrives with the till, in A6, and
+ * "Book them again" with new bookings, in A3.
+ */
+@Composable
+private fun AppointmentActions(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, now: Instant, onReschedule: () -> Unit) {
+    val appt = response.appointment
+    val scope = rememberCoroutineScope()
+    var confirming by remember { mutableStateOf<CloseOutcome?>(null) }
+    val idle = state.busy == null
+
+    RowDivider()
+    Column(Modifier.fillMaxWidth().background(WHColors.Bg).padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 14.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (appt.isClosed) {
+            Text(ActionWords.closedLine(appt.status, appt.completedAt, appt.startsAt, model.clock), Modifier.padding(vertical = 6.dp).testTag("closedLine"), style = WHType.Summary, color = WHColors.Neutral700)
+            return@Column
+        }
+
+        if (Arrival.hasArrived(appt.startsAt, now)) {
+            PrimaryButton("Mark done", { scope.launch { model.close(CloseOutcome.Completed) } }, Modifier.testTag("markDone"), enabled = idle, loading = state.busy == SheetAction.Done)
+        } else {
+            // Not offered rather than offered and refused: marking a future
+            // appointment done counts a visit that has not happened.
+            val opens = model.clock.time(appt.startsAt.minus(Duration.ofMinutes(Arrival.EARLY_MINUTES)))
+            Text(
+                buildAnnotatedString {
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = WHColors.Ink)) { append("Mark done opens when they arrive") }
+                    append(" — from $opens on the day.")
+                },
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(WHColors.Well).padding(horizontal = 16.dp, vertical = 12.dp).testTag("opensLater"),
+                style = WHType.Summary, color = WHColors.Neutral700,
+            )
+        }
+
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            WordsButton("Reschedule", onReschedule, Modifier.testTag("reschedule"), enabled = idle)
+            Row {
+                if (Arrival.hasStarted(appt.startsAt, now)) {
+                    WordsButton("Did not turn up", { confirming = CloseOutcome.NoShow }, Modifier.testTag("noShow"), color = WHColors.Accent, enabled = idle, loading = state.busy == SheetAction.NoShow)
+                }
+                WordsButton("Cancel appointment", { confirming = CloseOutcome.Cancelled }, Modifier.testTag("cancelAppointment"), color = WHColors.Accent, enabled = idle, loading = state.busy == SheetAction.Cancel)
+            }
+        }
+    }
+
+    confirming?.let { outcome ->
+        val first = appt.clientName?.substringBefore(' ') ?: "the client"
+        ConfirmDialog(
+            title = if (outcome == CloseOutcome.NoShow) "${appt.displayName} did not turn up?" else "Cancel ${appt.displayName}’s appointment?",
+            message = if (outcome == CloseOutcome.NoShow) "This cancels the booking, counts against $first and keeps any deposit they paid."
+            else "It comes out of the diary, and a deposit paid online is refunded in full.",
+            confirm = if (outcome == CloseOutcome.NoShow) "Record a no-show" else "Cancel appointment",
+            onConfirm = { scope.launch { model.close(outcome) } },
+            onDismiss = { confirming = null },
+        )
+    }
+}
+
+@Composable
+private fun AppointmentBody(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState) {
+    val clock = model.clock
     val appt = response.appointment
     val currency = appt.currency
 
@@ -142,10 +244,10 @@ private fun AppointmentBody(response: AppointmentResponse, clock: ShopClock) {
     response.bill?.let { BillCard(it, appt, Modifier.padding(top = 20.dp)) }
     if (appt.depositState == "uncollected" && !appt.isClosed) MissedDeposit(response, Modifier.padding(top = 12.dp))
     appt.project?.let { ProjectCard(it, currency, Modifier.padding(top = 12.dp)) }
-    if (appt.needsConsent && appt.clientId != null && !appt.isClosed) ConsentSection(response, Modifier.padding(top = 20.dp))
+    if (appt.needsConsent && appt.clientId != null && !appt.isClosed) ConsentSection(response, model, state, Modifier.padding(top = 20.dp))
     if (response.replies.isNotEmpty()) RepliesSection(response, clock, Modifier.padding(top = 20.dp))
     if (appt.standingFormula != null || appt.clientNotes != null) OnFileSection(appt, Modifier.padding(top = 20.dp))
-    response.series?.let { SeriesCard(it, appt, clock, Modifier.padding(top = 20.dp)) }
+    RepeatSection(response, model, state, Modifier.padding(top = 20.dp))
 }
 
 @Composable
@@ -261,10 +363,11 @@ private fun ProjectCard(project: AppointmentDetail.Project, currency: String, mo
 }
 
 /** A form still to go through, signed in the chair. The words themselves are
- *  shown; recording that they signed arrives with the diary's actions, in A2. */
+ *  shown: a button beside no wording would attest to a document nobody saw. */
 @Composable
-private fun ConsentSection(response: AppointmentResponse, modifier: Modifier = Modifier) {
-    SheetSection("Consent form still needed", modifier, accent = true) {
+private fun ConsentSection(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    SheetSection("Consent form still needed", modifier.testTag("consent"), accent = true) {
         val wording = response.consentWording
         if (wording == null) {
             Text(
@@ -273,12 +376,13 @@ private fun ConsentSection(response: AppointmentResponse, modifier: Modifier = M
             )
         } else {
             val first = response.appointment.clientName?.substringBefore(' ') ?: "the client"
-            Text("Go through this with $first before they sit down.", style = WHType.Summary, color = WHColors.Ink)
+            Text("Go through this with $first and record it once they have signed.", style = WHType.Summary, color = WHColors.Ink)
             // Scrollable rather than cut short: an abridged consent form is not the form.
             Box(Modifier.fillMaxWidth().heightIn(max = 220.dp).clip(RoundedCornerShape(10.dp)).background(WHColors.Bg).verticalScroll(rememberScrollState()).padding(12.dp)) {
                 Text(wording.body, style = WHType.CardMeta.copy(lineHeight = WHType.Body.lineHeight), color = WHColors.Ink)
             }
             Text("Version ${wording.version} — what gets recorded against their name.", style = WHType.Meta, color = WHColors.Neutral700)
+            InkButton("They have read and signed this", { scope.launch { model.recordConsent() } }, Modifier.fillMaxWidth().testTag("recordConsent"), enabled = state.busy == null, loading = state.busy == SheetAction.Consent)
         }
     }
 }
@@ -310,12 +414,61 @@ private fun OnFileSection(appt: AppointmentDetail, modifier: Modifier = Modifier
     }
 }
 
-/** Once repeating: the dates booked and the dates that could not be
- *  (chairtime `SeriesCard.tsx`). Starting and stopping a repeat is A2's. */
+/**
+ * "Same time in N weeks?" and, once repeating, the dates booked, the dates
+ * that could not be, and the way to stop (chairtime `SeriesCard.tsx`).
+ */
 @Composable
-private fun SeriesCard(series: SeriesView, appt: AppointmentDetail, clock: ShopClock, modifier: Modifier = Modifier) {
+private fun RepeatSection(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, modifier: Modifier = Modifier) {
+    val appt = response.appointment
+    // Nothing to offer a walk-in, or an appointment that did not happen.
+    val canRepeat = appt.clientId != null && appt.status !in setOf("cancelled", "no_show", "expired", "held") && response.repeatOptions != null
+    val series = response.series
+    when {
+        series != null -> SeriesCard(series, response, canRepeat, model, state, modifier)
+        canRepeat -> SheetSection("Book this again?", modifier.testTag("repeat")) { RepeatForm(response.repeatOptions!!, model, state) }
+    }
+}
+
+@Composable
+private fun RepeatForm(options: RepeatOptions, model: AppointmentModel, state: AppointmentState) {
+    val scope = rememberCoroutineScope()
+    var weeks by rememberSaveable { mutableStateOf<Int?>(null) }
+    var choosing by remember { mutableStateOf(false) }
+    val chosen = weeks ?: options.suggestedWeeks
+    val shape = RoundedCornerShape(9.dp)
+
+    Text("Same time, same person. The next ${options.keepAhead} are booked now, and another as each one passes.", style = WHType.CardMeta, color = WHColors.Neutral700)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.weight(1f)) {
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(shape).background(WHColors.Bg).border(1.dp, WHColors.Divider, shape)
+                    .clickable(role = Role.DropdownList) { choosing = true }
+                    .semantics { contentDescription = "How often: ${RepeatOptions.label(chosen)}" }.padding(horizontal = 12.dp).testTag("repeatEvery"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(RepeatOptions.label(chosen), Modifier.weight(1f).clearAndSetSemantics { }, style = WHType.Medium14, color = WHColors.Ink)
+                WHIcon(WHIcons.ChevronsUpDown, size = 14.dp, tint = WHColors.Ink)
+            }
+            DropdownMenu(choosing, onDismissRequest = { choosing = false }, containerColor = WHColors.Surface) {
+                for (option in options.intervals) {
+                    DropdownMenuItem(text = { Text(RepeatOptions.label(option), style = WHType.Medium14, color = WHColors.Ink) }, onClick = { weeks = option; choosing = false })
+                }
+            }
+        }
+        InkButton("Repeat", { scope.launch { model.startRepeat(chosen) } }, Modifier.testTag("startRepeat"), enabled = state.busy == null, loading = state.busy == SheetAction.RepeatStart)
+    }
+}
+
+@Composable
+private fun SeriesCard(series: SeriesView, response: AppointmentResponse, canRepeat: Boolean, model: AppointmentModel, state: AppointmentState, modifier: Modifier = Modifier) {
+    val appt = response.appointment
+    val clock = model.clock
+    val scope = rememberCoroutineScope()
+    var confirmingCancel by remember { mutableStateOf(false) }
     val booked = series.upcoming.filter { it.appointmentId != appt.id }
     val title = if (series.active) "Repeats · ${RepeatOptions.label(series.intervalWeeks).lowercase()}" else DiaryWords.seriesEnded(series.endedReason, series.staffName)
+
     SheetSection(title, modifier.testTag("series")) {
         for (occurrence in booked) {
             Row {
@@ -323,7 +476,6 @@ private fun SeriesCard(series: SeriesView, appt: AppointmentDetail, clock: ShopC
                 Text(series.localTime, style = WHType.Body, color = WHColors.Neutral700)
             }
         }
-        if (booked.isEmpty() && series.skipped.isEmpty()) Text("Nothing further is booked yet.", style = WHType.CardMeta, color = WHColors.Neutral700)
         if (series.skipped.isNotEmpty()) {
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(WHColors.Accent100).padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Not booked", style = WHType.CardMeta.copy(fontWeight = FontWeight.Medium), color = WHColors.Accent)
@@ -332,6 +484,28 @@ private fun SeriesCard(series: SeriesView, appt: AppointmentDetail, clock: ShopC
                 }
             }
         }
+        if (series.active) {
+            Column {
+                WordsButton("Stop repeating", { scope.launch { model.stopRepeat(cancelUpcoming = false) } }, Modifier.testTag("stopRepeat"), enabled = state.busy == null, loading = state.busy == SheetAction.RepeatStop)
+                if (series.after.isNotEmpty()) {
+                    val count = if (series.after.size == 1) "one" else "${series.after.size}"
+                    WordsButton("Stop and cancel the $count booked after this", { confirmingCancel = true }, color = WHColors.Accent, enabled = state.busy == null, loading = state.busy == SheetAction.RepeatStopAndCancel)
+                }
+            }
+        } else if (canRepeat) {
+            // Stopped is not final: the same appointment can start again.
+            RepeatForm(response.repeatOptions!!, model, state)
+        }
+    }
+
+    if (confirmingCancel) {
+        ConfirmDialog(
+            title = "Stop repeating and cancel the ${series.after.size} booked after this?",
+            message = "Those appointments come out of the diary. This one stays.",
+            confirm = "Stop and cancel them", keep = "Keep them",
+            onConfirm = { scope.launch { model.stopRepeat(cancelUpcoming = true) } },
+            onDismiss = { confirmingCancel = false },
+        )
     }
 }
 

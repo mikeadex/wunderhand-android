@@ -7,7 +7,7 @@ import com.wunderhand.core.ChairtimeJson
 import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.network.ApiError
-import com.wunderhand.network.WunderhandApi
+import com.wunderhand.app.support.StubApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -30,19 +30,15 @@ class SignInFormTest {
 
     private val kit = ChairtimeJson.decodeFromString(Me.serializer(), checkNotNull(javaClass.getResourceAsStream("/me.json")).bufferedReader().use { it.readText() })
 
-    private class Api(val accepts: Boolean, val me: Me) : WunderhandApi {
+    private class Api(val accepts: Boolean, val me: Me) : StubApi() {
         var sent: Pair<String, String>? = null
-        override var hasToken = false
-        override var tenantId: String? = null
+        init { hasToken = false }
         override suspend fun signIn(email: String, password: String) {
             sent = email to password
             if (!accepts) throw ApiError.SignInRefused("That email and password do not match. Try again.")
             hasToken = true
         }
-        override suspend fun signOut() { hasToken = false }
         override suspend fun me() = me
-        override suspend fun diary(date: String?) = error("not asked for")
-        override suspend fun appointment(id: String) = error("not asked for")
     }
 
     private object NoSettings : Settings {
