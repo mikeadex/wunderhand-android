@@ -4,6 +4,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -124,6 +125,7 @@ class DiaryTest {
         booksAWalkInAndCancelsIt()
         looksSomebodyUpAndAddsAndRemovesAClient()
         putsAServiceOnTheMenuAndTakesItOff()
+        walksTheShop()
         signOut()
     }
 
@@ -379,10 +381,98 @@ class DiaryTest {
         assertTrue("no refusal was shown", !isOnScreen("diaryActionProblem"))
     }
 
+    /**
+     * The Shop tab: the index and what each row says, a rule refused before it
+     * is sent and then saved as it was, a week of hours, somebody on the team,
+     * an outlet with its travel fees — and the two ways out, looked at and not
+     * taken: this login and this shop are the ones a store's reviewer signs in to.
+     */
+    private fun walksTheShop() {
+        app.onNodeWithTag("tab-Shop").performClick()
+        waitFor("shopTeam")
+        everyControlSaysWhatItIs("the shop")
+        // What the shop is on, and nothing about what that costs: the app never names a price for Wunderhand itself.
+        val plan = app.onNodeWithTag("shopPlan").performScrollTo().fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ")
+        assertTrue("the plan row counts seats and outlets: $plan", "seat" in plan && "outlet" in plan)
+        assertTrue("the plan row names no price: $plan", "£" !in plan && "month" !in plan.lowercase())
+
+        /** Open a row; look; come back. Beside the index, on a tablet, there is nothing to come back from. */
+        fun visit(row: String, page: String, look: () -> Unit) {
+            app.onNodeWithTag(row).performScrollTo().performClick()
+            waitFor("$page-heading")
+            look()
+            everyControlSaysWhatItIs(page)
+            if (isOnScreen("$page-close")) { app.onNodeWithTag("$page-close").performScrollTo().performClick(); waitFor("shopTeam") }
+        }
+
+        visit("shopRules", "rules") {
+            waitFor("field-noticeHours")
+            val was = app.onNodeWithTag("field-noticeHours").fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty()
+            app.onNodeWithTag("field-noticeHours").performScrollTo().performTextReplacement("soon")
+            app.onNodeWithTag("field-noticeHours").performImeAction()
+            app.waitForIdle()
+            app.onNodeWithTag("rules-save").performClick()
+            app.onNodeWithTag("rulesProblem").assertTextContains("Least notice must be a whole number")
+            // Put back as it was found, and saved: the same six numbers, so the shop is as it was.
+            app.onNodeWithTag("field-noticeHours").performScrollTo().performTextReplacement(was)
+            app.onNodeWithTag("field-noticeHours").performImeAction()
+            app.waitForIdle()
+            app.onNodeWithTag("rules-save").performClick()
+            app.waitUntil(20_000) { isOnScreen("savedLine") }
+        }
+
+        visit("shopHours", "hours") {
+            app.waitUntil(20_000) { anyOnScreen("day-") }
+            assertTrue("seven days", app.onAllNodes(tagStartsWith("day-")).fetchSemanticsNodes().size == 7)
+        }
+
+        visit("shopReminders", "reminders") { waitFor("reminder-3") }
+
+        visit("shopTeam", "team") {
+            app.waitUntil(20_000) { anyOnScreen("teamPerson") }
+            // Somebody with no name is not somebody: said before chairtime hears of it.
+            app.onNodeWithTag("team-save").performClick()
+            waitFor("savePerson")
+            everyControlSaysWhatItIs("the person form")
+            app.onNodeWithTag("savePerson").performClick()
+            app.onNodeWithTag("personFormProblem").assertTextContains("A name is needed")
+            app.onNodeWithTag("personForm-close").performScrollTo().performClick()
+            app.waitUntil(10_000) { !isOnScreen("savePerson") }
+
+            app.onAllNodesWithTag("teamPerson").onFirst().performClick()
+            waitFor("personStatus")
+            everyControlSaysWhatItIs("somebody's page")
+            app.onNodeWithTag("person-close").performScrollTo().performClick()
+            app.waitUntil(20_000) { anyOnScreen("teamPerson") }
+        }
+
+        visit("shopOutlets", "outlets") {
+            app.waitUntil(20_000) { anyOnScreen("outletCard") }
+            // The list has no travel fees; the form is fetched with them.
+            app.onAllNodesWithTag("outletCard").onFirst().performClick()
+            waitFor("saveOutlet")
+            everyControlSaysWhatItIs("the outlet form")
+            app.onNodeWithTag("outletForm-close").performScrollTo().performClick()
+            app.waitUntil(10_000) { !isOnScreen("saveOutlet") }
+        }
+
+        // The ways out. Read, and left alone: nothing is typed, so neither button can be pressed.
+        visit("shopAccount", "account") {
+            app.onNodeWithTag("accountPassword").performScrollTo().assertExists()
+            app.onNodeWithTag("deleteLogin").assertIsNotEnabled()
+        }
+        visit("shopClose", "closeShop") {
+            app.waitUntil(20_000) { isOnScreen("closeUpcoming") || isOnScreen("closureWaiting") || isOnScreen("shopClosed") }
+            if (isOnScreen("closeShopButton")) app.onNodeWithTag("closeShopButton").assertIsNotEnabled()
+        }
+    }
+
     private fun signOut() {
         app.onNodeWithTag("tab-Shop").performClick()
         waitFor("signOut")
         app.onNodeWithTag("signOut").performScrollTo().performClick()
+        // Asked about first: it is one slip of a thumb from the row above it.
+        app.onNodeWithTag("confirm").performClick()
         waitFor("signIn")
     }
 

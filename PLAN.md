@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 to A4 built** · 18 September 2026 · see [Progress](#progress) at the end
+Status: **A0 to A5 built** · 18 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -528,6 +528,27 @@ unfolded.
 | **From your contacts — a number, not a contact** | Built first with `PickContact`, which failed on the emulator: Android's grant for a picked contact covers its own row — a name — and reading its numbers is a `SecurityException` without permission to read every contact on the phone. So it picks a *number* (`ACTION_PICK` on `Phone.CONTENT_TYPE`), which comes with the name: what a shop knows a client by, and the number *they* chose rather than one guessed from a label. Email and date of birth are typed. Still no permission, still nothing to declare. Checked with a made-up contact: "Filled the name and mobile from your contacts. Check them before adding." |
 | Found by running it | `androidx.biometric` 1.1.0 brings `fragment` 1.2, which is older than the Activity Result API and throws "Can only use lower 16 bits for requestCode" the moment anything is launched for a result. `fragment` is now named in the catalog, with why. · `MainActivity` is a `FragmentActivity` only because the biometric prompt asks for one. |
 | Left in the dev branch by the test | One access-log line per run (opening medical notes is a reading, and is written down — that is the feature), and hidden "Zz Android Test" clients: removing a client hides them, as it should. |
+
+### A5: Menu and Shop, with editing and the ways out (built 18 September 2026)
+The Menu tab and the Shop tab, whole: a service made, shaped and archived from the phone; hours,
+rules, policy, reminders, the team and the outlets; and the two ways out. 295 JVM tests; the
+emulator test now puts a service on the menu — steps with a gap in the middle, somebody to do it,
+an extra made and retired — and takes it off again, then walks every Shop screen, folded and
+unfolded. Built in four commits: types and calls, Menu, Shop, leaving.
+
+| | |
+|---|---|
+| `:core` | `Menu.kt`, `Shop.kt`, `Leaving.kt`, decoded from the twelve menu and shop fixtures. The index row words, `TeamWords`, `OutletWords`, `ReminderWords` and `LeavingWords` are the web's and the iPhone's, word for word. `ServiceDraft`, `StepDraft` and `OutletDraft` turn what was typed into what chairtime wants, or name the field they could not read. |
+| `:network` | `MenuApi`, `ShopApi`, `LeavingApi` — 39 calls. `not_owner` comes back as its own case with chairtime's sentence. |
+| Menu | The list with its two warnings ("nobody can book", "not online"); a service's page as the hub, with "Change" on each part; the form shows a field only when it means something (an hourly rate for "by the hour", limits for "a range"); steps are added, moved and removed freely and saved whole, with the bar redrawn as they are typed and "35m is sellable" under it; performers; extras, where one can be changed as well as made and retired. Unfolded, the menu keeps its own pane and the service opens beside it. |
+| Shop | The index in the web's groups, each row carrying its one fact; on a tablet it keeps its pane and the screen opens beside it. Hours use Material's clock, as wall-clock "HH:MM" and never an instant. A day that closes before it opens is said against its row; chairtime's "days.2.closesAt" is turned back into the day it meant. Rows that open the web say so to a screen reader. |
+| **The ownership rule** | Read from the session, never from a loaded screen, so nothing opens as an owner's for a moment. `ade@` gets "Your work" — their own hours, their own prices — and no row that leads to a refusal. A place saved from before somebody stopped being an owner shows `OwnerOnlyNote` and **creates no view model, so asks chairtime nothing**. The performers editor builds a non-owner's single row from the service it was handed (tested: no call at all). Checked against chairtime's routes: every owner-only call in the app is behind an owner-only screen. |
+| **The billing rule** | The Plan row counts seats and outlets and leads nowhere; the emulator test fails if it ever contains "£" or "month". A new outlet "is added to your shop's plan"; an invitation says a seat is charged from when it is sent. Neither says what that costs. |
+| **The ways out** | *Your login*: what stays is said before the button is offered; the password typed again; one more press. *Close this shop*: what is still booked (in red when anything is), when the records go, the password, the address typed out — which is chairtime's to check, so it is sent as typed — and one more press. The partner flow: requester takes it back; a partner agrees with their own password or ends it; somebody who agreed can change their mind. **The password lives in memory only**: never saved state, let go of after every attempt whatever the answer, when the screen goes, and on `ON_STOP` — what this guards against is an unlocked phone on a counter. |
+| Forms and the system | The service, person and outlet forms keep what is typed in `SavedStateHandle`. The four settings screens do not: they are a few numbers loaded from chairtime, kept across a fold by their ViewModel and looked at afresh each time they are opened (a visit counter, so turning the phone is not a visit). Process death there loses a typed number — a candidate for A8 if it proves to matter. |
+| Found by running it | **The keyboard inset.** A form inside the tab bar floated a tab bar's height above the keyboard: the inset is measured from the bottom of the window and the page does not reach it. Taking the bar's height off then hid the button by exactly the gesture bar, which the scaffold had already taken off. `MainScaffold` now measures what is below the page, reads what is already consumed, and consumes the difference — flush to the pixel, and nothing taken off beside a rail. · Number pads have no way to be put away, so every money and number field has Done. · A footer beside a rail ran under the gesture bar. · Tags inside a bottom sheet are not resource ids (a sheet is its own window), which matters only to `adb`. |
+| **Not run** | Both ways out were read on the emulator and never pressed: `kit@fold.example` and Fold Barbers are what Apple's reviewer signs in to. They are covered by unit tests against a stub and by the network tests' paths and bodies. **Still to do before release: press them for real against a throwaway shop** — as the plan said, and for the same reason. Adding a person was likewise stopped at the form's own refusal, so the dev shop does not grow by a suspended "Zz" person a run. |
+| Left in the dev branch by the test | One archived "Zz Android Test" service and one retired extra per run, both hidden, as they should be. Booking rules are saved as they were found. |
 
 ### Running it locally
 ```sh
