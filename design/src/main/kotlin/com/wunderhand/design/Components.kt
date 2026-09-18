@@ -84,11 +84,12 @@ fun Lockup(modifier: Modifier = Modifier, fontSize: Double = 22.0) {
  * took stays red, with its ring, and takes no second tap.
  */
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, loading: Boolean = false) {
+fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, loading: Boolean = false, fill: Boolean = true) {
     Box(
         modifier
-            .fillMaxWidth()
-            .heightIn(min = 50.dp)
+            // As wide as its row by default; as wide as its words in a header beside other things.
+            .then(if (fill) Modifier.fillMaxWidth() else Modifier)
+            .heightIn(min = if (fill) 50.dp else 48.dp)
             .clip(Card)
             .background(WHColors.Accent.copy(alpha = if (enabled || loading) 1f else 0.45f))
             .clickable(enabled = enabled && !loading, role = Role.Button, onClick = onClick)

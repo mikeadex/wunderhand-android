@@ -125,6 +125,43 @@ class DiaryChangesTest {
         assertNull(model.state.value.actionProblem)
     }
 
+    @Test fun `a booking made goes to its day and opens there`() = runTest {
+        val api = Shop()
+        val model = model(api)
+        model.startBooking(com.wunderhand.app.features.booking.NewBookingStart())
+        val elsewhere = IsoDay.shift(day.date, 5)
+        model.booked(com.wunderhand.core.BookingCreated("b1", "new-appointment", Instant.parse("2026-09-21T10:00:00Z"), elsewhere))
+        val state = model.state.value
+        assertNull(state.newBooking)
+        assertEquals("new-appointment", state.openAppointmentId)
+        assertEquals(elsewhere, state.date)
+    }
+
+    @Test fun `a tap on somebody's empty column books them there, on the shop's grid`() = runTest {
+        val member = day.team.members.first { it.day.open.isNotEmpty() }
+        val opens = member.day.open.first().start
+        // Long before the day in the fixture, so the time has not passed.
+        val model = DiaryViewModel(me, Shop(), OfflineCache(File(folder.root, "offline")), handle = {}, io = dispatcher, now = { Instant.parse("2020-01-01T00:00:00Z") })
+        model.bookAt(member, minutesFromGridStart = 52, gridStart = opens)
+        val start = model.state.value.newBooking!!
+        assertEquals(member.id, start.staffId)
+        val step = member.day.slotIntervalMinutes
+        assertEquals(opens.plusSeconds((52 / step * step) * 60L), start.slot)
+    }
+
+    @Test fun `a tap on time that has passed, or that they do not work, brings only the person`() = runTest {
+        val member = day.team.members.first { it.day.open.isNotEmpty() }
+        val opens = member.day.open.first().start
+        val passed = DiaryViewModel(me, Shop(), OfflineCache(File(folder.root, "a")), handle = {}, io = dispatcher, now = { Instant.parse("2099-01-01T00:00:00Z") })
+        passed.bookAt(member, 60, opens)
+        assertEquals(member.id, passed.state.value.newBooking?.staffId)
+        assertNull(passed.state.value.newBooking?.slot)
+
+        val before = DiaryViewModel(me, Shop(), OfflineCache(File(folder.root, "b")), handle = {}, io = dispatcher, now = { Instant.parse("2020-01-01T00:00:00Z") })
+        before.bookAt(member, 0, opens.minusSeconds(3 * 3600))
+        assertNull(before.state.value.newBooking?.slot)
+    }
+
     @Test fun `time blocked on another day goes to that day, and on this one reloads it`() = runTest {
         val api = Shop()
         val model = model(api)

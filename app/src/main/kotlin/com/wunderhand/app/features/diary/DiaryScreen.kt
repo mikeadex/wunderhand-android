@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -56,8 +57,12 @@ import com.wunderhand.app.app.LocalReachability
 import com.wunderhand.core.DaySummary
 import com.wunderhand.core.Me
 import com.wunderhand.core.SignalWords
+import com.wunderhand.app.features.booking.NewBookingScreen
+import com.wunderhand.app.features.booking.NewBookingStart
+import com.wunderhand.app.features.booking.NewBookingViewModel
 import com.wunderhand.design.FooterBar
-import com.wunderhand.design.SecondaryButton
+import com.wunderhand.design.PrimaryButton
+import com.wunderhand.design.liftSmall
 import com.wunderhand.design.WHIcon
 import com.wunderhand.design.WHIcons
 import com.wunderhand.design.WHType
@@ -141,10 +146,19 @@ fun DiaryScreen(app: AppModel, me: Me) {
                         }
                     }
                 }
-                // The web's phone footer. "New booking" joins it in A3; until then
-                // the one thing it does is block time off.
-                if (!wide && state.response != null && state.members.isNotEmpty() && state.mode != DiaryMode.Week) {
-                    FooterBar { SecondaryButton("Block off time", { model.blockingTime(true) }, Modifier.fillMaxWidth().widthIn(max = 724.dp).testTag("blockTime")) }
+                // The web's phone footer: the one filled button books; the small one beside it blocks time off.
+                if (!wide && state.response != null && state.members.isNotEmpty()) {
+                    FooterBar {
+                        Row(Modifier.widthIn(max = 724.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            PrimaryButton("New booking", { model.startBooking(NewBookingStart()) }, Modifier.weight(1f).testTag("newBooking"))
+                            val shape = RoundedCornerShape(12.dp)
+                            Box(
+                                Modifier.size(width = 56.dp, height = 50.dp).liftSmall(shape).clip(shape).background(WHColors.Surface)
+                                    .clickable(role = Role.Button) { model.blockingTime(true) }.semantics { contentDescription = "Block off time" }.testTag("blockTime"),
+                                contentAlignment = Alignment.Center,
+                            ) { WHIcon(WHIcons.Menu, size = 20.dp, tint = WHColors.Ink) }
+                        }
+                    }
                 }
             }
 
@@ -152,7 +166,22 @@ fun DiaryScreen(app: AppModel, me: Me) {
             val open = state.openAppointmentId
             if (beside && open != null) {
                 Box(Modifier.fillMaxHeight().width(1.dp).background(WHColors.Divider))
-                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, Modifier.width(420.dp))
+                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, Modifier.width(420.dp), onRebook = model::startBooking)
+            }
+        }
+
+        state.newBooking?.let { start ->
+            ModalBottomSheet(
+                onDismissRequest = { model.startBooking(null) },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = WHColors.Bg, dragHandle = null,
+                // Room for the booking-so-far beside the steps on a tablet.
+                sheetMaxWidth = 980.dp,
+            ) {
+                val booking: NewBookingViewModel = viewModel(key = "booking-${start.id}") {
+                    NewBookingViewModel(start, app.client, model.clock, model.currency, app::handle, createSavedStateHandle())
+                }
+                NewBookingScreen(booking, onBooked = model::booked, onClose = { model.startBooking(null) })
             }
         }
 
@@ -173,7 +202,7 @@ fun DiaryScreen(app: AppModel, me: Me) {
                 containerColor = WHColors.Bg,
                 dragHandle = null,
             ) {
-                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) })
+                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, onRebook = model::startBooking)
             }
         }
     }
@@ -243,7 +272,7 @@ private fun ActionProblem(model: DiaryViewModel, state: DiaryState) {
     val problem = state.actionProblem ?: return
     Row(
         Modifier.fillMaxWidth().background(WHColors.Accent100).padding(start = 16.dp, end = 4.dp)
-            .semantics { liveRegion = LiveRegionMode.Assertive }.testTag("diaryActionProblem"),
+            .testTag("diaryActionProblem").semantics { liveRegion = LiveRegionMode.Assertive },
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(7.dp).clip(CircleShape).background(WHColors.Accent))

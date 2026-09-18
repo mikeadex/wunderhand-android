@@ -56,6 +56,7 @@ import com.wunderhand.core.AppointmentResponse
 import com.wunderhand.core.Bill
 import com.wunderhand.core.DiaryWords
 import com.wunderhand.core.Durations
+import com.wunderhand.app.features.booking.NewBookingStart
 import com.wunderhand.core.ActionWords
 import com.wunderhand.core.Arrival
 import com.wunderhand.core.CloseOutcome
@@ -97,7 +98,7 @@ import java.time.Instant
 @Composable
 fun AppointmentSheet(
     id: String, api: WunderhandApi, clock: ShopClock, changed: suspend () -> Unit, handle: suspend (ApiError) -> Unit,
-    onClose: () -> Unit, modifier: Modifier = Modifier,
+    onClose: () -> Unit, modifier: Modifier = Modifier, onRebook: (NewBookingStart) -> Unit = {},
 ) {
     val model = remember(id) { AppointmentModel(id, api, clock, changed, handle) }
     val state by model.state.collectAsStateWithLifecycle()
@@ -131,7 +132,7 @@ fun AppointmentSheet(
                     state.notice?.let { NoticeLine(it, Modifier.padding(bottom = 16.dp)) }
                     AppointmentBody(response, model, state)
                 }
-                AppointmentActions(response, model, state, now, onReschedule = { isRescheduling = true })
+                AppointmentActions(response, model, state, now, onReschedule = { isRescheduling = true }, onRebook)
             }
             state.loadFailure != null -> Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(state.loadFailure.orEmpty(), style = WHType.Body, color = WHColors.Neutral800)
@@ -156,7 +157,7 @@ fun NoticeLine(notice: Notice, modifier: Modifier = Modifier) {
         modifier.fillMaxWidth().then(if (notice.isProblem) Modifier else Modifier.liftSmall(shape)).clip(shape)
             .background(if (notice.isProblem) WHColors.Accent100 else WHColors.Surface).padding(horizontal = 14.dp, vertical = 10.dp)
             // Said as it appears, so somebody who cannot see the sheet change still hears that it did.
-            .semantics { liveRegion = LiveRegionMode.Polite }.testTag("sheetNotice"),
+            .testTag("sheetNotice").semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(Modifier.padding(top = 6.dp).size(7.dp).clip(CircleShape).background(if (notice.isProblem) WHColors.Accent else WHColors.Ink))
@@ -166,11 +167,10 @@ fun NoticeLine(notice: Notice, modifier: Modifier = Modifier) {
 
 /**
  * What can be done to the appointment now, pinned under it (chairtime
- * AppointmentDetail's footer). Check out arrives with the till, in A6, and
- * "Book them again" with new bookings, in A3.
+ * AppointmentDetail's footer). Check out arrives with the till, in A6.
  */
 @Composable
-private fun AppointmentActions(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, now: Instant, onReschedule: () -> Unit) {
+private fun AppointmentActions(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, now: Instant, onReschedule: () -> Unit, onRebook: (NewBookingStart) -> Unit) {
     val appt = response.appointment
     val scope = rememberCoroutineScope()
     var confirming by remember { mutableStateOf<CloseOutcome?>(null) }
@@ -179,7 +179,11 @@ private fun AppointmentActions(response: AppointmentResponse, model: Appointment
     RowDivider()
     Column(Modifier.fillMaxWidth().background(WHColors.Bg).padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 14.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (appt.isClosed) {
-            Text(ActionWords.closedLine(appt.status, appt.completedAt, appt.startsAt, model.clock), Modifier.padding(vertical = 6.dp).testTag("closedLine"), style = WHType.Summary, color = WHColors.Neutral700)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(ActionWords.closedLine(appt.status, appt.completedAt, appt.startsAt, model.clock), Modifier.weight(1f).padding(vertical = 6.dp).testTag("closedLine"), style = WHType.Summary, color = WHColors.Neutral700)
+                // Somebody to book again; a walk-in has nobody.
+                if (appt.clientId != null) InkButton("Book them again", { onRebook(NewBookingStart(clientId = appt.clientId, clientName = appt.clientName)) }, Modifier.testTag("bookThemAgain"))
+            }
             return@Column
         }
 

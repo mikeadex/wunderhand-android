@@ -355,3 +355,58 @@ class ActionCallsTest {
         server.takeRequest().let { assertEquals("DELETE", it.method); assertEquals("/api/v1/blocks/b1", it.url.encodedPath) }
     }
 }
+
+/** A new booking: what is asked for, and what a refusal comes back as. */
+class BookingCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun fixture(name: String) = checkNotNull(javaClass.getResourceAsStream("/$name.json")).bufferedReader().use { it.readText() }
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+    private fun reply(code: Int, body: String) = server.enqueue(MockResponse.Builder().code(code).body(body).build())
+    private val at = java.time.Instant.parse("2026-09-16T10:15:00Z")
+
+    @Test fun `slots ask for every extra, each by name`() = runTest {
+        reply(200, fixture("booking-slots"))
+        client().bookingSlots("s1", "p1", listOf("a1", "a2"), from = "2026-09-24")
+        val url = server.takeRequest().url
+        assertEquals("/api/v1/booking/slots", url.encodedPath)
+        assertEquals("s1", url.queryParameter("service"))
+        assertEquals("p1", url.queryParameter("staff"))
+        assertEquals(listOf("a1", "a2"), url.queryParameterValues("addon"))
+        assertEquals("2026-09-24", url.queryParameter("from"))
+    }
+
+    @Test fun `booking sends the choices and the instant`() = runTest {
+        reply(200, """{"bookingId":"b1","appointmentId":"a1","startsAt":"2026-09-16T10:15:00.000Z","date":"2026-09-16"}""")
+        val created = client().book("s1", "p1", at, clientId = "c1", addonIds = listOf("x"), overridePrerequisite = true)
+        val sent = server.takeRequest()
+        assertEquals("/api/v1/bookings", sent.url.encodedPath)
+        assertEquals("""{"serviceId":"s1","staffId":"p1","startsAt":"2026-09-16T10:15:00.000Z","clientId":"c1","addonIds":["x"],"overridePrerequisite":true}""", sent.body!!.utf8())
+        assertEquals("2026-09-16", created.date)
+    }
+
+    @Test fun `a walk-in is a booking with no client in it`() = runTest {
+        reply(200, """{"bookingId":"b1","appointmentId":"a1","startsAt":"2026-09-16T10:15:00.000Z","date":"2026-09-16"}""")
+        client().book("s1", "p1", at, clientId = null, addonIds = emptyList(), overridePrerequisite = false)
+        assertTrue("clientId" !in server.takeRequest().body!!.utf8())
+    }
+
+    @Test fun `a refused rule comes back by name, and a booking is never sent twice`() = runTest {
+        reply(422, """{"error":{"code":"too_young","message":"This service is for over-18s."}}""")
+        val error = try { client().book("s1", "p1", at, "c1", emptyList(), false); null } catch (e: ApiError) { e }
+        assertEquals("too_young", (error as ApiError.Ineligible).rule)
+        assertEquals("This service is for over-18s.", error.message)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun `the menu and a service are asked for where the web asks`() = runTest {
+        reply(200, fixture("booking-services")); reply(200, fixture("booking-service"))
+        val client = client()
+        assertTrue(client.bookingServices().services.isNotEmpty())
+        assertEquals("/api/v1/booking/services", server.takeRequest().url.encodedPath)
+        client.bookingService("s1")
+        assertEquals("/api/v1/booking/services/s1", server.takeRequest().url.encodedPath)
+    }
+}

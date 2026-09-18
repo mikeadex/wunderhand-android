@@ -53,6 +53,7 @@ import com.wunderhand.core.DaySummary
 import com.wunderhand.core.IsoDay
 import com.wunderhand.core.UncollectedDeposits
 import com.wunderhand.core.WeekDay
+import com.wunderhand.app.features.booking.NewBookingStart
 import com.wunderhand.design.AlertLine
 import com.wunderhand.design.Eyebrow
 import com.wunderhand.design.LoadBar
@@ -189,8 +190,10 @@ fun DiaryHeaderWide(model: DiaryViewModel, state: DiaryState, modifier: Modifier
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             if (!state.weekContainsToday) TextButton("Back to today", WHColors.Neutral700, model::showToday)
-            // "New booking", the filled one, joins this in A3.
-            if (state.members.isNotEmpty()) SecondaryButton("Block time", { model.blockingTime(true) }, Modifier.testTag("blockTime"), minHeight = 48.dp)
+            if (state.members.isNotEmpty()) {
+                SecondaryButton("Block time", { model.blockingTime(true) }, Modifier.testTag("blockTime"), minHeight = 48.dp)
+                PrimaryButton("New booking", { model.startBooking(NewBookingStart()) }, Modifier.testTag("newBooking"), fill = false)
+            }
             WHSegmented(
                 listOf(DiaryMode.Day to "Day", DiaryMode.Week to "Week", DiaryMode.List to "List"),
                 state.mode, model::setMode, Modifier.testTag("diaryMode"), compact = false,

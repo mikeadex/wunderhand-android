@@ -11,6 +11,8 @@ import com.wunderhand.core.OfflineCache
 import com.wunderhand.core.ShopClock
 import com.wunderhand.network.ApiError
 import com.wunderhand.network.WunderhandApi
+import com.wunderhand.app.features.booking.NewBookingStart
+import com.wunderhand.core.BookingCreated
 import com.wunderhand.core.DiaryAppointment
 import com.wunderhand.core.DiaryBreak
 import kotlinx.coroutines.CoroutineDispatcher
@@ -60,6 +62,8 @@ data class DiaryState(
     /** Why a move, a resize or an unblock was refused. */
     val actionProblem: String? = null,
     val isBlockingTime: Boolean = false,
+    /** A new booking being made, and where it was started from. */
+    val newBooking: NewBookingStart? = null,
 ) {
     val isShowingRequestedDay: Boolean get() = date == null || response?.date == date
 
@@ -117,6 +121,9 @@ class DiaryViewModel(
             mode = saved.get<String>("mode")?.let { name -> DiaryMode.entries.firstOrNull { it.name == name } } ?: DiaryMode.Day,
             focusStaffId = saved["focus"],
             openAppointmentId = saved["open"],
+            newBooking = saved.get<ArrayList<String>>("booking")?.let { f ->
+                NewBookingStart(f[0], f[1].ifEmpty { null }, f[2].toLongOrNull()?.let(Instant::ofEpochMilli), f[3].ifEmpty { null }, f[4].ifEmpty { null })
+            },
         ),
     )
     val state: StateFlow<DiaryState> = _state.asStateFlow()
@@ -222,6 +229,39 @@ class DiaryViewModel(
         _state.update { it.copy(isBlockingTime = false) }
         val s = _state.value
         if (on != (s.date ?: s.response?.date)) show(on) else load()
+    }
+
+    // endregion
+    // region A new booking
+
+    /** Start one: from the button (nothing chosen), somebody's column (who, and
+     *  perhaps when), or a finished appointment (who it is for). */
+    fun startBooking(start: NewBookingStart?) {
+        // Kept where the system can hand it back: a booking half made should survive a phone call.
+        saved["booking"] = start?.let { arrayListOf(it.id, it.staffId.orEmpty(), it.slot?.toEpochMilli()?.toString().orEmpty(), it.clientId.orEmpty(), it.clientName.orEmpty()) }
+        _state.update { it.copy(newBooking = start) }
+    }
+
+    /** A booking was made: close the flow, go to its day, and open it there. */
+    fun booked(created: BookingCreated) {
+        startBooking(null)
+        open(created.appointmentId)
+        val s = _state.value
+        if (created.date != (s.date ?: s.response?.date)) show(created.date) else load()
+    }
+
+    /**
+     * A tap on an empty stretch of somebody's column books them there. Snapped
+     * down to the shop's grid, as the web's column click is. The time comes
+     * along only if they are working then and it has not passed — otherwise
+     * the booking starts with just the person.
+     */
+    fun bookAt(member: DiaryMember, minutesFromGridStart: Int, gridStart: Instant) {
+        if (_state.value.response?.team?.isClosed == true) return
+        val interval = maxOf(member.day.slotIntervalMinutes, 1)
+        val at = gridStart.plusSeconds((maxOf(minutesFromGridStart, 0) / interval * interval) * 60L)
+        val working = member.day.open.any { it.start <= at && at < it.end }
+        startBooking(NewBookingStart(staffId = member.id, slot = at.takeIf { working && it > now() }))
     }
 
     // endregion

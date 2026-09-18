@@ -2,6 +2,11 @@ package com.wunderhand.network
 
 import com.wunderhand.core.AppointmentResponse
 import com.wunderhand.core.BlockCreated
+import com.wunderhand.core.BookingCreated
+import com.wunderhand.core.BookingRequest
+import com.wunderhand.core.BookingServiceResponse
+import com.wunderhand.core.BookingServicesResponse
+import com.wunderhand.core.BookingSlotsResponse
 import com.wunderhand.core.BlockRequest
 import com.wunderhand.core.CloseOutcome
 import com.wunderhand.core.CloseResponse
@@ -159,27 +164,44 @@ class ApiClient(
         delete<Ack>("api/v1/blocks/$id")
     }
 
+    // New booking
+
+    override suspend fun bookingServices(): BookingServicesResponse = get("api/v1/booking/services")
+
+    override suspend fun bookingService(id: String): BookingServiceResponse = get("api/v1/booking/services/$id")
+
+    override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?): BookingSlotsResponse =
+        // An extra is asked for once each: `addon=a&addon=b`, as the web's own form sends them.
+        send("GET", "api/v1/booking/slots", buildList {
+            add("service" to serviceId); add("staff" to staffId)
+            addonIds.forEach { add("addon" to it) }
+            from?.let { add("from" to it) }
+        }, null, BookingSlotsResponse.serializer())
+
+    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): BookingCreated =
+        post("api/v1/bookings", BookingRequest(serviceId, staffId, instant(startsAt), clientId, addonIds, overridePrerequisite))
+
     // endregion
     // region Plumbing
 
     suspend inline fun <reified T> get(path: String, query: Map<String, String> = emptyMap()): T =
-        send("GET", path, query, null, serializer<T>())
+        send("GET", path, query.toList(), null, serializer<T>())
 
     suspend inline fun <reified B, reified T> post(path: String, body: B): T =
-        send("POST", path, emptyMap(), ChairtimeJson.encodeToString(serializer<B>(), body), serializer<T>())
+        send("POST", path, emptyList(), ChairtimeJson.encodeToString(serializer<B>(), body), serializer<T>())
 
     suspend inline fun <reified B, reified T> put(path: String, body: B): T =
-        send("PUT", path, emptyMap(), ChairtimeJson.encodeToString(serializer<B>(), body), serializer<T>())
+        send("PUT", path, emptyList(), ChairtimeJson.encodeToString(serializer<B>(), body), serializer<T>())
 
     suspend inline fun <reified T> delete(path: String, query: Map<String, String> = emptyMap()): T =
-        send("DELETE", path, query, null, serializer<T>())
+        send("DELETE", path, query.toList(), null, serializer<T>())
 
     /** Send it, and where the trouble looks like it will pass, send it again
      *  before saying anything. What the screen finally sees is either the
      *  answer or the last refusal. */
     @PublishedApi
     internal suspend fun <T> send(
-        method: String, path: String, query: Map<String, String>, body: String?, reply: KSerializer<T>,
+        method: String, path: String, query: List<Pair<String, String>>, body: String?, reply: KSerializer<T>,
     ): T {
         var attempt = 1
         var pause = retry.firstWait
@@ -198,7 +220,7 @@ class ApiClient(
     }
 
     private suspend fun <T> once(
-        method: String, path: String, query: Map<String, String>, body: String?, reply: KSerializer<T>,
+        method: String, path: String, query: List<Pair<String, String>>, body: String?, reply: KSerializer<T>,
     ): T {
         val token = tokens.read() ?: throw ApiError.Unauthorized("Sign in to carry on.")
 

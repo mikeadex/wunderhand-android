@@ -39,4 +39,8 @@ open class StubApi : WunderhandApi {
     override suspend fun stopRepeat(appointmentId: String, cancelUpcoming: Boolean): RepeatStopped = unexpected("stopRepeat")
     override suspend fun blockTime(request: BlockRequest): BlockCreated = unexpected("blockTime")
     override suspend fun unblock(id: String) { unexpected("unblock") }
+    override suspend fun bookingServices(): com.wunderhand.core.BookingServicesResponse = unexpected("bookingServices")
+    override suspend fun bookingService(id: String): com.wunderhand.core.BookingServiceResponse = unexpected("bookingService")
+    override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?): com.wunderhand.core.BookingSlotsResponse = unexpected("bookingSlots")
+    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): com.wunderhand.core.BookingCreated = unexpected("book")
 }

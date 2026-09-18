@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0, A1 and A2 built** · 18 September 2026 · see [Progress](#progress) at the end
+Status: **A0 to A3 built** · 18 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -494,6 +494,22 @@ and unfolded. Everything it changes it puts back.
 | Found by the emulator test | **Tap a day, then Block time before it had loaded, and the wrong day was blocked** — the sheet took its date from the day still on screen. It is now the day asked for (`dayInHand`), with a test. · The new phone footer was added outside the column and took the diary's place: caught because the test runs folded too. · A test tag written after `clearAndSetSemantics` is cleared with everything else; three were. · chairtime refuses a block that overlaps another with its double-booking sentence — "Nothing has been booked" — so the sheet says "Something is already in the diary then" instead. |
 | A question for chairtime | The block sheet's own words (from the web) say "Appointments already there stay put", and blocking over an appointment does work — but blocking over another *block* is refused by `time_off_no_overlap`, and **the web's block action does not catch that**, so on the web it is an error page. Not touched from here. |
 | One leftover, cleaned up | A failed run left a block on Kit's Tuesday in the dev branch; removed by hand from the app. The test now blocks six weeks out, names its note "Android test — safe to remove", and reports chairtime's words if it is refused. |
+
+### A3: New booking (built 18 September 2026)
+Service → person → extras when the service has any → a time → "Book Sat 09:00", and the diary goes
+to that day with the new appointment open. 161 JVM tests; the emulator test now books a walk-in all
+the way through and cancels it from its sheet, folded and unfolded.
+
+| | |
+|---|---|
+| `:core` | The booking types decoded from the three booking fixtures; `ServiceFacts` for how a price and a length read wherever a service is listed ("from £40", "£90/hr", "3h–8h") — a pricing mode this build has not heard of is still a price; `BookingStep`, where "Step 3 of 3" counts only the steps this booking has; `Ineligible`; `BookingWords`. |
+| `:network` | The menu, a service, slots and book. An extra is asked for once each (`addon=a&addon=b`), so the client's query became a list of pairs. A booking is never retried, and a walk-in goes out with no `clientId` in it at all. |
+| `NewBookingViewModel` | As iOS: tapping an answer moves on by itself and only extras wait for Continue; back undoes one answer; changing an extra throws away times that were for another length; an answer to a question that has since changed is dropped; a time tapped on the grid is kept only if it is one on offer, and a person only if they do this service. A time taken while choosing is said, dropped, and the times asked for again. An age limit is said and cannot be ticked past; a consultation done elsewhere can. **A rule this build has not heard of is still said, in chairtime's words.** The answers live in `SavedStateHandle`, so a phone call in the middle does not lose the booking. 14 tests. |
+| The screens | Rows under a rule on a phone with what has been chosen as tags under the title; where there is room, cards two across with the booking-so-far beside them as a receipt that fills in — the web's laptop layout. Prices show on the times only when a rule brings some down, and the rule is named ("Wednesday mornings"), so the pro can explain the number rather than discover it. Every row and time reads as one sentence. |
+| Ways in | The phone's footer — the filled "New booking" with the small block-time button beside it, as the web's — the tablet header's button, **a tap on an empty stretch of somebody's column** (the person, and the time if they are working then and it has not passed; a screen reader gets "New booking with Tomas" as an action on the column), and **Book them again** under a finished appointment that has a client. |
+| Who it is for | As on the web and the iPhone, a booking started from the diary is a walk-in; one started from somebody's appointment is theirs. Choosing a client arrives with clients, in A4, from their profile's Rebook. |
+| Checked by hand | Booked Saturday 09:00 with Tomas as a walk-in: the flow closed, the diary moved to Saturday, the appointment opened — then cancelled it from its sheet: chip, sentence and footer all said so, and a walk-in rightly had no "Book them again". That was A2's cancel for real, too. |
+| Found by the emulator test | The sheet's notice was a live region with no words of its own — its sentence sat in a child — so TalkBack would have announced nothing when "Cancelled." appeared. The sentence is merged into it now. |
 
 ### Running it locally
 ```sh

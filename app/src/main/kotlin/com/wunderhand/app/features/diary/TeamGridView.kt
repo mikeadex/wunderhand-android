@@ -30,7 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import com.wunderhand.app.features.booking.NewBookingStart
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
@@ -181,7 +186,16 @@ private fun ColumnHead(member: DiaryMember, range: Span, model: DiaryViewModel, 
 private fun TeamColumn(member: DiaryMember, range: Span, height: Dp, closed: Boolean, model: DiaryViewModel, state: DiaryState, now: Instant, modifier: Modifier = Modifier) {
     Box(
         modifier.height(height).clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp)).background(WHColors.Surface)
-            .semantics { contentDescription = "${member.name}'s day" },
+            // Underneath everything: a tap on an empty stretch books this person
+            // there. The bookings and breaks above take their own taps first.
+            .pointerInput(member.id, closed) {
+                if (!closed) detectTapGestures { at -> model.bookAt(member, (at.y / density).toInt(), range.start) }
+            }
+            .semantics {
+                contentDescription = "${member.name}'s day"
+                if (!closed) customActions = listOf(CustomAccessibilityAction("New booking with ${member.firstName}") { model.startBooking(NewBookingStart(staffId = member.id)); true })
+            }
+            .testTag("column-${member.id}"),
     ) {
         for (i in 0 until maxOf((height.value / 60).toInt(), 1)) {
             Box(Modifier.offset(y = (i * 60).dp).fillMaxWidth().height(1.dp).background(WHColors.Divider))

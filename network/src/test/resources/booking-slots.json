@@ -1,0 +1,164 @@
+{
+  "days": [
+    {
+      "isoDate": "2026-10-01",
+      "label": "Thursday 1 Oct",
+      "slots": [
+        {
+          "start": "2026-10-01T08:00:00.000Z",
+          "end": "2026-10-01T08:45:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": 540,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-01T08:15:00.000Z",
+          "end": "2026-10-01T09:00:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-01T08:30:00.000Z",
+          "end": "2026-10-01T09:15:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-01T08:45:00.000Z",
+          "end": "2026-10-01T09:30:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-01T09:00:00.000Z",
+          "end": "2026-10-01T09:45:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-01T09:15:00.000Z",
+          "end": "2026-10-01T10:00:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        }
+      ]
+    },
+    {
+      "isoDate": "2026-10-02",
+      "label": "Friday 2 Oct",
+      "slots": [
+        {
+          "start": "2026-10-02T08:00:00.000Z",
+          "end": "2026-10-02T08:45:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": 540,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-02T08:15:00.000Z",
+          "end": "2026-10-02T09:00:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-02T08:30:00.000Z",
+          "end": "2026-10-02T09:15:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-02T08:45:00.000Z",
+          "end": "2026-10-02T09:30:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-02T09:00:00.000Z",
+          "end": "2026-10-02T09:45:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        },
+        {
+          "start": "2026-10-02T09:15:00.000Z",
+          "end": "2026-10-02T10:00:00.000Z",
+          "closesGapExactly": false,
+          "gapMinutes": null,
+          "price": {
+            "pence": 2800,
+            "listPence": 2800,
+            "savingPence": 0,
+            "ruleName": null
+          }
+        }
+      ]
+    }
+  ],
+  "standard": {
+    "minutes": 45,
+    "pence": 2800
+  }
+}

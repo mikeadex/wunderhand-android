@@ -118,7 +118,52 @@ class DiaryTest {
         app.waitUntil(10_000) { !isOnScreen("appointmentName") }
 
         blocksTimeAndTakesItBack()
+        booksAWalkInAndCancelsIt()
         signOut()
+    }
+
+    /**
+     * The whole of a new booking — service, person, extras if there are any,
+     * a time, "Book" — then the appointment it opens on is cancelled, so the
+     * seed ends as it began. A walk-in, so there is no deposit to refund and
+     * nobody to email.
+     */
+    private fun booksAWalkInAndCancelsIt() {
+        runCatching { app.onNodeWithTag("newBooking").performScrollTo() }
+        app.onNodeWithTag("newBooking").performClick()
+        app.waitUntil(20_000) { anyOnScreen("bookingService") }
+        app.onNodeWithTag("bookingTitle").assertTextContains("Pick a service")
+        everyControlSaysWhatItIs("the menu step")
+        app.onAllNodesWithTag("bookingService").onFirst().performClick()
+
+        app.waitUntil(20_000) { anyOnScreen("bookingPerson") }
+        everyControlSaysWhatItIs("the person step")
+        app.onAllNodesWithTag("bookingPerson").onFirst().performClick()
+
+        // Extras are a step only for a service that has some.
+        app.waitUntil(20_000) { isOnScreen("bookingContinue") || anyOnScreen("bookingSlot") || isOnScreen("bookingLaterDays") }
+        if (isOnScreen("bookingContinue")) {
+            everyControlSaysWhatItIs("the extras step")
+            app.onNodeWithTag("bookingContinue").performClick()
+        }
+
+        app.waitUntil(20_000) { anyOnScreen("bookingSlot") }
+        everyControlSaysWhatItIs("the time step")
+        app.onAllNodesWithTag("bookingSlot").onFirst().performScrollTo().performClick()
+        waitFor("bookButton")
+        app.onNodeWithTag("bookButton").assertTextContains("Book ", substring = true)
+        app.onNodeWithTag("bookButton").performClick()
+
+        // The flow goes; the diary moves to its day; the new appointment opens.
+        waitFor("appointmentName")
+        app.onNodeWithTag("appointmentName").assertTextContains("Walk-in")
+        waitFor("cancelAppointment")
+        app.onNodeWithTag("cancelAppointment").performClick()
+        app.onNodeWithTag("confirm").performClick()
+        waitFor("closedLine")
+        app.onNodeWithTag("sheetNotice").assertTextContains("Cancelled", substring = true)
+        app.onNodeWithContentDescription("Close appointment").performClick()
+        app.waitUntil(10_000) { !isOnScreen("appointmentName") }
     }
 
     /**

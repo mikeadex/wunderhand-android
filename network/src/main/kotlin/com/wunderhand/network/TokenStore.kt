@@ -53,5 +53,14 @@ interface ActionsApi {
     suspend fun unblock(id: String)
 }
 
+/** A new booking, a step at a time. */
+interface BookingApi {
+    suspend fun bookingServices(): com.wunderhand.core.BookingServicesResponse
+    suspend fun bookingService(id: String): com.wunderhand.core.BookingServiceResponse
+    /** The next open days for this person, with the extras' time in and each time priced. */
+    suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String? = null): com.wunderhand.core.BookingSlotsResponse
+    suspend fun book(serviceId: String, staffId: String, startsAt: java.time.Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): com.wunderhand.core.BookingCreated
+}
+
 /** Everything the app asks of chairtime. `ApiClient` is the real one. */
-interface WunderhandApi : SessionApi, DiaryApi, ActionsApi
+interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi
