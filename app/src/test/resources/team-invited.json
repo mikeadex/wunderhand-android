@@ -1,0 +1,35 @@
+{
+  "person": {
+    "id": "ca4f6a0c-051b-4cbf-9256-1d59ebee87d2",
+    "name": "ZZ Mobile Person Jr",
+    "roleTitle": null,
+    "employment": "employed",
+    "accountStatus": "invited",
+    "isBookable": true,
+    "hasLogin": false,
+    "isOwner": false,
+    "inviteEmail": "zz.person@example.com"
+  },
+  "outletIds": [
+    "5d86983d-6c1d-46ba-93d5-6287f0d99847",
+    "d24539af-fc91-41f7-a222-4d983d8566a8"
+  ],
+  "outlets": [
+    {
+      "id": "5d86983d-6c1d-46ba-93d5-6287f0d99847",
+      "name": "Hackney Road",
+      "city": "London",
+      "postcode": "E2 7SJ"
+    },
+    {
+      "id": "d24539af-fc91-41f7-a222-4d983d8566a8",
+      "name": "Dalston Lane",
+      "city": "London",
+      "postcode": "E8 3AZ"
+    }
+  ],
+  "viewerIsOwner": true,
+  "isYou": false,
+  "outcome": "invited",
+  "message": "Invitation sent. They have two weeks to set a password, and the seat is charged from now — sending it again replaces the old link."
+}

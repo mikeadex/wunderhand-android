@@ -1,0 +1,245 @@
+{
+  "people": [
+    {
+      "id": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+      "name": "Ade Balogun",
+      "roleTitle": "Barber",
+      "employment": "chair_renter",
+      "accountStatus": "active",
+      "isBookable": true,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "95d32e80-01b2-4e83-afc2-90e433f45286",
+      "name": "Dez Mwangi",
+      "roleTitle": "Barber",
+      "employment": "chair_renter",
+      "accountStatus": "active",
+      "isBookable": true,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+      "name": "Kit Alvarez",
+      "roleTitle": "Owner",
+      "employment": "employed",
+      "accountStatus": "active",
+      "isBookable": true,
+      "hasLogin": true,
+      "isOwner": true
+    },
+    {
+      "id": "e1dd614f-530c-4f89-a865-a3f7ca75b484",
+      "name": "Ruth Okafor",
+      "roleTitle": "Front desk",
+      "employment": "admin_only",
+      "accountStatus": "active",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "017e0b0b-c611-402e-a0e8-9fb03c6ea8cd",
+      "name": "Sam Reilly",
+      "roleTitle": "Barber",
+      "employment": "chair_renter",
+      "accountStatus": "active",
+      "isBookable": true,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "6fe813c9-23f0-4801-972a-b154fc1228d7",
+      "name": "Tomas Novak",
+      "roleTitle": "Barber",
+      "employment": "chair_renter",
+      "accountStatus": "invited",
+      "isBookable": true,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "5e93fdb5-e37a-4d72-a439-01fc5b4ca3ee",
+      "name": "ZZ UI person 0e4b22",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "945e76a8-d694-49ba-897e-a180b37228a4",
+      "name": "ZZ UI person 16f049",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "adf49500-e029-4d6d-a08e-44140dd6a7da",
+      "name": "ZZ UI person 2ca9e3",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "43b31e1c-9132-45a5-b462-99f5628e702b",
+      "name": "ZZ UI person 31796b",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "af388f68-bdb5-4c89-b2ba-f7227f237476",
+      "name": "ZZ UI person 39696b",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "06ead3e0-dbbb-42a2-b94c-2dced3d20485",
+      "name": "ZZ UI person 3f13e2",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "19d85066-69ff-42b4-be82-d14a09e22656",
+      "name": "ZZ UI person 5be168",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "066e7448-bee2-46fe-824a-35f532b51f18",
+      "name": "ZZ UI person 5bf27a",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "10f00c07-edce-448d-8700-e5faa6f30337",
+      "name": "ZZ UI person 7d1476",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "bd7bf408-edf3-4221-bec3-24ec491776c9",
+      "name": "ZZ UI person 866e93",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "db3e0e22-f21a-4b9c-8830-d8ffbfe46522",
+      "name": "ZZ UI person ab15ff",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "cbdf2558-28a6-404b-a88d-4bd66f5593b2",
+      "name": "ZZ UI person abd49a",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "e54779ae-1e03-4dde-9cf6-3ad1499009b2",
+      "name": "ZZ UI person cc91c9",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "4807109a-6f5b-4df9-a4bc-afe4d2777ce9",
+      "name": "ZZ UI person d3784e",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "75f580da-747b-4a8d-b924-1b855ee8d620",
+      "name": "ZZ UI person db8b2f",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "d96863c7-6cf6-4c6b-8ba9-52a6e97d9cbd",
+      "name": "ZZ UI person decc45",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "e6a8e13a-958f-4184-912d-c55bdc180b7f",
+      "name": "ZZ UI person e113b6",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    },
+    {
+      "id": "149c70a1-730d-4f8b-8c3e-463873902df0",
+      "name": "ZZ UI person e25f13",
+      "roleTitle": null,
+      "employment": "employed",
+      "accountStatus": "suspended",
+      "isBookable": false,
+      "hasLogin": false,
+      "isOwner": false
+    }
+  ],
+  "seats": 6
+}

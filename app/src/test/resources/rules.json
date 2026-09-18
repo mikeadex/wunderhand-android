@@ -1,0 +1,8 @@
+{
+  "slotIntervalMinutes": 15,
+  "bufferMinutes": 10,
+  "noticeHours": 2,
+  "horizonWeeks": 12,
+  "paymentHoldMinutes": 12,
+  "waitlistHoldMinutes": 20
+}

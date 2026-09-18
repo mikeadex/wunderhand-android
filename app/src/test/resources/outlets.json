@@ -1,0 +1,26 @@
+{
+  "outlets": [
+    {
+      "id": "5d86983d-6c1d-46ba-93d5-6287f0d99847",
+      "name": "Hackney Road",
+      "addressLine1": "288 Hackney Road",
+      "city": "London",
+      "postcode": "E2 7SJ",
+      "timezone": "Europe/London",
+      "servesRadiusMiles": null,
+      "defaultTravelMinutes": 25,
+      "addressPrivate": false
+    },
+    {
+      "id": "d24539af-fc91-41f7-a222-4d983d8566a8",
+      "name": "Dalston Lane",
+      "addressLine1": "44 Dalston Lane",
+      "city": "London",
+      "postcode": "E8 3AZ",
+      "timezone": "Europe/London",
+      "servesRadiusMiles": null,
+      "defaultTravelMinutes": 25,
+      "addressPrivate": false
+    }
+  ]
+}

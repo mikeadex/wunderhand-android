@@ -1,0 +1,10 @@
+{
+  "standardDepositPence": 1000,
+  "freeCancellationHours": 24,
+  "lateCancellationPercent": 50,
+  "noShowPercent": 50,
+  "payInFullAfterNoShows": 2,
+  "clientFacingWording": null,
+  "wordingVersion": "v11",
+  "defaultWording": "Free to cancel up to 24 hours before. After that the deposit is not refunded."
+}

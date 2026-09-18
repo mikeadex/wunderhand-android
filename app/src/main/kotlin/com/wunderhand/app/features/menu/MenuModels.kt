@@ -3,6 +3,8 @@ package com.wunderhand.app.features.menu
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wunderhand.app.app.SaveProblem
+import com.wunderhand.app.app.isTheApps
 import com.wunderhand.core.DraftProblem
 import com.wunderhand.core.DurationMode
 import com.wunderhand.core.ExtraLinksWrite
@@ -26,15 +28,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-/** Trouble that is the whole app's — signed out, off the team, too old a build — not this screen's to word. */
-internal fun ApiError.isTheApps() = this is ApiError.Unauthorized || this is ApiError.NotMember || this is ApiError.UpgradeRequired
-
-/** What could not be saved, and the field it was about. */
-data class SaveProblem(val text: String, val field: String? = null) {
-    constructor(error: ApiError) : this(error.message, (error as? ApiError.Validation)?.field)
-    constructor(error: DraftProblem) : this(error.message, error.field)
-}
 
 // region The menu
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.wunderhand.design.CloseButton
+import com.wunderhand.design.Eyebrow
 import com.wunderhand.design.FooterBar
 import com.wunderhand.design.SheetTitle
 import com.wunderhand.design.WHColors
@@ -41,16 +42,22 @@ fun EditorSheet(onDismiss: () -> Unit, content: @Composable () -> Unit) {
  */
 @Composable
 fun EditorPage(
-    title: String, onClose: () -> Unit, tag: String, modifier: Modifier = Modifier,
+    title: String, onClose: (() -> Unit)?, tag: String, modifier: Modifier = Modifier,
     intro: String? = null, accentIntro: String? = null, back: Boolean = false,
+    /** Where this sits: "SHOP" over a settings screen. */
+    eyebrow: String? = null,
+    /** Words for the way out, when "Back" alone would not say where to. */
+    closeLabel: String? = null,
     footer: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier.fillMaxSize().background(WHColors.Bg).imePadding().testTag(tag)) {
         Box(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {
             Column(Modifier.widthIn(max = 640.dp).fillMaxWidth().padding(horizontal = 18.dp).padding(bottom = 24.dp)) {
-                CloseButton(onClose, Modifier.padding(top = 12.dp).testTag("$tag-close"), back = back)
-                SheetTitle(title, Modifier.padding(top = 10.dp).testTag("$tag-heading"))
+                // Beside the list it came from there is nowhere to go back to, and so no button.
+                if (onClose != null) CloseButton(onClose, Modifier.padding(top = 12.dp).testTag("$tag-close"), back = back, label = closeLabel ?: if (back) "Back" else "Close")
+                if (eyebrow != null) Eyebrow(eyebrow, Modifier.padding(top = if (onClose != null) 8.dp else 26.dp))
+                SheetTitle(title, Modifier.padding(top = if (eyebrow != null) 8.dp else if (onClose != null) 10.dp else 26.dp).testTag("$tag-heading"))
                 if (intro != null) Text(intro, Modifier.padding(top = 10.dp), style = WHType.Body, color = WHColors.Neutral800)
                 if (accentIntro != null) Text(accentIntro, Modifier.padding(top = 8.dp), style = WHType.Body, color = WHColors.Accent)
                 content()
