@@ -138,14 +138,23 @@ leave it out.
 |---|---|---|
 | App icon | 512 × 512 PNG | **Done**: `play/icon-512.png`, written by `scripts/sync-brand.sh` |
 | Feature graphic | 1024 × 500 PNG | **Done**: `play/feature-1024x500.png`, written by the same script. The lockup on the icon's ground and nothing else: Play puts the screenshots directly underneath, and a sentence would be too small to read on a phone. |
-| Phone screenshots | 2–8, each side 320–3840 px, no side more than twice the other | **Not taken.** From the emulator folded (1080 × 2092), on the seeded shop |
-| 7-inch tablet | up to 8 | **Not taken.** From the emulator unfolded (2208 × 1840) |
-| 10-inch tablet | up to 8 | **Not taken.** Needs a tablet emulator; the installed system image can be reused, so nothing to download |
+| Phone screenshots | 2–8, each side 320–3840 px, no side more than twice the other | **Done**: `play/phone/`, five, 1080 × 2092, from the emulator folded |
+| 7-inch tablet | up to 8 | **Done**: `play/tablet-7/`, four, 2208 × 1840, from the emulator unfolded |
+| 10-inch tablet | up to 8 | **Done**: `play/tablet-10/`, four, 2208 × 1380 — the same emulator's inner screen given a 10-inch tablet's shape (`wm size 2208x1380`, `wm density 276`: 1280 × 800dp, a Pixel Tablet's), because this Mac has not the 7 GB a second emulator wants |
 
-The same five and four as the App Store, for the same reasons (`APPSTORE.md` §5): a full diary day,
-an appointment open, the waiting list, the menu, the client list filtered to Regulars; and on the
-wide screens the team grid, a service beside the menu, a client beside the list, the Shop index
-with hours open. Not the Money tab (the seeded month reads "down 78%") and not a gap nobody fits.
+Upload them in their file names' order. Phone: a full diary day, an appointment open, the waiting
+list, a service with its develop gap, the client list filtered to Regulars. Wide: the team grid, an
+appointment (over the grid at 7 inches, beside it at 10), a client beside the list, the Shop index
+with hours open. All on the seeded shop's Wednesday 16 September, the one day it has 27 bookings
+on; the status bar is Android's own demo mode (09:41, full battery, no notifications).
+
+Left out, and why: the Money tab (the seeded month reads "down 78%"); a gap nobody fits; and **the
+menu as a list**, because the development shop's menu has two rows called "ZZ UI service" that the
+iOS interface tests left behind — so the phone shows one service open instead, and no wide shot has
+the menu in it. Two things in them that a tidier demo shop would not have: the owner's banner about
+uncollected deposits across the top of the diary, and "Team · 33 people" on the Shop tab. Both are
+true of the seeded shop. If they bother you, the cure is in the data, not the app: finish the demo
+shop's Stripe setup or photograph as a barber, and clear the test staff out.
 
 ---
 
@@ -281,7 +290,7 @@ is.
 - [ ] Signed bundle uploaded to internal testing, installed from the Play Store on a real phone
 - [ ] TalkBack pass on that phone, screen by screen
 - [x] Feature graphic made
-- [ ] Screenshots taken: phone, 7-inch, 10-inch
+- [x] Screenshots taken: phone, 7-inch, 10-inch
 - [ ] chairtime's `feat/android-push` merged — for `/delete-account`, and for App Links
 - [ ] Data safety, content rating, target audience, health and financial declarations as above
 - [ ] App access: the demo login, and production answering (it did not, on the morning of

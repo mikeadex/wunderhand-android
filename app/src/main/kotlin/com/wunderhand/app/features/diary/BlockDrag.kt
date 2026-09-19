@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -123,9 +124,11 @@ fun rememberBlockDrag(row: DiaryAppointment, model: DiaryViewModel, state: Diary
                 )
                 // The block's own named actions do this for a screen reader.
                 .clearAndSetSemantics { },
-            contentAlignment = Alignment.Center,
+            // The grip sits on the block's bottom edge, not in the middle of the zone a finger gets:
+            // in the middle it crossed out the second line of a 45-minute booking.
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            Box(Modifier.width(28.dp).height(3.dp).clip(CircleShape).background(if (adjust.stretchMinutes != 0) WHColors.Accent else WHColors.Neutral300))
+            Box(Modifier.padding(bottom = 2.dp).width(28.dp).height(3.dp).clip(CircleShape).background(if (adjust.stretchMinutes != 0) WHColors.Accent else WHColors.Neutral300))
         }
     }
 
