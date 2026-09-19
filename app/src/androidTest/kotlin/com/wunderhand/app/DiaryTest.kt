@@ -58,6 +58,10 @@ class DiaryTest {
     private fun waitFor(tag: String) = app.waitUntil(20_000) { isOnScreen(tag) }
 
     @Test fun signsInReadsTheDiaryAndSignsOut() {
+        // Said yes to already, so the system's own question — which no Compose test can answer — never comes up over the diary.
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(app.activity.packageName, android.Manifest.permission.POST_NOTIFICATIONS)
+        }
         // Whatever the last run left behind, start from the sign-in screen.
         app.waitUntil(20_000) { isOnScreen("signIn") || isOnScreen("diaryHeading") }
         if (isOnScreen("diaryHeading")) signOut()
@@ -128,6 +132,7 @@ class DiaryTest {
         putsAServiceOnTheMenuAndTakesItOff()
         waitsFillsAndCounts()
         walksTheShop()
+        followsALink()
         signOut()
     }
 
@@ -548,6 +553,30 @@ class DiaryTest {
             app.waitUntil(20_000) { isOnScreen("closeUpcoming") || isOnScreen("closureWaiting") || isOnScreen("shopClosed") }
             if (isOnScreen("closeShopButton")) app.onNodeWithTag("closeShopButton").assertIsNotEnabled()
         }
+    }
+
+    /**
+     * A link, from wherever the app happens to be: the diary comes to the
+     * front and the appointment opens over it — here one chairtime has never
+     * heard of, which says so and offers to try again. And something that only
+     * looks like a link opens nothing.
+     */
+    private fun followsALink() {
+        fun open(address: String) = app.activity.startActivity(
+            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(address)).setPackage(app.activity.packageName),
+        )
+        app.onNodeWithTag("tab-Menu").performClick()
+        app.waitUntil(20_000) { anyOnScreen("menuService") }
+        open("wunderhand://appointment/../../shop/close")
+        app.waitForIdle()
+        assertTrue("something that is not a link opens nothing", !isOnScreen("appointmentSheet") && anyOnScreen("menuService"))
+
+        open("wunderhand://appointment/00000000-0000-4000-8000-000000000000")
+        waitFor("appointmentSheet")
+        everyControlSaysWhatItIs("an appointment that could not be found")
+        app.onNodeWithContentDescription("Close appointment").performClick()
+        app.waitUntil(10_000) { !isOnScreen("appointmentSheet") }
+        waitFor("diaryHeading")
     }
 
     private fun signOut() {

@@ -38,6 +38,8 @@ class AppModel(
     private val connect: (baseUrl: String) -> WunderhandApi,
     /** Signing out, or changing shop: anything unlocked for the last one is locked again. */
     private val onLeaving: () -> Unit = {},
+    /** On the way out, while the session still stands: this phone comes off chairtime's list of where to send news. */
+    private val beforeSignOut: suspend (WunderhandApi) -> Unit = {},
 ) {
     private val _phase = MutableStateFlow<Phase>(Phase.Launching)
     val phase: StateFlow<Phase> = _phase.asStateFlow()
@@ -125,6 +127,8 @@ class AppModel(
         onLeaving()
         cache.clear()
         lastMe = null
+        // Never a reason not to sign out: it has its own patience, and its own way of failing quietly.
+        runCatching { beforeSignOut(client) }
         client.signOut()
         settings.setChosenShopId(null)
         _trouble.value = null

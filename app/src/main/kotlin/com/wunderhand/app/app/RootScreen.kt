@@ -33,6 +33,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wunderhand.app.BuildConfig
 import com.wunderhand.app.features.auth.ShopPickerScreen
 import com.wunderhand.app.features.clients.LocalNotesGate
+import com.wunderhand.app.push.LocalPush
+import com.wunderhand.app.push.PushServices
 import com.wunderhand.app.features.clients.NotesGate
 import com.wunderhand.app.features.auth.SignInScreen
 import com.wunderhand.app.features.shell.MainScaffold
@@ -50,7 +52,7 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun RootScreen(model: AppModel, reachability: Reachability, notesGate: NotesGate) {
+fun RootScreen(model: AppModel, reachability: Reachability, notesGate: NotesGate, push: PushServices? = null) {
     val phase by model.phase.collectAsStateWithLifecycle()
     val trouble by model.trouble.collectAsStateWithLifecycle()
     val cameBack by reachability.cameBack.collectAsStateWithLifecycle()
@@ -66,7 +68,7 @@ fun RootScreen(model: AppModel, reachability: Reachability, notesGate: NotesGate
         if (cameBack > 0 && model.trouble.value != null) model.tryAgain()
     }
 
-    CompositionLocalProvider(LocalReachability provides reachability, LocalNotesGate provides notesGate) {
+    CompositionLocalProvider(LocalReachability provides reachability, LocalNotesGate provides notesGate, LocalPush provides push) {
     // The top and the sides are the root's. The bottom is each screen's: the
     // tab bar draws under the gesture bar, and a form pads for the keyboard.
     // Test tags double as resource ids, so UI Automator and accessibility tools can find a control by name.

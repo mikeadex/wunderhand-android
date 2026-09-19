@@ -148,5 +148,13 @@ interface MoneyApi {
     suspend fun money(): com.wunderhand.core.MoneyResponse
 }
 
+/** Where chairtime sends this phone its news. */
+interface DevicesApi {
+    /** This phone, for the shop now open. Safe to repeat; whoever signs in on a phone takes its token from whoever had it before. */
+    suspend fun registerDevice(token: String, appVersion: String)
+    /** Stop sending to this phone, at every shop — on the way out, while the session still stands. */
+    suspend fun releaseDevice(token: String)
+}
+
 /** Everything the app asks of chairtime. `ApiClient` is the real one. */
-interface WunderhandApi : SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi, MenuApi, ShopApi, LeavingApi, WaitlistApi, MoneyApi
+interface WunderhandApi : DevicesApi, SessionApi, DiaryApi, ActionsApi, BookingApi, ClientsApi, MenuApi, ShopApi, LeavingApi, WaitlistApi, MoneyApi

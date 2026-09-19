@@ -604,3 +604,34 @@ class WaitlistAndMoneyCallsTest {
         assertEquals("/api/v1/money", server.takeRequest().url.encodedPath)
     }
 }
+
+class DeviceCallsTest {
+    private val server = MockWebServer()
+    @Before fun start() = server.start()
+    @After fun stop() = server.close()
+
+    private fun client() = ApiClient(server.url("/").toString(), InMemoryTokenStore("a-token"), build = "1.0", wait = {})
+    // FCM's tokens are not hex: colons, dashes, underscores, and long.
+    private val token = "dGVzdA:APA91b" + "x_Y-z".repeat(30)
+
+    @Test fun `a phone registers as android, for the shop now open`() = runTest {
+        server.enqueue(MockResponse.Builder().code(200).body("""{"ok":true}""").build())
+        client().apply { tenantId = "t1" }.registerDevice(token, "1.0 (1)")
+        server.takeRequest().let {
+            assertEquals("/api/v1/devices", it.url.encodedPath)
+            assertEquals("t1", it.headers["X-Tenant-Id"])
+            assertEquals("""{"token":"$token","appVersion":"1.0 (1)","platform":"android"}""", it.body!!.utf8())
+        }
+    }
+
+    @Test fun `leaving names the phone in the body, never in the address`() = runTest {
+        server.enqueue(MockResponse.Builder().code(200).body("""{"ok":true}""").build())
+        client().releaseDevice(token)
+        server.takeRequest().let {
+            assertEquals("POST", it.method)
+            assertEquals("/api/v1/devices/release", it.url.encodedPath)
+            assertTrue(token !in it.url.toString())
+            assertEquals("""{"token":"$token","platform":"android"}""", it.body!!.utf8())
+        }
+    }
+}

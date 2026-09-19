@@ -24,3 +24,4 @@ keystore.properties
 google-services.json
 *.p8
 *.pem
+firebase.properties

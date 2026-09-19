@@ -7,6 +7,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.wunderhand.app.BuildConfig
 import com.wunderhand.app.features.clients.BiometricGate
+import com.wunderhand.app.push.FcmTokens
+import com.wunderhand.app.push.PushCoordinator
+import com.wunderhand.app.push.PushNotifier
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.network.ApiClient
 import java.io.File
@@ -23,6 +26,11 @@ class AppContainer(app: Application) {
     val notesGate = BiometricGate()
     private val tokens = KeystoreTokenStore(app)
 
+    /** This phone's pushes. One for the process: an app has one token, whoever is signed in. */
+    val notifier = PushNotifier(app)
+    val fcm = FcmTokens(app)
+    val push = PushCoordinator(fcm, "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", notifier::mayNotify)
+
     val model = AppModel(
         settings = DataStoreSettings(app),
         // Private to the app, encrypted at rest by Android, and out of every backup.
@@ -38,6 +46,8 @@ class AppContainer(app: Application) {
         },
         // Signed out, or another shop: whoever unlocked the notes did so for the last one.
         onLeaving = notesGate::close,
+        // Off chairtime's list while the session can still say so, and the token thrown away.
+        beforeSignOut = { api -> notifier.clear(); push.signingOut(api) },
     )
 }
 
@@ -49,6 +59,7 @@ class WunderhandApp : Application() {
         super.onCreate()
         container = AppContainer(this)
         container.reachability.start()
+        container.notifier.ensureChannels()
         // Sent to the background: the unlock goes with it, however soon they are back.
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) container.notesGate.close()

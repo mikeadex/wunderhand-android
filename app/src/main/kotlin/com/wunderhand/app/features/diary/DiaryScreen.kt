@@ -33,6 +33,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.rememberCoroutineScope
+import com.wunderhand.app.push.LocalPush
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -102,6 +108,34 @@ fun DiaryScreen(app: AppModel, me: Me) {
     val now by rememberNow()
     // The ring is for a pull only: a reload nobody asked for should not wave at them.
     var isRefreshing by remember { mutableStateOf(false) }
+
+    // This phone's pushes. Null where nothing provides them: a preview, a test.
+    val push = LocalPush.current
+    val scope = rememberCoroutineScope()
+    val askToNotify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { scope.launch { push?.coordinator?.diaryLoaded(app.client, me.shop.id) } }
+    val hasLoaded = state.response != null && state.failure == null
+    LaunchedEffect(hasLoaded, me.shop.id) {
+        if (!hasLoaded || push == null) return@LaunchedEffect
+        /* The moment to ask: the diary is on screen, so somebody can see what a notification would be about.
+         * Never at launch, once only, and not at all in a build that could not receive one. */
+        if (push.coordinator.isConfigured && push.notifier.shouldAsk) {
+            push.notifier.hasAsked = true
+            askToNotify.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        push.coordinator.diaryLoaded(app.client, me.shop.id)
+    }
+    // Something arrived with the app open: the banner says what, and the day underneath catches up.
+    LaunchedEffect(push) { push?.coordinator?.news?.collect { model.load() } }
+    // A tapped notification, or a link.
+    val link = push?.coordinator?.pendingLink?.collectAsStateWithLifecycle()?.value
+    LaunchedEffect(link, me.shop.id) {
+        if (link == null || push == null) return@LaunchedEffect
+        when (val followed = model.follow(link)) {
+            DiaryViewModel.Followed.Here, DiaryViewModel.Followed.NotTheirs -> push.coordinator.followed()
+            // The link stays: this screen is rebuilt for that shop, and follows it then.
+            is DiaryViewModel.Followed.ChangeShop -> app.choose(followed.shopId)
+        }
+    }
 
     // Back in front after being away: the day may have moved on without us.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { if (model.state.value.response != null) model.load() }

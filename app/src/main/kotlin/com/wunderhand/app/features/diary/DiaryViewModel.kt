@@ -13,6 +13,7 @@ import com.wunderhand.network.ApiError
 import com.wunderhand.network.WunderhandApi
 import com.wunderhand.app.features.booking.NewBookingStart
 import com.wunderhand.app.features.waitlist.GapWindow
+import com.wunderhand.core.DeepLink
 import com.wunderhand.core.BookingCreated
 import com.wunderhand.core.DiaryAppointment
 import com.wunderhand.core.DiaryBreak
@@ -245,6 +246,34 @@ class DiaryViewModel(
         // Kept where the system can hand it back: a booking half made should survive a phone call.
         saved["booking"] = start?.let { arrayListOf(it.id, it.staffId.orEmpty(), it.slot?.toEpochMilli()?.toString().orEmpty(), it.clientId.orEmpty(), it.clientName.orEmpty()) }
         _state.update { it.copy(newBooking = start) }
+    }
+
+    /** What became of a link: followed here, or for another of their shops, or for a shop that is not theirs. */
+    sealed interface Followed {
+        data object Here : Followed
+        data class ChangeShop(val shopId: String) : Followed
+        data object NotTheirs : Followed
+    }
+
+    /**
+     * A tapped notification or a link: open that appointment, or the gap a
+     * cancellation left. One for another of this person's shops changes shop
+     * first — this screen is rebuilt for it and follows the link then. One for
+     * a shop that is not theirs is dropped: the link knew an id, and that is
+     * not the same as being allowed to see it.
+     */
+    fun follow(link: DeepLink): Followed {
+        val shop = link.shopId
+        if (shop != null && !shop.equals(me.shop.id, ignoreCase = true)) {
+            val theirs = me.shops.firstOrNull { it.id.equals(shop, ignoreCase = true) } ?: return Followed.NotTheirs
+            return Followed.ChangeShop(theirs.id)
+        }
+        when (link) {
+            is DeepLink.Appointment -> { fillGap(null); open(link.id) }
+            // "Offer the gap": who could take the time that came free.
+            is DeepLink.Gap -> { open(null); fillGap(GapWindow(link.staffId, link.from, link.to)) }
+        }
+        return Followed.Here
     }
 
     /** Offer a free stretch to whoever is waiting. Closed, the day is looked at again: an offer out changes who is waiting. */

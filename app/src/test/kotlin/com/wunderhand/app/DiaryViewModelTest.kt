@@ -180,4 +180,36 @@ class DiaryViewModelTest {
         assertEquals(DiaryMode.Day, model.state.value.mode)
         assertFalse(model.state.value.isLoading)
     }
+
+    // A tapped notification, or a link.
+
+    private val appointmentId = "fb67befa-8f43-4692-8472-e17d2df6ba35"
+    private val otherShop = "0d0c3a2e-5b1f-4c59-9f43-6f1d2a7b8c90"
+
+    @Test fun `a link for this shop, or for no shop in particular, opens the appointment`() = runTest(dispatcher) {
+        val model = model(FakeDiary { day })
+        assertEquals(DiaryViewModel.Followed.Here, model.follow(com.wunderhand.core.DeepLink.Appointment(appointmentId, null)))
+        assertEquals(appointmentId, model.state.value.openAppointmentId)
+        assertEquals(DiaryViewModel.Followed.Here, model.follow(com.wunderhand.core.DeepLink.Appointment(appointmentId, me.shop.id.uppercase())))
+    }
+
+    @Test fun `Offer the gap opens who could take the time that came free, not the appointment that went`() = runTest(dispatcher) {
+        val model = model(FakeDiary { day })
+        model.open(appointmentId)
+        val gap = com.wunderhand.core.DeepLink.gap(appointmentId, "2026-09-18T09:00:00Z", "2026-09-18T09:45:00Z", null)!!
+        assertEquals(DiaryViewModel.Followed.Here, model.follow(gap))
+        assertEquals(null, model.state.value.openAppointmentId)
+        assertEquals(45, model.state.value.gap?.minutes)
+    }
+
+    @Test fun `a link for another of their shops changes shop first, and one for somebody else's shop opens nothing`() = runTest(dispatcher) {
+        val inTwo = me.copy(shops = me.shops + Me.ShopSummary(otherShop, "Dalston Barbers", "dalston", "s9"))
+        val model = DiaryViewModel(inTwo, FakeDiary { day }, cache(), handle = {}, io = dispatcher)
+        assertEquals(DiaryViewModel.Followed.ChangeShop(otherShop), model.follow(com.wunderhand.core.DeepLink.Appointment(appointmentId, otherShop)))
+        assertEquals(null, model.state.value.openAppointmentId)
+
+        val stranger = "11111111-2222-3333-4444-555555555555"
+        assertEquals(DiaryViewModel.Followed.NotTheirs, model.follow(com.wunderhand.core.DeepLink.Appointment(appointmentId, stranger)))
+        assertEquals(null, model.state.value.openAppointmentId)
+    }
 }

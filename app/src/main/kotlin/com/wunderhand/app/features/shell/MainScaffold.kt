@@ -14,6 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wunderhand.app.push.LocalPush
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -61,6 +64,9 @@ enum class AppTab(val title: String, val icon: WHIcons) {
 @Composable
 fun MainScaffold(model: AppModel, me: Me) {
     var tab by rememberSaveable { mutableStateOf(AppTab.Diary) }
+    // A tapped notification or a link: the appointment opens in the diary, whichever tab was up.
+    val link = LocalPush.current?.coordinator?.pendingLink?.collectAsStateWithLifecycle()?.value
+    LaunchedEffect(link) { if (link != null) tab = AppTab.Diary }
 
     val selected = WHColors.Ink
     val resting = WHColors.Neutral700

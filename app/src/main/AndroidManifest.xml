@@ -5,6 +5,9 @@
     <!-- To word a failure honestly ("no signal" or "could not reach
          Wunderhand") and to load again when the signal comes back. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- A booking, a cancellation. Asked for after the first diary has loaded, never at
+         launch: by then there is something on screen a notification would be about. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Nothing the app keeps should arrive on another phone by itself: not
          the session token, and not the day it last saw. So no backup at all,
@@ -21,14 +24,54 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Wunderhand">
 
+        <!-- singleTop: a notification tapped with the app open goes to the diary that is
+             already there, not to a second one on top of it. -->
         <activity
             android:name=".app.MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- wunderhand://appointment/<id>?shop=<tenant> -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="wunderhand" android:host="appointment" />
+            </intent-filter>
+
+            <!-- https://wunderhand.com/diary/<id>: the web's own address for an appointment,
+                 so a link in an email opens the app where it is installed. Verified against
+                 /.well-known/assetlinks.json; until that is live Android treats this as an
+                 ordinary link and asks. The pattern is the shape of an id — eight, four, four,
+                 four, twelve — so /diary/block and the rest of the web's diary stay in the browser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="wunderhand.com" />
+                <data android:host="www.wunderhand.com" />
+                <data android:pathPattern="/diary/........-....-....-....-............" />
+            </intent-filter>
         </activity>
+
+        <!-- What Firebase hands the app. Not exported: only Google Play services, through
+             Firebase's own receiver, can reach it. -->
+        <service android:name=".push.WunderhandMessagingService" android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- No token is minted at first launch, for nobody: only once somebody is signed in
+             and has said yes to notifications (push/FcmTokens.kt). And nothing about delivery
+             is exported anywhere. -->
+        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
+        <meta-data android:name="delivery_metrics_exported_to_big_query_enabled" android:value="false" />
     </application>
 </manifest>

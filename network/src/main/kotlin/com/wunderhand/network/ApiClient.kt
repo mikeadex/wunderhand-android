@@ -259,6 +259,11 @@ class ApiClient(
     override suspend fun settle(bookingId: String, request: TillRequest): SettledResponse = post("api/v1/checkout/$bookingId", request)
     override suspend fun money(): MoneyResponse = get("api/v1/money")
 
+    // This phone
+
+    override suspend fun registerDevice(token: String, appVersion: String) { post<DeviceRegistration, Ack>("api/v1/devices", DeviceRegistration(token, appVersion)) }
+    override suspend fun releaseDevice(token: String) { post<DeviceRelease, Ack>("api/v1/devices/release", DeviceRelease(token)) }
+
     // endregion
     // region Plumbing
 

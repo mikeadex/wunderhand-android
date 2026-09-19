@@ -1,10 +1,13 @@
 package com.wunderhand.app.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.wunderhand.app.push.PushNotifier
+import com.wunderhand.app.push.PushServices
 import com.wunderhand.design.WunderhandTheme
 
 /**
@@ -19,8 +22,18 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         val container = (application as WunderhandApp).container
         container.notesGate.attach(this)
+        // Started by a tapped notification or a link — but not again when the phone is turned, or the app comes back from the dead.
+        if (savedInstanceState == null) { container.notifier.dismissFor(intent); container.push.follow(PushNotifier.linkIn(intent)) }
         setContent {
-            WunderhandTheme { RootScreen(container.model, container.reachability, container.notesGate) }
+            WunderhandTheme { RootScreen(container.model, container.reachability, container.notesGate, PushServices(container.push, container.notifier)) }
         }
+    }
+
+    /** Tapped with the app already open. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val container = (application as WunderhandApp).container
+        container.notifier.dismissFor(intent)
+        container.push.follow(PushNotifier.linkIn(intent))
     }
 }

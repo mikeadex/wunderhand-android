@@ -1,8 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+/*
+ * Where Firebase is, for push: `firebase.properties` beside this project, never in git, written
+ * from the console's google-services.json by scripts/firebase-config.sh. With no such file every
+ * field is empty, push is off, and nothing else notices — the same app, on a machine that has
+ * never heard of the Firebase project.
+ */
+val firebase = Properties().also { props ->
+    rootProject.file("firebase.properties").takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
+}
+fun firebaseField(name: String): String = "\"" + (firebase.getProperty(name) ?: "").replace("\\", "").replace("\"", "") + "\""
 
 android {
     namespace = "com.wunderhand.app"
@@ -16,6 +29,9 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "FIREBASE_PROJECT_ID", firebaseField("projectId"))
+        buildConfigField("String", "FIREBASE_API_KEY", firebaseField("apiKey"))
+        buildConfigField("String", "FIREBASE_SENDER_ID", firebaseField("senderId"))
     }
 
     buildTypes {
@@ -26,9 +42,12 @@ android {
             // chairtime's dev server listens. The sign-in screen can point a
             // real phone somewhere else.
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3100\"")
+            // Firebase knows the debug build as its own app, because it has its own package name.
+            buildConfigField("String", "FIREBASE_APP_ID", firebaseField("debug.appId"))
         }
         release {
             buildConfigField("String", "API_BASE_URL", "\"https://wunderhand.com\"")
+            buildConfigField("String", "FIREBASE_APP_ID", firebaseField("release.appId"))
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -58,6 +77,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":network"))
     implementation(project(":design"))
+    implementation(libs.firebase.messaging)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

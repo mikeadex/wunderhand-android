@@ -99,4 +99,7 @@ open class StubApi : WunderhandApi {
     override suspend fun checkout(bookingId: String): com.wunderhand.core.CheckoutResponse = unexpected("checkout")
     override suspend fun settle(bookingId: String, request: com.wunderhand.core.TillRequest): com.wunderhand.core.SettledResponse = unexpected("settle")
     override suspend fun money(): com.wunderhand.core.MoneyResponse = unexpected("money")
+    // Telling chairtime about a phone is never what a test is about, and never a reason for one to fail.
+    override suspend fun registerDevice(token: String, appVersion: String) { calls += "registerDevice" }
+    override suspend fun releaseDevice(token: String) { calls += "releaseDevice" }
 }
