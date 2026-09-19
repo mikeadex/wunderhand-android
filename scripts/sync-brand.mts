@@ -172,3 +172,37 @@ console.log('launcher icon → app/src/main/res (adaptive, with the themed layer
   writeFileSync(`${APP}/play/icon-512.png`, png)
   console.log(`play/icon-512.png → ${(png.length / 1024).toFixed(0)}KB`)
 }
+
+/* Play's feature graphic: 1024 × 500, shown across the top of the listing. The icon's own ground,
+ * and the lockup on it — the mark and the name, nothing else. No screenshot, because Play puts
+ * those directly underneath; no sentence, because at a phone's width it would be too small to read.
+ * The name is set by Next's own image renderer from the app's Archivo file, handed over as bytes.
+ * sharp's text is not used: on a Mac it finds fonts through CoreText, takes no notice of a font
+ * file or of fontconfig, and sets the name in Helvetica without a word. */
+{
+  const W = 1024, H = 500, markPx = 168
+  const ground = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
+    + '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8502f"/><stop offset=".46" stop-color="#b03a22"/><stop offset="1" stop-color="#6d2716"/></linearGradient>'
+    + '<radialGradient id="glow" cx="0.16" cy="0.1" r="0.9"><stop offset="0" stop-color="#e06a47" stop-opacity=".55"/><stop offset="1" stop-color="#e06a47" stop-opacity="0"/></radialGradient></defs>'
+    + `<rect width="${W}" height="${H}" fill="url(#g)"/><rect width="${W}" height="${H}" fill="url(#glow)"/></svg>`
+  const mark = await sharp(Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${markPx}" height="${markPx}" viewBox="0 0 100 100">${markGroup('full', '#f6f5f4', '')}</svg>`,
+  ), { density: 72 * 4 }).resize(markPx, markPx).png().toBuffer()
+  // Set large and trimmed to its ink, then brought to the width it should be.
+  const { ImageResponse } = await import(`${CHAIRTIME}/node_modules/next/og.js`)
+  const archivo = readFileSync(`${APP}/design/src/main/res/font/archivo_bold.ttf`)
+  const word = { type: 'div', props: { style: { display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontFamily: 'Archivo', fontWeight: 700, fontSize: 240, letterSpacing: '-0.03em', color: '#f6f5f4' }, children: 'wunderhand' } }
+  const set = await sharp(Buffer.from(await new ImageResponse(word as never, {
+    width: 1800, height: 400, fonts: [{ name: 'Archivo', data: archivo, weight: 700, style: 'normal' }],
+  }).arrayBuffer())).trim().png().toBuffer()
+  const name = await sharp(set).resize({ width: 560 }).png().toBuffer()
+  const { width: nameW = 0, height: nameH = 0 } = await sharp(name).metadata()
+  const gap = 22, total = markPx + gap + nameW, left = Math.round((W - total) / 2)
+  const png = await sharp(Buffer.from(ground)).composite([
+    // The mark's blades reach above its loops: sat a little high, the pair reads as level.
+    { input: mark, left, top: Math.round((H - markPx) / 2) - 6 },
+    { input: name, left: left + markPx + gap, top: Math.round((H - nameH) / 2) - 6 },
+  ]).png().toBuffer()
+  writeFileSync(`${APP}/play/feature-1024x500.png`, png)
+  console.log(`play/feature-1024x500.png → ${(png.length / 1024).toFixed(0)}KB (name ${nameW}×${nameH})`)
+}

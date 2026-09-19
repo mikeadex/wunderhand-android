@@ -18,10 +18,36 @@ app does is stated plainly in each section, so the right box can be found whatev
 
 | | |
 |---|---|
-| Developer account | Play Console, $25 once. As an **organisation** (Paradigm Shift Multimedia Ltd) it needs a D-U-N-S number and skips the testers rule below. As a **personal** account it is instant, but a new personal account must run a closed test with **12 testers for 14 days** before it may publish. Decide this first: it sets the whole timetable. |
+| Developer account | You have one, and it is **personal**. See "Personal or organisation" below: it sets the whole timetable. |
 | Create the app | App name `Wunderhand` · default language English (United Kingdom) · **App**, not game · **Free** · accept the declarations. |
 | Package name | `com.wunderhand.app`. Permanent once the first bundle is uploaded. |
 | Play App Signing | Accept it (the default). Google holds the key phones trust; you hold only an upload key, which can be replaced if lost. |
+
+### Personal or organisation
+
+A personal account made after 13 November 2023 must hold a closed test with **12 testers, each
+opted in for 14 days without a break**, before Play will let it apply for production. (Made before
+that date, the rule does not apply: the console says so by simply offering Production.) An
+organisation account never has the rule.
+
+**The account can be changed in place**, personal to organisation, and the apps stay where they
+are: Play Console → Developer account → About you → Change account type. Google's own page
+describes it as making a new payments profile of the organisation type, verifying it, and linking
+it. It needs a **D-U-N-S number** for Paradigm Shift Multimedia Ltd (free from Dun & Bradstreet; a
+UK company often has one already, so look it up before applying; a new one takes from a few days
+to a few weeks), an address, a website and an email that agree with what D&B holds, and proof of
+who you are as the company's representative. **It cannot be changed back.**
+
+What it buys: no testers rule; the listing says the company's name and address instead of your own
+legal name and home address (a personal account that earns nothing shows the name and country; one
+that sells shows the full address, and this one sells nothing); and cover for the health question.
+Google says health apps "such as Medical apps and Human Subjects Research apps" *should* come from
+an organisation account. Wunderhand is neither, but it does hold health notes and does fill in the
+health declaration (§3), and a reviewer who reads that broadly would ask for exactly this change.
+
+**Do both at once, because neither waits for the other.** Ask D&B for the number today, and start
+the closed test on the personal account today. Whichever finishes first opens production. Nothing
+in the build, the listing or the package name depends on the answer.
 
 ---
 
@@ -111,7 +137,7 @@ leave it out.
 | Asset | Size | State |
 |---|---|---|
 | App icon | 512 × 512 PNG | **Done**: `play/icon-512.png`, written by `scripts/sync-brand.sh` |
-| Feature graphic | 1024 × 500 PNG or JPG | **Not made.** Required. The lockup on the brand ground, nothing else — no screenshots in it, no words Play will crop on a small phone. |
+| Feature graphic | 1024 × 500 PNG | **Done**: `play/feature-1024x500.png`, written by the same script. The lockup on the icon's ground and nothing else: Play puts the screenshots directly underneath, and a sentence would be too small to read on a phone. |
 | Phone screenshots | 2–8, each side 320–3840 px, no side more than twice the other | **Not taken.** From the emulator folded (1080 × 2092), on the seeded shop |
 | 7-inch tablet | up to 8 | **Not taken.** From the emulator unfolded (2208 × 1840) |
 | 10-inch tablet | up to 8 | **Not taken.** Needs a tablet emulator; the installed system image can be reused, so nothing to download |
@@ -220,8 +246,13 @@ removed, and medical notes erased, from inside the app.
 1. **Internal testing** — up to 100 people by email, live within minutes, no review. Put the first
    bundle here and install it on a real phone from the Play Store. This is where TalkBack, Doze
    and OEM battery savers get looked at (PLAN.md, A8).
-2. **Closed testing** — a personal account must hold 12 opted-in testers for 14 days here before
-   production opens. An organisation account may go straight on.
+2. **Closed testing** — where the 12 testers and their 14 days are served (§0). It needs the
+   whole store listing and every declaration in §3 first, and its first bundle is reviewed, so the
+   clock starts some days after you press the button, not when you do. Testers join by opening the
+   opt-in link on the phone, signed in to the Google account you listed, and installing. Somebody
+   who opts out and back in starts their 14 days again, so list 15 or so. They need not be
+   barbers, and they need not have a Wunderhand login: opted in and installed is what is counted.
+   Afterwards, "Apply for production" asks a few questions about what the test found.
 3. **Production** — staged: 20%, then 100%.
 
 A new account's first review can take a week. After that, a day or two.
@@ -244,11 +275,12 @@ is.
 
 ## 6. Before pressing publish
 
-- [ ] Developer account made, and organisation or personal decided
+- [x] Developer account made (personal)
+- [ ] D-U-N-S number asked for, and the closed test started: whichever finishes first
 - [ ] Upload key made, and backed up somewhere that is not this Mac
 - [ ] Signed bundle uploaded to internal testing, installed from the Play Store on a real phone
 - [ ] TalkBack pass on that phone, screen by screen
-- [ ] Feature graphic made
+- [x] Feature graphic made
 - [ ] Screenshots taken: phone, 7-inch, 10-inch
 - [ ] chairtime's `feat/android-push` merged — for `/delete-account`, and for App Links
 - [ ] Data safety, content rating, target audience, health and financial declarations as above
