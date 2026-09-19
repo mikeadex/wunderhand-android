@@ -392,8 +392,8 @@ class RemindersViewModel(private val api: ShopApi, handle: suspend (ApiError) ->
 data class TeamState(val response: TeamResponse? = null, val failure: String? = null, val isAdding: Boolean = false)
 
 /** The team (chairtime `app/(pro)/shop/team`): who is on it, who logs in, who is in the diary and who sees the money. */
-class TeamViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit) : SettingViewModel(handle) {
-    private val _state = MutableStateFlow(TeamState())
+class TeamViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit, private val saved: SavedStateHandle = SavedStateHandle()) : SettingViewModel(handle) {
+    private val _state = MutableStateFlow(TeamState(isAdding = saved["adding"] ?: false))
     val state: StateFlow<TeamState> = _state.asStateFlow()
 
     // Every time it is come back to: somebody may have been changed. What is on screen stays while it is asked.
@@ -401,7 +401,10 @@ class TeamViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit
         attempt({ e -> _state.update { it.copy(failure = e.message) } }) { api.team().let { r -> _state.update { it.copy(response = r, failure = null) } } }
     }
 
-    fun adding(showing: Boolean) = _state.update { it.copy(isAdding = showing) }
+    fun adding(showing: Boolean) {
+        saved["adding"] = showing
+        _state.update { it.copy(isAdding = showing) }
+    }
 }
 
 data class PersonState(
@@ -421,7 +424,7 @@ data class PersonState(
  * the shop's money, are acts — an owner's, each with guards chairtime keeps,
  * each asked about first. Nothing here names a price.
  */
-class TeamPersonViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit) : ViewModel() {
+class TeamPersonViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit, private val saved: SavedStateHandle = SavedStateHandle()) : ViewModel() {
     private val handle = handle
     private var shown: Pair<String, Int>? = null
     private val _state = MutableStateFlow(PersonState())
@@ -429,8 +432,10 @@ class TeamPersonViewModel(private val api: ShopApi, handle: suspend (ApiError) -
 
     fun enter(id: String, visit: Int) {
         if (shown == id to visit) return
+        // Back from the dead on the same person, mid-change: the form comes back once they have loaded. Anybody else starts clean.
+        val wasEditing = saved.get<String>("editing") == id
         shown = id to visit
-        _state.value = PersonState()
+        _state.value = PersonState(isEditing = wasEditing)
         load(id)
     }
 
@@ -443,8 +448,13 @@ class TeamPersonViewModel(private val api: ShopApi, handle: suspend (ApiError) -
     }
 
     fun typeEmail(value: String) = _state.update { it.copy(email = value) }
-    fun editing(showing: Boolean) = _state.update { it.copy(isEditing = showing) }
-    fun edited(response: TeamPersonResponse) = _state.update { it.copy(response = response, isEditing = false, notice = null, problem = null) }
+    fun editing(showing: Boolean) {
+        saved["editing"] = id.takeIf { showing }
+        _state.update { it.copy(isEditing = showing) }
+    }
+    fun edited(response: TeamPersonResponse) = _state.update {
+        saved["editing"] = null
+        it.copy(response = response, isEditing = false, notice = null, problem = null) }
 
     /** One act, then the person as chairtime now has them — whether it worked or not, since a refusal usually means something changed elsewhere. */
     private fun act(body: suspend (String) -> Pair<TeamPersonResponse, String>): Job? {
@@ -567,15 +577,36 @@ data class OutletsState(
 )
 
 /** Outlets (chairtime `app/(pro)/shop/outlets`): where the shop is, and how far it travels. */
-class OutletsViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit) : SettingViewModel(handle) {
-    private val _state = MutableStateFlow(OutletsState())
+class OutletsViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Unit, private val saved: SavedStateHandle = SavedStateHandle()) : SettingViewModel(handle) {
+    private val _state = MutableStateFlow(OutletsState(formVisit = saved["formVisit"] ?: 0))
+
+    init {
+        // Back from the dead with a form up: a new outlet's needs nothing; one being changed is fetched again, and what was typed is laid over it.
+        when (val was = saved.get<String>("form")) {
+            null -> Unit
+            "" -> _state.update { it.copy(isEditing = true) }
+            else -> reopen(was)
+        }
+    }
     val state: StateFlow<OutletsState> = _state.asStateFlow()
 
     override fun load(): Job = viewModelScope.launch {
         attempt({ e -> _state.update { it.copy(failure = e.message) } }) { api.outlets().let { r -> _state.update { it.copy(response = r, failure = null) } } }
     }
 
-    fun add() = _state.update { it.copy(isEditing = true, editing = null, formVisit = it.formVisit + 1) }
+    private fun remember(form: String?) {
+        saved["form"] = form
+        saved["formVisit"] = _state.value.formVisit
+    }
+
+    fun add() {
+        _state.update { it.copy(isEditing = true, editing = null, formVisit = it.formVisit + 1) }
+        remember("")
+    }
+
+    private fun reopen(id: String) = viewModelScope.launch {
+        attempt({ e -> _state.update { it.copy(problem = e.message) } }) { api.outlet(id).let { r -> _state.update { it.copy(isEditing = true, editing = r) } } }
+    }
 
     fun open(id: String): Job? {
         if (_state.value.opening != null) return null
@@ -584,6 +615,7 @@ class OutletsViewModel(private val api: ShopApi, handle: suspend (ApiError) -> U
             attempt({ e -> _state.update { it.copy(problem = e.message) } }) {
                 val r = api.outlet(id)
                 _state.update { it.copy(isEditing = true, editing = r, problem = null, formVisit = it.formVisit + 1) }
+                remember(id)
             }
             _state.update { it.copy(opening = null) }
         }
@@ -591,6 +623,7 @@ class OutletsViewModel(private val api: ShopApi, handle: suspend (ApiError) -> U
 
     fun closeForm(savedOne: Boolean) {
         _state.update { it.copy(isEditing = false, editing = null) }
+        remember(null)
         if (savedOne) load()
     }
 }

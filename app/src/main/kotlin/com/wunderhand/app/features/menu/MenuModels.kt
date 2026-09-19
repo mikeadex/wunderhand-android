@@ -53,7 +53,7 @@ class MenuViewModel(
     val isOwner: Boolean = me.staff.isOwner
     val myStaffId: String = me.staff.id
 
-    private val _state = MutableStateFlow(MenuState(category = saved["category"], openId = saved["open"]))
+    private val _state = MutableStateFlow(MenuState(category = saved["category"], openId = saved["open"], isAdding = saved["adding"] ?: false))
     val state: StateFlow<MenuState> = _state.asStateFlow()
 
     init { load() }
@@ -80,7 +80,12 @@ class MenuViewModel(
         _state.update { it.copy(openId = id) }
     }
 
-    fun adding(showing: Boolean) = _state.update { it.copy(isAdding = showing) }
+    // That a form is open is kept where the system can hand it back, with what was typed into it: killed in the
+    // background with a form half filled in, the app comes back to the form, not to the screen behind it.
+    fun adding(showing: Boolean) {
+        saved["adding"] = showing
+        _state.update { it.copy(isAdding = showing) }
+    }
 
     /** Straight to its page: it has an hour and nobody to do it, and both are one tap from there. */
     fun created(id: String) {

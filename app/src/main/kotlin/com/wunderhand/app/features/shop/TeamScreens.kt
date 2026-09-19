@@ -82,7 +82,7 @@ internal fun Pill(text: String, accent: Boolean = false, modifier: Modifier = Mo
 /** The team (chairtime `app/(pro)/shop/team`): who is on it, who logs in, who is in the diary and who sees the money. */
 @Composable
 internal fun TeamScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: TeamViewModel = viewModel(key = "shop-team") { TeamViewModel(app.client, app::handle) }
+    val model: TeamViewModel = viewModel(key = "shop-team") { TeamViewModel(app.client, app::handle, createSavedStateHandle()) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -141,7 +141,7 @@ private sealed interface Asking {
  */
 @Composable
 internal fun TeamPersonScreen(id: String, app: AppModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: TeamPersonViewModel = viewModel(key = "shop-person") { TeamPersonViewModel(app.client, app::handle) }
+    val model: TeamPersonViewModel = viewModel(key = "shop-person") { TeamPersonViewModel(app.client, app::handle, createSavedStateHandle()) }
     LaunchedEffect(id, visit) { model.enter(id, visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val focus = LocalFocusManager.current

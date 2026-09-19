@@ -17,6 +17,16 @@ val firebase = Properties().also { props ->
 }
 fun firebaseField(name: String): String = "\"" + (firebase.getProperty(name) ?: "").replace("\\", "").replace("\"", "") + "\""
 
+/*
+ * The upload key: `keystore.properties` beside this project, never in git (nor is the .jks). Google
+ * holds the key that signs what phones install (Play App Signing); this one only proves an upload
+ * is yours, and can be replaced if it is ever lost. With no such file the release build is simply
+ * unsigned, as it is on any machine but the one that publishes. See PLAYSTORE.md.
+ */
+val keystore = Properties().also { props ->
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
+}
+
 android {
     namespace = "com.wunderhand.app"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -34,6 +44,15 @@ android {
         buildConfigField("String", "FIREBASE_SENDER_ID", firebaseField("senderId"))
     }
 
+    signingConfigs {
+        if (keystore.getProperty("storeFile") != null) create("upload") {
+            storeFile = rootProject.file(keystore.getProperty("storeFile"))
+            storePassword = keystore.getProperty("storePassword")
+            keyAlias = keystore.getProperty("keyAlias")
+            keyPassword = keystore.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         debug {
             // Beside the store build on one phone, not instead of it.
@@ -47,6 +66,7 @@ android {
         }
         release {
             buildConfigField("String", "API_BASE_URL", "\"https://wunderhand.com\"")
+            signingConfig = signingConfigs.findByName("upload")
             buildConfigField("String", "FIREBASE_APP_ID", firebaseField("release.appId"))
             isMinifyEnabled = true
             isShrinkResources = true

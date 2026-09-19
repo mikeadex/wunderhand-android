@@ -168,7 +168,8 @@ private fun Content(t: MoneyResponse, model: MoneyViewModel, twoColumns: Boolean
             tiles(Modifier.width(300.dp), stacked = true)
         } else {
             headline()
-            tiles(stacked = false)
+            // Side by side until the type is big enough that "YEAR TO DATE" is three lines and the figure beside it a sliver.
+            tiles(stacked = LocalDensity.current.fontScale >= 1.5f)
         }
 
         val panels = evidence(t, model.thisMonthKey, monthName)
@@ -249,12 +250,14 @@ private fun evidence(t: MoneyResponse, thisMonthKey: String, monthName: String):
 // region Pieces
 
 /** A titled card of evidence. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MoneyPanel(modifier: Modifier = Modifier, title: String? = null, note: String? = null, padding: Dp = 18.dp, content: @Composable ColumnScope.() -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Column(modifier.fillMaxWidth().liftSmall(shape).clip(shape).background(WHColors.Surface).padding(padding)) {
-        if (title != null) Row(Modifier.padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(title.uppercase(), Modifier.weight(1f).semantics { contentDescription = title; heading() }, style = WHType.Eyebrow, color = WHColors.Eyebrow)
+        // The title, and what it covers beside it — or under it, once the two no longer fit a line: a title is never broken mid-word to make room.
+        if (title != null) FlowRow(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(2.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+            Text(title.uppercase(), Modifier.semantics { contentDescription = title; heading() }, style = WHType.Eyebrow, color = WHColors.Eyebrow)
             if (note != null) Text(note, style = WHType.Meta, color = WHColors.Neutral700)
         }
         content()
@@ -304,20 +307,38 @@ private data class BarRow(val label: String, val pence: Int, val count: Int?, va
 @Composable
 private fun Bars(rows: List<BarRow>, currency: String, wideLabel: Boolean) {
     val peak = maxOf(rows.maxOfOrNull { it.pence } ?: 1, 1)
-    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+    /* Beside the bar while the words fit the columns made for them. With the phone's text turned up they do not —
+     * "£4,844" was cut to "£4,84", a wrong figure said confidently — so then the words sit above the bar,
+     * with the whole row to themselves. */
+    val roomy = LocalDensity.current.fontScale >= 1.3f
+
+    @Composable
+    fun bar(row: BarRow, modifier: Modifier) = Box(modifier.height(12.dp).clip(CircleShape).background(WHColors.Well)) {
+        // A sliver even for a small month: nothing sold is no bar, something sold is never no bar.
+        if (row.pence > 0) Box(Modifier.fillMaxWidth((row.pence.toFloat() / peak).coerceIn(0.03f, 1f)).height(12.dp).clip(CircleShape).background(WHColors.Ink))
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(if (roomy) 14.dp else 9.dp)) {
         for (row in rows) {
             val money = Pence(row.pence).formatted(currency)
-            Row(
-                Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = listOfNotNull(row.spoken, money, row.count?.let { "$it" }, "so far".takeIf { row.isNow }).joinToString(", ") }.testTag("moneyBar"),
+            val spoken = listOfNotNull(row.spoken, money, row.count?.let { "$it" }, "so far".takeIf { row.isNow }).joinToString(", ")
+            val weight = if (row.isNow) FontWeight.Medium else FontWeight.Normal
+            val name = if (roomy) row.spoken else row.label
+            if (roomy) Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }.testTag("moneyBar"), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                    Text(name, Modifier.weight(1f), style = WHType.Meta.copy(fontWeight = weight), color = if (row.isNow) WHColors.Ink else WHColors.Neutral700)
+                    if (row.count != null) Text("${row.count}", style = WHType.Meta, color = WHColors.Neutral700, maxLines = 1)
+                    Text(money, style = WHType.Semi14.copy(fontWeight = weight), color = WHColors.Ink, maxLines = 1)
+                }
+                bar(row, Modifier.fillMaxWidth())
+            } else Row(
+                Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken }.testTag("moneyBar"),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OneLine(row.label, WHType.Meta.copy(fontWeight = if (row.isNow) FontWeight.Medium else FontWeight.Normal), if (row.isNow) WHColors.Ink else WHColors.Neutral700, Modifier.width(if (wideLabel) 96.dp else 36.dp))
-                Box(Modifier.weight(1f).height(12.dp).clip(CircleShape).background(WHColors.Well)) {
-                    // A sliver even for a small month: nothing sold is no bar, something sold is never no bar.
-                    if (row.pence > 0) Box(Modifier.fillMaxWidth((row.pence.toFloat() / peak).coerceIn(0.03f, 1f)).height(12.dp).clip(CircleShape).background(WHColors.Ink))
-                }
+                OneLine(name, WHType.Meta.copy(fontWeight = weight), if (row.isNow) WHColors.Ink else WHColors.Neutral700, Modifier.width(if (wideLabel) 96.dp else 36.dp))
+                bar(row, Modifier.weight(1f))
                 if (row.count != null) Text("${row.count}", Modifier.widthIn(min = 26.dp), style = WHType.Meta, color = WHColors.Neutral700, textAlign = TextAlign.End, maxLines = 1)
-                Text(money, Modifier.width(78.dp), style = WHType.Semi14.copy(fontWeight = if (row.isNow) FontWeight.Medium else FontWeight.Normal), color = WHColors.Ink, textAlign = TextAlign.End, maxLines = 1)
+                Text(money, Modifier.width(78.dp), style = WHType.Semi14.copy(fontWeight = weight), color = WHColors.Ink, textAlign = TextAlign.End, maxLines = 1)
             }
         }
     }

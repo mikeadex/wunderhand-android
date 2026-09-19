@@ -62,6 +62,7 @@ class ClientsViewModel(
             openId = saved["open"],
             // Medical notes are never where the app comes back to by itself: they are asked for.
             showingHealth = false,
+            isAdding = saved["adding"] ?: false,
         ),
     )
     val state: StateFlow<ClientsState> = _state.asStateFlow()
@@ -102,7 +103,12 @@ class ClientsViewModel(
     }
 
     fun showHealth(showing: Boolean) = _state.update { it.copy(showingHealth = showing) }
-    fun adding(showing: Boolean) = _state.update { it.copy(isAdding = showing) }
+    // That a form is open is kept where the system can hand it back, with what was typed into it: killed in the
+    // background with a form half filled in, the app comes back to the form, not to the screen behind it.
+    fun adding(showing: Boolean) {
+        saved["adding"] = showing
+        _state.update { it.copy(isAdding = showing) }
+    }
 
     /** Somebody new: the list has them now, and they open. */
     fun added(id: String) {

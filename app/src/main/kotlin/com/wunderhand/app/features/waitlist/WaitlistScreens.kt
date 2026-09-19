@@ -107,7 +107,7 @@ private fun NoticeLine(text: String, modifier: Modifier = Modifier) {
 fun WaitlistSheet(app: AppModel, clock: ShopClock, addFor: WaitingFor? = null, onClose: () -> Unit) {
     EditorSheet(onDismiss = onClose) {
         val opened = rememberSaveable { UUID.randomUUID().toString() }
-        val model: WaitlistViewModel = viewModel(key = "waitlist-$opened") { WaitlistViewModel(app.client, app::handle, addStraightAway = addFor != null) }
+        val model: WaitlistViewModel = viewModel(key = "waitlist-$opened") { WaitlistViewModel(app.client, app::handle, addStraightAway = addFor != null, saved = createSavedStateHandle()) }
         val state by model.state.collectAsStateWithLifecycle()
 
         if (state.isAdding) {

@@ -49,8 +49,11 @@ data class WaitlistState(
  * long they have waited, not by when a gap might suit them: this screen
  * answers "who am I letting down", not "who takes this hour".
  */
-class WaitlistViewModel(private val api: WaitlistApi, private val handle: suspend (ApiError) -> Unit, addStraightAway: Boolean = false, private val now: () -> Instant = Instant::now) : ViewModel() {
-    private val _state = MutableStateFlow(WaitlistState(isAdding = addStraightAway))
+class WaitlistViewModel(
+    private val api: WaitlistApi, private val handle: suspend (ApiError) -> Unit, addStraightAway: Boolean = false,
+    private val now: () -> Instant = Instant::now, private val saved: SavedStateHandle = SavedStateHandle(),
+) : ViewModel() {
+    private val _state = MutableStateFlow(WaitlistState(isAdding = saved["adding"] ?: addStraightAway, addVisit = saved["addVisit"] ?: 0))
     val state: StateFlow<WaitlistState> = _state.asStateFlow()
 
     init { load() }
@@ -78,9 +81,14 @@ class WaitlistViewModel(private val api: WaitlistApi, private val handle: suspen
 
     fun waited(row: WaitingRow): String = WaitWords.waited(row.waitingSince, now())
 
-    fun adding(showing: Boolean) = _state.update { it.copy(isAdding = showing, addVisit = if (showing) it.addVisit + 1 else it.addVisit) }
+    fun adding(showing: Boolean) {
+        _state.update { it.copy(isAdding = showing, addVisit = if (showing) it.addVisit + 1 else it.addVisit) }
+        saved["adding"] = showing
+        saved["addVisit"] = _state.value.addVisit
+    }
 
     fun added(name: String) {
+        saved["adding"] = false
         _state.update { it.copy(isAdding = false, notice = "$name is on the list.") }
         load()
     }

@@ -127,6 +127,8 @@ class DiaryViewModel(
             focusStaffId = saved["focus"],
             openAppointmentId = saved["open"],
             gap = GapWindow.unpack(saved["gap"]),
+            isBlockingTime = saved["blocking"] ?: false,
+            isShowingWaitlist = saved["waitlist"] ?: false,
             newBooking = saved.get<ArrayList<String>>("booking")?.let { f ->
                 NewBookingStart(f[0], f[1].ifEmpty { null }, f[2].toLongOrNull()?.let(Instant::ofEpochMilli), f[3].ifEmpty { null }, f[4].ifEmpty { null })
             },
@@ -228,10 +230,14 @@ class DiaryViewModel(
 
     fun dismissActionProblem() = _state.update { it.copy(actionProblem = null) }
 
-    fun blockingTime(showing: Boolean) = _state.update { it.copy(isBlockingTime = showing) }
+    fun blockingTime(showing: Boolean) {
+        saved["blocking"] = showing
+        _state.update { it.copy(isBlockingTime = showing) }
+    }
 
     /** After time was blocked: show the day it was blocked on. */
     fun blocked(on: String) {
+        saved["blocking"] = false
         _state.update { it.copy(isBlockingTime = false) }
         val s = _state.value
         if (on != (s.date ?: s.response?.date)) show(on) else load()
@@ -287,6 +293,7 @@ class DiaryViewModel(
     /** The waiting list, from "3 waiting". Closed, the count may have changed. */
     fun showWaitlist(showing: Boolean) {
         val wasOpen = _state.value.isShowingWaitlist
+        saved["waitlist"] = showing
         _state.update { it.copy(isShowingWaitlist = showing) }
         if (!showing && wasOpen) load()
     }

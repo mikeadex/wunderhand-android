@@ -64,7 +64,7 @@ import com.wunderhand.design.WHType
  */
 @Composable
 internal fun OutletsScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: OutletsViewModel = viewModel(key = "shop-outlets") { OutletsViewModel(app.client, app::handle) }
+    val model: OutletsViewModel = viewModel(key = "shop-outlets") { OutletsViewModel(app.client, app::handle, createSavedStateHandle()) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
