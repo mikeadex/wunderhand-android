@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 to A6 built** · 19 September 2026 · see [Progress](#progress) at the end
+Status: **A0 to A6 built; A7 built and waiting on three things from you** · 19 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -570,6 +570,36 @@ the "Coming" placeholder is gone.
 | **Not run** | **"Offer it" was never pressed**: on this server an offer emails whoever is on the seeded list, and that is not a test's to send. **"Mark paid and finish" was never pressed**: a bill rung through cannot be un-rung, and it would change the dev shop's takings for every other session using it. Both are covered by unit tests against a stub and by the network tests' paths and bodies; the till was opened on a live bill (yesterday's open walk-in: £38, a £4 tip typed, £42 to pay) and closed unpaid. The SMS hand-off was therefore not seen either. **Before release: one offer and one bill, for real, on a throwaway shop.** |
 | Left in the dev branch by the test | Nothing new: the client put on the waiting list is taken off again, and the walk-in is cancelled as before. |
 
+### A7: Push and deep links (built 19 September 2026 — not yet delivered end to end)
+Both halves are written and tested as far as they can be without a Firebase project and without
+chairtime's change being live. 354 JVM tests here; 49 pure tests in chairtime. The emulator test now
+follows a link from another tab and checks that something which only looks like one opens nothing.
+
+**What it still needs, all yours to give:** (1) a Firebase project, with Android apps for
+`com.wunderhand.app` and `com.wunderhand.app.debug` — then `scripts/firebase-config.sh
+~/Downloads/google-services.json`; (2) the OK to push chairtime's branch and open its PR, and to
+run migration 0111 on the development database and then production; (3) the service account's
+three values in Vercel (`FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`). Then "done when" —
+a real booking reaching a real, idle Android phone — can be tried.
+
+| | |
+|---|---|
+| **No plugin, no json in the build** | `firebase-messaging` alone. The `google-services` Gradle plugin fails the build when `google-services.json` is missing; instead `firebase.properties` (git-ignored, written by `scripts/firebase-config.sh`) becomes `BuildConfig` fields and Firebase is started by hand from them. With no such file push is off and **nothing else notices** — which is how it runs today. Firebase's own start-up is switched off in the manifest: no token is minted at first launch, for nobody. Release build checked: R8 is content, 3.7 MB. |
+| `:core` | `DeepLink` — `wunderhand://appointment/<id>?shop=`, `https://wunderhand.com/diary/<id>`, and what a push carries — with the iOS cases ported and more: a host dressed up as ours (`wunderhand.com@evil.example`), a path that climbs, `intent://`. **An id is a UUID or it is not a link**, and it is checked again on the way out of saved state. `PushPayload` reads chairtime's data: the words are chairtime's and the app adds nothing; news with no words is no notification; a crafted one opens nothing. |
+| `PushCoordinator` | Behind two small interfaces, so it is tested with no phone: chairtime hears once for each token and shop; a phone that would swallow the news is not registered and **no token is even asked for** until somebody has said yes; a refusal is tried again on the next diary load; a new token from Firebase goes to the shop that is open. |
+| Asking | After the first diary has loaded, never at launch; once; and not at all in a build that could not receive one. |
+| Drawing it | chairtime sends **data only**, so the app draws the notification: two channels — Bookings, Cancellations — each silenced on its own in the phone's settings; grouped by shop; "Offer the gap" on a cancellation that carried its time, which opens the gap screen and sends nothing. `VISIBILITY_PRIVATE` with a public version that says only that there is news — **no client's name on a lock screen set to hide sensitive content**. |
+| **Signing out** | The phone comes off chairtime's list while the session can still say so — at every shop — then the token is deleted, then any of the shop's news still showing is cleared. And a message that arrives with nobody signed in is dropped before it is drawn: so even with no signal on the way out, nothing more appears for whoever has left. Checked on the emulator: one notification signed in; none after signing out; none for a push arriving signed out. |
+| Following a link | One activity, `singleTop`. The link waits through sign-in; the tabs come to the diary; a link for another of their shops changes shop first and is followed there; one for a shop that is not theirs is dropped — knowing an id is not being allowed to see it. App Links' filter matches the *shape* of an id (`/diary/........-....-....-....-............`), so `/diary/block` stays in the browser. |
+| A way to see it without Firebase | `DebugPushReceiver`, in the debug source set only, guarded by `DUMP` — which adb's shell holds and no app does. It takes the same path a real message takes. With it, on the emulator: the heads-up with the mark on the brand colour; a tap from the Money tab opening the exact appointment; "Offer the gap" opening who could take the freed hour; `wunderhand://` opening an appointment; `wunderhand://appointment/../../shop/close` opening nothing. |
+| **chairtime** — `feat/android-push`, commit 714e19f, **local only, not pushed**, in its own worktree (`../chairtime-a7`) so the shared folder and the dev server were never touched | `POST /devices` takes `platform`, `'ios'` when unsaid so the shipped iOS app is untouched; one service's token under the other's name is refused by the API *and* by the table. `lib/push/fcm.ts`: a service account's RS256 JWT → access token (kept 55 minutes) → FCM HTTP v1, data only, high priority, 12-hour TTL; `UNREGISTERED` forgets the token. `provider.ts` splits by platform, and **each service stands in for itself** — Apple's being set up says nothing about Google's. The words are chosen above the split, so no price reaches a non-owner on either phone. `assetlinks.json` as a route, public by exact path. The support page names both stores' apps. |
+| Two things the plan had not seen | The `device_tokens` **table** checks for hex as well as the API, so 0111 replaces two column checks with one that knows the platform. · `DELETE /devices/{token}` puts the token in the address. Fine for 64 hex characters; FCM's is several times that, and a device's token in a URL is a device's token in every access log on the way. So Android signs out with **`POST /devices/release`**, token in the body. The iOS route is unchanged. |
+| 0111 is safe to run first | Every existing row defaults to `'ios'`; the six-argument `register_device_token` the deployed code calls **stays**, as a wrapper. So it can go on production by hand before the deploy, as always, and nothing is broken in between. |
+| **Not run** | The database-backed cases added to `tests/api-v1-devices.test.ts` — they need 0111 on the development database, and that is a change to a database other sessions share. No real FCM message has been sent or received; Doze, and OEM battery savers, only show on hardware. App Links are unverified until `assetlinks.json` is live. |
+| For `ANDROID_DEBUG_CERT_SHA256` | This Mac's debug key: `8D:55:A7:6A:F7:BB:A2:50:A6:89:EA:A2:3C:40:E4:36:AF:A0:95:44:08:1E:C5:5F:7F:C2:69:5E:75:A5:50:A6`. Public, as a certificate fingerprint is. The store build's is Play's app-signing certificate, known once the app exists in Play Console (A8). |
+| For A8's Data safety form | Firebase Messaging brings an installation id and the push token: "Device or other IDs", for app functionality, not shared, not for tracking. No Analytics — it is not a dependency. |
+| Found in passing, in chairtime, not touched | `tests/push-words.test.ts` compares against a hard-coded "today" of 17 September while `whenFor` asks the real clock whether it is today. It has failed on `main` since the 18th. A test-only fault: in production both clocks are the same one. |
+
 ### Running it locally
 ```sh
 # chairtime, beside this project, on port 3100 (the emulator reaches it as 10.0.2.2:3100)
@@ -583,4 +613,7 @@ CHAIRTIME=../chairtime-m5 scripts/sync-brand.sh
 ./gradlew :app:connectedDebugAndroidTest
 # onto the emulator to use
 ./gradlew :app:installDebug
+# push, once there is a Firebase project (neither file goes in git)
+scripts/firebase-config.sh ~/Downloads/google-services.json
+# a pretended push, debug build only — see app/src/debug/AndroidManifest.xml
 ```
