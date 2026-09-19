@@ -52,7 +52,32 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        /*
+         * The store build in every way that can break it — R8, resource shrinking, not debuggable —
+         * but aimed at chairtime's dev server on this Mac and signed with the debug key, so the
+         * emulator test can be run against it:
+         *
+         *   ./gradlew :app:connectedMinifiedAndroidTest -Pminified
+         *
+         * "It decoded in debug" is the classic way an Android release breaks: R8 renames or removes
+         * what a serializer needed, and the first anybody hears of it is a blank screen in the store
+         * build. The emulator test signs in and walks every screen, so every reply chairtime sends is
+         * decoded by minified code. Never uploaded anywhere: its own application id, and no way to be
+         * pointed at production.
+         */
+        create("minified") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".minified"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            // The libraries the test harness drives by name; the app's own code is kept by nothing.
+            proguardFile("proguard-minified-test.pro")
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3100\"")
+            buildConfigField("String", "FIREBASE_APP_ID", "\"\"")
+        }
     }
+    // The emulator test runs against the debug build, unless asked for the minified one.
+    testBuildType = if (project.hasProperty("minified")) "minified" else "debug"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
