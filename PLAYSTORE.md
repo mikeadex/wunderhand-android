@@ -18,7 +18,7 @@ app does is stated plainly in each section, so the right box can be found whatev
 
 | | |
 |---|---|
-| Developer account | You have one, and it is **personal**. See "Personal or organisation" below: it sets the whole timetable. |
+| Developer account | You have one. It was personal; on 19 September 2026 you asked for it to become an **organisation** account, and Google is verifying that (days, not hours). See "Personal or organisation" below. |
 | Create the app | App name `Wunderhand` · default language English (United Kingdom) · **App**, not game · **Free** · accept the declarations. |
 | Package name | `com.wunderhand.app`. Permanent once the first bundle is uploaded. |
 | Play App Signing | Accept it (the default). Google holds the key phones trust; you hold only an upload key, which can be replaced if lost. |
@@ -45,9 +45,11 @@ Google says health apps "such as Medical apps and Human Subjects Research apps" 
 an organisation account. Wunderhand is neither, but it does hold health notes and does fill in the
 health declaration (§3), and a reviewer who reads that broadly would ask for exactly this change.
 
-**Do both at once, because neither waits for the other.** Ask D&B for the number today, and start
-the closed test on the personal account today. Whichever finishes first opens production. Nothing
-in the build, the listing or the package name depends on the answer.
+**The change was asked for on 19 September 2026 and is being verified.** Nothing in the build, the
+listing or the package name waits on it, so everything else in this file can be done meanwhile:
+the app created, the listing and the declarations filled in, a bundle in internal testing. If the
+console still shows the testers rule after the account reads "Organisation", start the closed test
+that day rather than argue with it.
 
 ---
 
@@ -284,8 +286,8 @@ is.
 
 ## 6. Before pressing publish
 
-- [x] Developer account made (personal)
-- [ ] D-U-N-S number asked for, and the closed test started: whichever finishes first
+- [x] Developer account made, and its change to an organisation asked for (19 September 2026)
+- [ ] Google's verification of the organisation finished
 - [ ] Upload key made, and backed up somewhere that is not this Mac
 - [ ] Signed bundle uploaded to internal testing, installed from the Play Store on a real phone
 - [ ] TalkBack pass on that phone, screen by screen
