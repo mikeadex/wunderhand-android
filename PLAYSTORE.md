@@ -67,7 +67,7 @@ is what people see: `1.0`.
 
 > Your shop's diary at the chair: bookings, clients, the waiting list and takings.
 
-**Full description** (4,000; this is about 1,250):
+**Full description** (4,000; this is about 1,100):
 
 > Wunderhand is the staff app for a Wunderhand shop — barbers, salons, tattoo studios, and anybody
 > who works by appointment.
