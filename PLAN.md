@@ -1,6 +1,6 @@
 # Wunderhand for Android: build plan
 
-Status: **A0 to A6 built; A7 built and waiting on three things from you** · 19 September 2026 · see [Progress](#progress) at the end
+Status: **A0 to A6 built; A7 built and waiting on three things from you; A8 under way** · 19 September 2026 · see [Progress](#progress) at the end
 
 A native Android app for the **pro side** of Wunderhand, written in Kotlin with Jetpack Compose. It
 is the same product as the iOS app in `../wunderhand`: the diary, clients, menu, money and shop that
@@ -600,6 +600,18 @@ a real booking reaching a real, idle Android phone — can be tried.
 | For A8's Data safety form | Firebase Messaging brings an installation id and the push token: "Device or other IDs", for app functionality, not shared, not for tracking. No Analytics — it is not a dependency. |
 | Found in passing, in chairtime, not touched | `tests/push-words.test.ts` compares against a hard-coded "today" of 17 September while `whenFor` asks the real clock whether it is today. It has failed on `main` since the 18th. A test-only fault: in production both clocks are the same one. |
 
+### A8: Hardening and release (under way, 19 September 2026)
+| | |
+|---|---|
+| **The store build's minification, checked** | A `minified` build type: the release build in every way that can break it — R8, resource shrinking, not debuggable — but aimed at the dev server and signed with the debug key. `./gradlew :app:connectedMinifiedAndroidTest -Pminified` runs the whole emulator walk against it, so every reply chairtime sends is decoded by minified code. It passes; the mapping shows 1,076 of the app's 1,103 classes renamed. Only the libraries the test harness drives by name are kept (`proguard-minified-test.pro`), never the app's own code. |
+| Signing | Read from a git-ignored `keystore.properties`; with no such file the bundle is unsigned. The key and its password are the owner's to make (PLAYSTORE.md §1). `bundleRelease` builds: 7.7 MB. |
+| **Process death** | Found by doing it: what was typed into a form was kept, but *that the form was open* was not, so the app came back to the screen behind it and the draft was never seen again. Fixed for the service, client, team, person, outlet, waiting-list and block-time forms; five unit tests, each a view model made twice over one `SavedStateHandle`. **Not yet confirmed on the emulator** — the attempts ran while the database was refusing connections (below), and proved nothing either way. |
+| 200% text | The emulator walk passes at font scale 2.0. Three faults found and fixed on Money: figures clipped by fixed-width columns ("£4,84" for £4,844 — a wrong number said confidently), two tiles cramped side by side, a panel title broken mid-word. At large sizes a bar's words now sit above it, tiles stack, and a title's note wraps under it. |
+| One crash, not reproduced | The first 200% run died with Compose's "performMeasureAndLayout called during measure layout", at the instant the setting was changed, under the test harness. Not seen again in a full rerun, seven changes of text size with the app open, or three at launch. Recorded, not fixed. |
+| PLAYSTORE.md | The listing, every declaration, the upload key, the tracks, and a checklist. |
+| **The morning the database stopped** | On 19 September production and development both answered 500 to anything that needed the database: Neon's free plan allows a project about 100 compute-hours a month and this one had used 110. `vercel.json` runs `/api/cron/sweep` every five minutes, and Neon sleeps after five idle minutes — so production's database never sleeps, and an always-awake quarter-CPU is about 180 hours a month. It will happen every month on the free plan. The owner upgraded. Worth doing afterwards: a slower sweep, so the database can sleep. |
+| Still to do | Emulator confirmation of process death · screenshots (phone, 7-inch, 10-inch) · the feature graphic · rotation and fold mid-flow · baseline profile · and, the owner's: the Play account, the upload key, TalkBack on a real phone. |
+
 ### Running it locally
 ```sh
 # chairtime, beside this project, on port 3100 (the emulator reaches it as 10.0.2.2:3100)
@@ -615,5 +627,7 @@ CHAIRTIME=../chairtime-m5 scripts/sync-brand.sh
 ./gradlew :app:installDebug
 # push, once there is a Firebase project (neither file goes in git)
 scripts/firebase-config.sh ~/Downloads/google-services.json
+# the emulator walk against the minified build: what the store build's R8 would break
+./gradlew :app:connectedMinifiedAndroidTest -Pminified
 # a pretended push, debug build only — see app/src/debug/AndroidManifest.xml
 ```
