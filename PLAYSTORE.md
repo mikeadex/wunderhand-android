@@ -283,6 +283,14 @@ is.
 
 ---
 
+## Release notes (500 characters)
+
+The same note for internal testing and the first production release:
+
+```
+The first Wunderhand release: the diary by day and week, bookings made, moved and marked done, the waiting list and gaps, the till, clients and their notes, medical notes behind the phone's lock, and your menu, team, outlets and hours. Phones, tablets and foldables.
+```
+
 ## 6. Before pressing publish
 
 - [x] Developer account made, and changed to an organisation account (verified 22 September 2026)
