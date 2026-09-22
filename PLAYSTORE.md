@@ -284,10 +284,17 @@ A new account's first review can take a week. After that, a day or two.
 ## 5. After the first upload
 
 Play Console → Test and release → App integrity → **App signing key certificate** → copy the
-SHA-256. That is what makes `https://wunderhand.com/diary/…` links open the app:
+SHA-256. Copied 22 September 2026:
 
-- into chairtime's environment as `ANDROID_CERT_SHA256` (and the upload key's beside it, comma
-  separated, for builds you install by hand);
+```
+B7:0C:C3:08:4D:FE:AD:B8:68:42:BF:93:95:38:71:F7:61:88:3E:B5:EB:97:35:72:71:3A:D3:3D:5D:1E:81:ED
+```
+
+That is what makes `https://wunderhand.com/diary/…` links open the app:
+
+- into chairtime's environment as `ANDROID_CERT_SHA256`, with the upload key's beside it, comma
+  separated, for builds installed by hand. The exact value for Vercel:
+  `B7:0C:C3:08:4D:FE:AD:B8:68:42:BF:93:95:38:71:F7:61:88:3E:B5:EB:97:35:72:71:3A:D3:3D:5D:1E:81:ED,A6:C4:3C:88:DB:78:3C:EA:DF:BA:6F:53:45:E7:8B:98:E0:FC:25:AB:6D:A9:18:70:74:BF:3D:42:42:F5:C0:3A`
 - this Mac's debug key for `ANDROID_DEBUG_CERT_SHA256` is in PLAN.md (A7).
 
 It needs the `feat/android-push` branch live, because that is where `/.well-known/assetlinks.json`
