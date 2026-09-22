@@ -286,7 +286,7 @@ is.
 ## 6. Before pressing publish
 
 - [x] Developer account made, and changed to an organisation account (verified 22 September 2026)
-- [ ] Upload key made, and backed up somewhere that is not this Mac
+- [x] Upload key made (22 September 2026), the signed bundle built; **backed up somewhere that is not this Mac — do it**
 - [ ] Signed bundle uploaded to internal testing, installed from the Play Store on a real phone
 - [ ] TalkBack pass on that phone, screen by screen
 - [x] Feature graphic made
