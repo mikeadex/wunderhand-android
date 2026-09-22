@@ -295,6 +295,15 @@ is.
 
 ---
 
+## Android developer verification
+
+Google's rule from 2026: every app installed on a certified Android phone must come from a verified
+developer. **Done, 22 September 2026**: the organisation account is verified and the console shows
+the app as registered. If it ever asks again, what belongs on its page is the Play app
+`com.wunderhand.app`, and the upload key, because an APK signed with it was installed on a phone
+outside Play: `A6:C4:3C:88:DB:78:3C:EA:DF:BA:6F:53:45:E7:8B:98:E0:FC:25:AB:6D:A9:18:70:74:BF:3D:42:42:F5:C0:3A`.
+Debug builds installed over adb are exempt.
+
 ## Release notes (500 characters)
 
 The same note for internal testing and the first production release:
