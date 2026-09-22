@@ -411,7 +411,7 @@ shortcuts ("New booking" from a long-press on the icon), Wear OS — neither bef
 | A0 | Say when to create the private GitHub repo |
 | A7 | A Firebase project; the service-account key into Vercel; OK for the chairtime PR and the migration run |
 | A7 | A real Android phone for push — the emulator receives FCM, but Doze and OEM battery savers only show on hardware |
-| A8 | The upload keystore backed up somewhere that is not this Mac; testers' Google accounts for the closed track |
+| A8 | The upload keystore backed up somewhere that is not this Mac |
 
 ## 9. Google Play notes
 - **Sign-up and billing on the web.** Same as Apple §9. Play's payments policy forbids steering to
@@ -612,10 +612,10 @@ a real booking reaching a real, idle Android phone — can be tried.
 | **The morning the database stopped** | On 19 September production and development both answered 500 to anything that needed the database: Neon's free plan allows a project about 100 compute-hours a month and this one had used 110. `vercel.json` runs `/api/cron/sweep` every five minutes, and Neon sleeps after five idle minutes — so production's database never sleeps, and an always-awake quarter-CPU is about 180 hours a month. It will happen every month on the free plan. The owner upgraded. Worth doing afterwards: a slower sweep, so the database can sleep. |
 | **The listing's pictures** | `play/feature-1024x500.png` from `scripts/sync-brand.sh` (the name set from the app's own Archivo file by Next's image renderer — sharp's text quietly used Helvetica on this Mac), and thirteen screenshots in `play/phone`, `play/tablet-7`, `play/tablet-10`. What is in them, what was left out and why: PLAYSTORE.md §2. |
 | **A bug the screenshots found** | In both grids the grip for stretching a booking was drawn in the middle of its 20dp touch zone, which on a 45-minute block is exactly where the second line of words is: every short booking had a grey bar through its service name. The grip now sits on the block's bottom edge; the zone a finger gets is unchanged (`BlockDrag.kt`). |
-| **The account** | Was personal, which means 12 testers for 14 days in a closed test. The owner asked Google to change it to an organisation on 19 September 2026; verification takes days. Nothing in the build waits on it. |
+| **The account** | An organisation account since 22 September 2026, so no closed test with 12 testers: internal testing, then production. |
 | **Rotation and fold mid-flow** | On the Pixel Fold emulator with a half-typed client form open: landscape and back unfolded, folded, landscape and back folded, unfolded again. The form stayed open with its text at every step; the window went 2208×1840 to 1080×2092 and back. |
 | **Baseline profile** | `:baselineprofile`, a `com.android.test` module with the `androidx.baselineprofile` plugin. `./gradlew :app:generateReleaseBaselineProfile` builds the release variant with debug signing, installs it on whatever emulator is running (API 33+, no root), signs in as the demo shop on production, scrolls the day and the week, opens an appointment, scrolls the client list, and writes `app/src/release/generated/baselineProfiles/` — 26,000 rules, committed, packaged into every release bundle by `profileinstaller`. Two lessons from making it work: UI Automator handles into Compose go stale between finding and using, so every tap and fling in the generator re-finds its target; and the diary needs a moment after sign-in before it has anything to scroll. Regenerate when the walk's screens change shape. |
-| Still to do | The owner's: the upload key, twelve testers, TalkBack on a real phone. |
+| Still to do | The owner's: the upload key, and TalkBack on a real phone. |
 
 ### Running it locally
 ```sh

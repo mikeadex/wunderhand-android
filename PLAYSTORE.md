@@ -18,7 +18,7 @@ app does is stated plainly in each section, so the right box can be found whatev
 
 | | |
 |---|---|
-| Developer account | You have one. It was personal; on 19 September 2026 you asked for it to become an **organisation** account, and Google is verifying that (days, not hours). See "Personal or organisation" below. |
+| Developer account | An **organisation** account, Paradigm Shift Multimedia Ltd, since 22 September 2026. The 12-testers rule below no longer applies; the listing shows the company's name and address. |
 | Create the app | App name `Wunderhand` · default language English (United Kingdom) · **App**, not game · **Free** · accept the declarations. |
 | Package name | `com.wunderhand.app`. Permanent once the first bundle is uploaded. |
 | Play App Signing | Accept it (the default). Google holds the key phones trust; you hold only an upload key, which can be replaced if lost. |
@@ -45,11 +45,10 @@ Google says health apps "such as Medical apps and Human Subjects Research apps" 
 an organisation account. Wunderhand is neither, but it does hold health notes and does fill in the
 health declaration (§3), and a reviewer who reads that broadly would ask for exactly this change.
 
-**The change was asked for on 19 September 2026 and is being verified.** Nothing in the build, the
-listing or the package name waits on it, so everything else in this file can be done meanwhile:
-the app created, the listing and the declarations filled in, a bundle in internal testing. If the
-console still shows the testers rule after the account reads "Organisation", start the closed test
-that day rather than argue with it.
+**Done: the account became an organisation account on 22 September 2026.** The rest of this
+section is kept for the record. If the console nonetheless shows the testers rule on the production
+track, that is Google's console catching up, not a rule to satisfy: contact Play support from the
+console with the account's new type, rather than start a closed test.
 
 ---
 
@@ -257,7 +256,7 @@ removed, and medical notes erased, from inside the app.
 1. **Internal testing** — up to 100 people by email, live within minutes, no review. Put the first
    bundle here and install it on a real phone from the Play Store. This is where TalkBack, Doze
    and OEM battery savers get looked at (PLAN.md, A8).
-2. **Closed testing** — where the 12 testers and their 14 days are served (§0). It needs the
+2. **Closed testing** — optional for an organisation account (§0); a personal one served its 12 testers here. It needs the
    whole store listing and every declaration in §3 first, and its first bundle is reviewed, so the
    clock starts some days after you press the button, not when you do. Testers join by opening the
    opt-in link on the phone, signed in to the Google account you listed, and installing. Somebody
@@ -286,8 +285,7 @@ is.
 
 ## 6. Before pressing publish
 
-- [x] Developer account made, and its change to an organisation asked for (19 September 2026)
-- [ ] Google's verification of the organisation finished
+- [x] Developer account made, and changed to an organisation account (verified 22 September 2026)
 - [ ] Upload key made, and backed up somewhere that is not this Mac
 - [ ] Signed bundle uploaded to internal testing, installed from the Play Store on a real phone
 - [ ] TalkBack pass on that phone, screen by screen
