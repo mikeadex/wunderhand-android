@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.baselineprofile)
 }
 
 /*
@@ -119,6 +120,9 @@ kotlin {
 }
 
 dependencies {
+    // Installs the baseline profile in app/src/release/generated/baselineProfiles/ on first run.
+    implementation(libs.androidx.profileinstaller)
+    "baselineProfile"(project(":baselineprofile"))
     implementation(project(":core"))
     implementation(project(":network"))
     implementation(project(":design"))
