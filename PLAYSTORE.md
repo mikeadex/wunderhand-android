@@ -96,35 +96,47 @@ is what people see: `1.0`.
 
 **Full description** (4,000; this is about 1,100):
 
-> Wunderhand is the staff app for a Wunderhand shop — barbers, salons, tattoo studios, and anybody
-> who works by appointment.
+> Wunderhand is the staff app for appointment-based businesses: barbershops, hair and beauty
+> salons, tattoo studios and any other business that runs on appointments.
 >
-> Sign in with your shop's account and the day is there: who is coming, what they are having, and
-> who is free. Book somebody in, move them, mark them done, or cancel and see the gap it leaves. On
-> a tablet or an unfolded phone the whole team sits side by side, a column each.
+> Sign in with your shop's Wunderhand account and see everything you need to run the day: who is
+> coming in, what they are booked for, which team members are free and where the gaps are.
 >
-> WHAT IT DOES
+> Manage appointments, look after clients and keep the whole team working from the same schedule.
+> On a tablet or an unfolded phone, see everyone's appointments side by side, with a column for
+> each team member.
 >
-> • The day, the week, and every chair at once
-> • Book, reschedule, mark done, no-show or cancel — with the deposit rules your shop set
-> • Gaps, and who on the waiting list fits one
-> • Record what was paid at the chair and see what the day took
-> • Clients: their history, their notes, what they are owed
-> • Medical notes behind your fingerprint or face, for the trades that need them
-> • Your menu, your team, your outlets and your hours
-> • A notification when a booking lands or a client cancels
+> YOUR DAY, ALL IN ONE PLACE
 >
-> WHAT IT DOES NOT DO
+> • View appointments by day or week, across your team
+> • Create bookings, reschedule, and mark appointments done, no-show or cancelled
+> • Apply the booking, cancellation and deposit rules your shop has set
+> • Spot gaps in the schedule and find clients on the waiting list who fit them
+> • Record what was paid at the chair and keep track of the day's takings
 >
-> Sign-up and billing are on the web at wunderhand.com. There is nothing to buy in the app.
+> YOUR CLIENTS AND YOUR TEAM
 >
-> Wunderhand needs an account. If your shop does not have one yet, start on the web.
+> • Client profiles, appointment history, notes and outstanding balances
+> • Sensitive medical notes protected by your fingerprint or face, for the trades that keep them
+> • Your services, team members, locations and working hours
+>
+> ACCESS AND ACCOUNT REQUIREMENTS
+>
+> Wunderhand is for the authorised staff of businesses using the Wunderhand platform. Your shop
+> must already have a Wunderhand account; staff access is provided and managed by the shop owner.
+>
+> There is nothing to buy in this app: no subscriptions, upgrades or purchases.
+>
+> If you work at a participating shop, ask your shop owner for your login details.
 
-Two changes from the App Store copy, both deliberate: "Take payment at the chair" became "Record
-what was paid", because Play's payments reviewers read "take payment" as the app processing money,
-and it does not; and "Face ID" became "your fingerprint or face". **Drop the notifications bullet**
-if the first release ships before push is switched on (PLAN.md, A7) — a listing should not promise
-what the build cannot do yet.
+The same text as the App Store description of 22 September 2026 (`../wunderhand/APPSTORE.md` §1),
+with three Android differences, all deliberate: "record what was paid at the chair", because
+Play's payments reviewers read "take payment" as the app processing money, and it does not;
+"fingerprint or face" for Face ID; and "a tablet or an unfolded phone" for iPad. The notifications
+bullet is left out because push is off in the first release (PLAN.md, A7): a listing should not
+promise what the build cannot do. Add it back — "A notification when a booking lands or a client
+cancels" — with the release that switches push on. Nothing in it names where sign-up or billing
+happens, for the reason the App Store rejection taught (APPSTORE.md §8).
 
 **Category**: Business. **Tags**: Business, Productivity (choose what the console offers nearest).
 
