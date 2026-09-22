@@ -307,13 +307,13 @@ The first Wunderhand release: the diary by day and week, bookings made, moved an
 
 - [x] Developer account made, and changed to an organisation account (verified 22 September 2026)
 - [x] Upload key made (22 September 2026), the signed bundle built; **backed up somewhere that is not this Mac — do it**
-- [ ] Signed bundle uploaded to internal testing, installed from the Play Store on a real phone
+- [x] Signed bundle uploaded to internal testing (22 September 2026, version code 1) — [ ] installed from the Play Store on a real phone
 - [ ] TalkBack pass on that phone, screen by screen
 - [x] Feature graphic made
 - [x] Screenshots taken: phone, 7-inch, 10-inch
 - [ ] chairtime's `feat/android-push` merged — for `/delete-account`, and for App Links
-- [ ] Data safety, content rating, target audience, health and financial declarations as above
-- [ ] App access: the demo login, and production answering (it did not, on the morning of
+- [x] Data safety, content rating, target audience, health, financial and advertising-id declarations, category Business (22 September 2026)
+- [x] App access: the demo login (22 September 2026); [ ] production answering (it did not, on the morning of
       19 September 2026, when the database's monthly compute ran out — see PLAN.md)
 - [ ] Both ways out pressed for real, once, on a throwaway shop (PLAN.md, A5)
 - [ ] One offer sent and one bill rung through for real, on a throwaway shop (PLAN.md, A6)
