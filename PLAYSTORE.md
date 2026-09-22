@@ -284,17 +284,22 @@ A new account's first review can take a week. After that, a day or two.
 ## 5. After the first upload
 
 Play Console → Test and release → App integrity → **App signing key certificate** → copy the
-SHA-256. Copied 22 September 2026:
+SHA-256. On 22 September 2026 the developer-verification page listed three keys for the package,
+none of them the upload key, and which one signs the store copy is only labelled on the App
+signing tab. Asset links take a list and an extra fingerprint costs nothing, so all three go in:
 
 ```
 B7:0C:C3:08:4D:FE:AD:B8:68:42:BF:93:95:38:71:F7:61:88:3E:B5:EB:97:35:72:71:3A:D3:3D:5D:1E:81:ED
+BA:56:10:AF:3E:94:00:BB:7D:EE:53:7B:F1:9E:6B:3E:D0:37:81:BA:73:5A:39:80:0F:AA:A5:7D:94:9B:D3:BA
+FB:4A:68:57:A1:1C:D9:D3:1A:02:6C:D2:3A:97:D8:62:3D:83:37:22:EB:44:8E:0D:EC:B8:FD:75:8E:30:EE:FD
 ```
 
 That is what makes `https://wunderhand.com/diary/…` links open the app:
 
 - into chairtime's environment as `ANDROID_CERT_SHA256`, with the upload key's beside it, comma
-  separated, for builds installed by hand. The exact value for Vercel:
-  `B7:0C:C3:08:4D:FE:AD:B8:68:42:BF:93:95:38:71:F7:61:88:3E:B5:EB:97:35:72:71:3A:D3:3D:5D:1E:81:ED,A6:C4:3C:88:DB:78:3C:EA:DF:BA:6F:53:45:E7:8B:98:E0:FC:25:AB:6D:A9:18:70:74:BF:3D:42:42:F5:C0:3A`
+  separated, for builds installed by hand. The exact value for Vercel, Google's three then the
+  upload key:
+  `B7:0C:C3:08:4D:FE:AD:B8:68:42:BF:93:95:38:71:F7:61:88:3E:B5:EB:97:35:72:71:3A:D3:3D:5D:1E:81:ED,BA:56:10:AF:3E:94:00:BB:7D:EE:53:7B:F1:9E:6B:3E:D0:37:81:BA:73:5A:39:80:0F:AA:A5:7D:94:9B:D3:BA,FB:4A:68:57:A1:1C:D9:D3:1A:02:6C:D2:3A:97:D8:62:3D:83:37:22:EB:44:8E:0D:EC:B8:FD:75:8E:30:EE:FD,A6:C4:3C:88:DB:78:3C:EA:DF:BA:6F:53:45:E7:8B:98:E0:FC:25:AB:6D:A9:18:70:74:BF:3D:42:42:F5:C0:3A`
 - this Mac's debug key for `ANDROID_DEBUG_CERT_SHA256` is in PLAN.md (A7).
 
 It needs the `feat/android-push` branch live, because that is where `/.well-known/assetlinks.json`
