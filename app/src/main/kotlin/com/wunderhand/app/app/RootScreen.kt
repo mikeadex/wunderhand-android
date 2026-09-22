@@ -87,7 +87,16 @@ fun RootScreen(model: AppModel, reachability: Reachability, notesGate: NotesGate
 
         // Keyed on the kind of phase, not its contents: a refreshed `Me` is the
         // same screen with newer words, not a new screen to fade to.
-        AnimatedContent(phase, contentKey = { it::class }, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "phase") { now ->
+        //
+        // The key is the class's *name*, not the class. The key's hashCode is
+        // folded into the name of every rememberSaveable beneath it, and a
+        // Class object's hash is its address: the same after a rotation, and
+        // different in the process that comes back after the system killed the
+        // app. With the class as the key, nothing under here was restored after
+        // process death — the tab went back to Diary and every form's text was
+        // lost, while the view models' SavedStateHandles, keyed by strings,
+        // came back fine. Found on the emulator, 22 September 2026.
+        AnimatedContent(phase, contentKey = { it::class.java.name }, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "phase") { now ->
             val bottom = if (now is Phase.SignedIn) Modifier else Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
             Box(Modifier.fillMaxSize().then(bottom)) {
                 when (now) {
