@@ -339,3 +339,7 @@ The first Wunderhand release: the diary by day and week, bookings made, moved an
 - [ ] Both ways out pressed for real, once, on a throwaway shop (PLAN.md, A5)
 - [ ] One offer sent and one bill rung through for real, on a throwaway shop (PLAN.md, A6)
 - [ ] The notifications bullet in the description matches what the build does
+
+## Live
+
+Approved and live on Google Play and the App Store, 24 September 2026 (Android production release, iOS 1.0 build 7). The push freeze on chairtime is over; see PR #41 for what ships next.
