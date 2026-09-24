@@ -342,4 +342,4 @@ The first Wunderhand release: the diary by day and week, bookings made, moved an
 
 ## Live
 
-Approved and live on Google Play and the App Store, 24 September 2026 (Android production release, iOS 1.0 build 7). The push freeze on chairtime is over; see PR #41 for what ships next.
+Approved and live on Google Play and the App Store, 24 September 2026 (Android production release, iOS 1.0 build 7). The push freeze on chairtime is over. PR #41 merged and deployed 24 September 2026: `/.well-known/assetlinks.json` serves the four fingerprints, and `/delete-account` is live. **To do in Play Console**: App content → Data safety → account deletion URL → `https://wunderhand.com/delete-account` (was the support page).
