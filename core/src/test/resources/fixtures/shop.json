@@ -1,7 +1,7 @@
 {
   "isOwner": true,
   "team": {
-    "count": 24,
+    "count": 6,
     "withoutLogin": 0
   },
   "outlets": {
@@ -26,7 +26,7 @@
     "noShowPercent": 50,
     "payInFullAfterNoShows": 2,
     "clientFacingWording": null,
-    "wordingVersion": "v11"
+    "wordingVersion": "v7"
   },
   "reminders": {
     "anyOn": false,

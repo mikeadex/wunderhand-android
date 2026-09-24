@@ -17,7 +17,7 @@ class ContractTest {
         for (name in Fixtures.names) {
             ChairtimeJson.parseToJsonElement(Fixtures.text(name))
         }
-        assertEquals(29, Fixtures.names.size)
+        assertEquals(30, Fixtures.names.size)
     }
 
     @Test fun `me decodes from chairtime's own response`() {

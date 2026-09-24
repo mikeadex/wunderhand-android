@@ -1,12 +1,12 @@
 {
-  "broadcastId": "e1a61038-0738-411a-a529-306e545fda0d",
+  "broadcastId": "fcb4cfcd-be0e-4dca-8cad-1f5357d23662",
   "emailWorking": false,
   "sent": [
     {
       "name": "ZZ Mobile Money Client",
       "phone": "+447700900777",
       "email": null,
-      "url": "http://localhost:3000/offer/9ThoFmEzUXZEOegeeP3TE_u9Yso"
+      "url": "http://localhost:3000/offer/GxYPea5JIKpkm9n3ZC5v7DQShfc"
     }
   ]
 }

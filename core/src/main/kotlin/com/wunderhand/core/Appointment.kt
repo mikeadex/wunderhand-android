@@ -63,6 +63,9 @@ data class AppointmentDetail(
     val clientAddress: String? = null,
     val clientPostcode: String? = null,
     val travelMinutes: Int? = null,
+    /** The outlet it is at, at a shop with more than one. */
+    val outletId: String? = null,
+    val outletName: String? = null,
     /** The service needs a signed consent form and none is on record. */
     val needsConsent: Boolean = false,
     val project: Project? = null,

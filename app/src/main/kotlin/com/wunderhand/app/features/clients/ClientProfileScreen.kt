@@ -187,7 +187,7 @@ fun ClientProfileScreen(id: String, app: AppModel, list: ClientsViewModel, wide:
     }
     openVisit?.let { visit ->
         ModalBottomSheet(onDismissRequest = { openVisit = null }, sheetState = sheet, containerColor = WHColors.Bg, dragHandle = null) {
-            AppointmentSheet(visit, app.client, list.clock, changed = { model.load(); list.load().join() }, app::handle, onClose = { openVisit = null }, onRebook = { openVisit = null; rebooking = it })
+            AppointmentSheet(visit, app.client, list.clock, changed = { model.load(); list.load().join() }, app::handle, onClose = { openVisit = null }, onRebook = { openVisit = null; rebooking = it }, namesOutlet = app.me?.shop?.hasSeveralOutlets ?: false)
         }
     }
 }

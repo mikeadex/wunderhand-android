@@ -51,6 +51,8 @@ data class NewBookingState(
     val slots: BookingSlotsResponse? = null,
     val loadProblem: String? = null,
     val serviceId: String? = null,
+    /** Which outlet, at a shop where more than one does the service. */
+    val outletId: String? = null,
     val staffId: String? = null,
     val addonIds: List<String> = emptyList(),
     val extrasSeen: Boolean = false,
@@ -62,12 +64,16 @@ data class NewBookingState(
     val isBooking: Boolean = false,
 ) {
     val hasExtras: Boolean get() = !detail?.addons.isNullOrEmpty()
+    /** The outlets where somebody does the service; a step only when there is more than one. */
+    val outlets: List<BookingServiceResponse.Outlet> get() = detail?.outlets.orEmpty()
+    val needsOutlet: Boolean get() = detail?.needsOutlet ?: false
+    val outlet: BookingServiceResponse.Outlet? get() = outlets.firstOrNull { it.id == outletId }
 
     /** Null while the chosen service's details are on their way: until then
-     *  it is not known whether there is an extras step. */
+     *  it is not known whether there is an outlet or an extras step. */
     val step: BookingStep?
         get() = if (serviceId != null && detail == null) null
-        else BookingStep.current(serviceId != null, staffId != null, hasExtras, extrasSeen)
+        else BookingStep.current(serviceId != null, staffId != null, hasExtras, extrasSeen, outletNeeded = needsOutlet, outletChosen = outletId != null)
 
     val service: BookingService? get() = detail?.service ?: services?.firstOrNull { it.id == serviceId }
     val person: BookingServiceResponse.Performer? get() = detail?.staff?.firstOrNull { it.id == staffId }
@@ -98,6 +104,7 @@ class NewBookingViewModel(
     private val _state = MutableStateFlow(
         NewBookingState(
             serviceId = saved["service"],
+            outletId = saved["outlet"],
             staffId = saved["staff"] ?: start.staffId,
             addonIds = saved.get<ArrayList<String>>("addons").orEmpty(),
             extrasSeen = saved["extrasSeen"] ?: false,
@@ -115,6 +122,7 @@ class NewBookingViewModel(
         _state.update(change)
         val s = _state.value
         saved["service"] = s.serviceId
+        saved["outlet"] = s.outletId
         saved["staff"] = s.staffId
         saved["addons"] = ArrayList(s.addonIds)
         saved["extrasSeen"] = s.extrasSeen
@@ -142,11 +150,12 @@ class NewBookingViewModel(
 
     private suspend fun loadDetail() {
         val asked = _state.value.serviceId ?: return
+        val outlet = _state.value.outletId
         try {
-            val loaded = api.bookingService(asked)
-            if (asked != _state.value.serviceId) return
+            val loaded = api.bookingService(asked, outlet)
+            if (asked != _state.value.serviceId || outlet != _state.value.outletId) return
             set { s ->
-                // Someone tapped on the grid may not do this service: ask who is.
+                // Someone tapped on the grid may not do this service, or not at this outlet: ask who is.
                 s.copy(detail = loaded, loadProblem = null, staffId = s.staffId?.takeIf { id -> loaded.staff.any { it.id == id } })
             }
             if (_state.value.step == BookingStep.Time) loadSlots()
@@ -157,11 +166,11 @@ class NewBookingViewModel(
         val s = _state.value
         val serviceId = s.serviceId ?: return
         val staffId = s.staffId ?: return
-        val asked = listOf(serviceId, staffId, s.addonIds, s.from)
+        val asked = listOf(serviceId, staffId, s.addonIds, s.from, s.outletId)
         try {
-            val loaded = api.bookingSlots(serviceId, staffId, s.addonIds, s.from)
+            val loaded = api.bookingSlots(serviceId, staffId, s.addonIds, s.from, s.outletId)
             // An answer to a question that has since changed is nobody's answer.
-            if (asked != _state.value.let { listOf(it.serviceId, it.staffId, it.addonIds, it.from) }) return
+            if (asked != _state.value.let { listOf(it.serviceId, it.staffId, it.addonIds, it.from, it.outletId) }) return
             val wanted = wantedSlot.also { wantedSlot = null }
             set { it.copy(slots = loaded, loadProblem = null, slot = if (wanted != null && loaded.slot(wanted) != null) wanted else it.slot?.takeIf { at -> loaded.slot(at) != null }) }
         } catch (error: ApiError) { fail(error) }
@@ -176,7 +185,14 @@ class NewBookingViewModel(
     // region Answers
 
     fun choose(service: BookingService): Job {
-        set { clearedFromExtras(it).copy(serviceId = service.id, detail = null, addonIds = emptyList()) }
+        set { clearedFromExtras(it).copy(serviceId = service.id, outletId = null, detail = null, addonIds = emptyList()) }
+        return viewModelScope.launch { loadDetail() }
+    }
+
+    /** Which outlet: the people offered next are those who work there, so
+     *  the service's details are fetched again with the outlet named. */
+    fun choose(outlet: BookingServiceResponse.Outlet): Job {
+        set { clearedFromExtras(it).copy(outletId = outlet.id) }
         return viewModelScope.launch { loadDetail() }
     }
 
@@ -212,7 +228,13 @@ class NewBookingViewModel(
         if (s.serviceId == null) return false
         when (s.step) {
             BookingStep.Service -> return false
-            BookingStep.Person, null -> set { clearedFromExtras(it).copy(serviceId = null, detail = null, staffId = null, addonIds = emptyList()) }
+            BookingStep.Person -> if (s.needsOutlet) {
+                // Back to "which outlet?"; the people are fetched again once one is chosen.
+                set { clearedFromExtras(it).copy(outletId = null, staffId = null) }
+            } else {
+                set { clearedFromExtras(it).copy(serviceId = null, detail = null, staffId = null, addonIds = emptyList()) }
+            }
+            BookingStep.Outlet, null -> set { clearedFromExtras(it).copy(serviceId = null, outletId = null, detail = null, staffId = null, addonIds = emptyList()) }
             BookingStep.Extras -> set { clearedFromExtras(it).copy(staffId = null) }
             BookingStep.Time ->
                 if (s.hasExtras) set { it.copy(extrasSeen = false, slot = null, slots = null, from = null, refusal = null) }
@@ -237,7 +259,7 @@ class NewBookingViewModel(
         set { it.copy(isBooking = true) }
         return viewModelScope.launch {
             try {
-                val created = api.book(serviceId, staffId, slot, start.clientId, s.addonIds, s.overridePrerequisite)
+                val created = api.book(serviceId, staffId, slot, start.clientId, s.addonIds, s.overridePrerequisite, s.outletId)
                 set { it.copy(refusal = null, isBooking = false) }
                 onBooked(created)
             } catch (error: ApiError) {

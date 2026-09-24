@@ -47,7 +47,7 @@ data class MenuService(
 
 /** `GET /api/v1/menu` */
 @Serializable
-data class MenuResponse(val categories: List<Category> = emptyList(), val services: List<MenuService> = emptyList()) {
+data class MenuResponse(val categories: List<Category> = emptyList(), val services: List<MenuService> = emptyList(), /** Any outlet does home visits, so a new service defaults to "either". */ val travels: Boolean? = null) {
     @Serializable
     data class Category(val id: String, val name: String)
 

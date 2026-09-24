@@ -110,7 +110,7 @@ private fun Header(model: NewBookingViewModel, state: NewBookingState, wide: Boo
                 WHIcon(if (first) WHIcons.X else WHIcons.ChevronLeft, size = 18.dp, tint = WHColors.Ink)
             }
         }
-        state.step?.let { Eyebrow("Step ${it.number(state.hasExtras)} of ${BookingStep.total(state.hasExtras)}") }
+        state.step?.let { Eyebrow("Step ${it.number(state.hasExtras, state.needsOutlet)} of ${BookingStep.total(state.hasExtras, state.needsOutlet)}") }
     }
     Text(
         state.step?.title ?: " ", Modifier.padding(horizontal = 22.dp).padding(top = 10.dp).semantics { heading() }.testTag("bookingTitle"),
@@ -123,6 +123,7 @@ private fun Header(model: NewBookingViewModel, state: NewBookingState, wide: Boo
             model.start.clientName?.let { "For $it" },
             state.service?.let { "${it.name} · ${it.durationLabel}" },
             state.service?.pricePence?.formatted(model.currency),
+            state.outlet?.name,
             state.person?.name,
         )
         if (tags.isNotEmpty()) {
@@ -154,6 +155,7 @@ private fun Steps(model: NewBookingViewModel, state: NewBookingState, wide: Bool
 
     when (state.step) {
         BookingStep.Service -> ServiceStep(model, state, wide)
+        BookingStep.Outlet -> OutletStep(model, state, wide)
         BookingStep.Person -> PersonStep(model, state, wide)
         BookingStep.Extras -> ExtrasStep(model, state, wide)
         BookingStep.Time -> TimeStep(model, state, wide)
@@ -230,6 +232,21 @@ private fun ServiceStep(model: NewBookingViewModel, state: NewBookingState, wide
                     }
                     Text(price, style = WHType.Button, color = WHColors.Ink, maxLines = 1)
                 }
+            }
+        }
+    }
+}
+
+/** Which outlet, at a shop where more than one does the service — asked
+ *  before who, since the people offered are those who work there. */
+@Composable
+private fun OutletStep(model: NewBookingViewModel, state: NewBookingState, wide: Boolean) {
+    Rows(state.outlets, wide) { outlet, modifier ->
+        val meta = listOfNotNull(outlet.area, "Does home visits".takeIf { outlet.travels }).joinToString(" · ")
+        ChoiceRow(wide, false, "bookingOutlet", listOfNotNull(outlet.name, meta.ifEmpty { null }).joinToString(", "), { model.choose(outlet) }, modifier) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(outlet.name, style = WHType.RowName, color = WHColors.Ink)
+                if (meta.isNotEmpty()) Text(meta, style = WHType.Meta, color = WHColors.Neutral700)
             }
         }
     }
@@ -410,6 +427,7 @@ private fun Summary(model: NewBookingViewModel, state: NewBookingState, modifier
         Eyebrow("This booking", Modifier.padding(horizontal = 16.dp, vertical = 10.dp))
         SummaryRow("Client", model.start.clientName ?: "Walk-in", muted = model.start.clientName == null)
         SummaryRow("Service", state.service?.name ?: "Not chosen", muted = state.service == null)
+        if (state.needsOutlet) SummaryRow("Where", state.outlet?.name ?: "Not chosen", muted = state.outlet == null)
         SummaryRow("With", state.person?.name ?: "Not chosen", muted = state.person == null)
         for (addon in state.chosenAddons) SummaryRow("Extra", "${addon.name} · ${addon.pricePence.formatted(model.currency)}", muted = false)
         SummaryRow("When", state.slot?.let(model.clock::shortDayTime) ?: "Not chosen", muted = state.slot == null)

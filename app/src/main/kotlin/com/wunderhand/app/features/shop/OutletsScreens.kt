@@ -56,6 +56,7 @@ import com.wunderhand.design.WHField
 import com.wunderhand.design.WHIcon
 import com.wunderhand.design.WHIcons
 import com.wunderhand.design.WHType
+import com.wunderhand.core.HomeVisits
 
 /**
  * Outlets (chairtime `app/(pro)/shop/outlets`): where the shop is, and how far
@@ -142,6 +143,12 @@ internal fun OutletForm(form: OutletFormViewModel, onSaved: () -> Unit, onClose:
                     WHField("Travel time to allow (minutes)", draft.defaultTravelMinutes, { v -> form.edit { it.copy(defaultTravelMinutes = v) } }, Modifier.weight(1f), keyboardOptions = wholeNumbers, placeholder = "30", isProblem = refused("defaultTravelMinutes"))
                 }
                 Hint(OutletWords.TRAVEL_TIME_HINT)
+                ChoiceField(
+                    "Home visits on the menu", HomeVisits.Keep.label, HomeVisits.entries.filter { it != HomeVisits.Keep }.map { it.raw to it.label },
+                    draft.homeVisits.takeIf { it != HomeVisits.Keep }?.raw, { v -> form.edit { it.copy(homeVisits = HomeVisits.of(v)) } },
+                    Modifier.padding(top = 10.dp).testTag("outletHomeVisits"),
+                )
+                Hint(OutletWords.HOME_VISITS_HINT)
             }
 
             FormGroup("Charging for the journey", Modifier.padding(top = 16.dp)) {

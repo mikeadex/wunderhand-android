@@ -55,6 +55,8 @@ data class BookingService(
     override val durationMode: String = "fixed",
     override val minMinutes: Int? = null,
     override val maxMinutes: Int? = null,
+    /** at_venue, at_client or either. Missing from older chairtime responses. */
+    val locationMode: String? = null,
 ) : ServiceFacts
 
 /** `GET /api/v1/booking/services` */
@@ -68,7 +70,17 @@ data class BookingServiceResponse(
     val staff: List<Performer>,
     val addons: List<Addon> = emptyList(),
     val requirements: Requirements = Requirements(),
+    /** The outlets where somebody does it. One at most shops, when nothing is
+     *  asked; the app asks which only when there is a choice. */
+    val outlets: List<Outlet>? = null,
 ) {
+    /** More than one outlet does this: ask which before asking who. */
+    val needsOutlet: Boolean get() = (outlets?.size ?: 0) > 1
+
+    /** An outlet a booking can be made at. */
+    @Serializable
+    data class Outlet(val id: String, val name: String, /** "Peckham, London" */ val area: String? = null, /** Does home visits from here. */ val travels: Boolean = false)
+
     @Serializable
     data class Performer(
         val id: String,
@@ -131,6 +143,8 @@ data class BookingRequest(
     val addonIds: List<String> = emptyList(),
     /** "The consultation was done, just not through here." Never gets past an age limit. */
     val overridePrerequisite: Boolean = false,
+    /** Which outlet, at a shop with more than one. Null means the first. */
+    val outletId: String? = null,
 )
 
 @Serializable
@@ -161,20 +175,26 @@ enum class Ineligible(val code: String) {
  * that has some, and come before the time because they lengthen it.
  */
 enum class BookingStep(val title: String) {
-    Service("Pick a service"), Person("Who is doing it?"), Extras("Anything else?"), Time("Pick a time");
+    Service("Pick a service"), Outlet("Which outlet?"), Person("Who is doing it?"), Extras("Anything else?"), Time("Pick a time");
 
     /** "Step 3 of 4": the number counts only the steps this booking has. */
-    fun number(hasExtras: Boolean): Int = if (this == Time && !hasExtras) 3 else ordinal + 1
+    fun number(hasExtras: Boolean, hasOutlet: Boolean = false): Int = steps(hasOutlet, hasExtras).indexOf(this) + 1
 
     companion object {
-        fun current(serviceChosen: Boolean, staffChosen: Boolean, hasExtras: Boolean, extrasSeen: Boolean): BookingStep = when {
+        /** The outlet is a step only at a shop where more than one does the service. */
+        fun current(serviceChosen: Boolean, staffChosen: Boolean, hasExtras: Boolean, extrasSeen: Boolean, outletNeeded: Boolean = false, outletChosen: Boolean = false): BookingStep = when {
             !serviceChosen -> Service
+            outletNeeded && !outletChosen -> Outlet
             !staffChosen -> Person
             hasExtras && !extrasSeen -> Extras
             else -> Time
         }
 
-        fun total(hasExtras: Boolean): Int = if (hasExtras) 4 else 3
+        /** The steps this booking has, in order. */
+        fun steps(hasOutlet: Boolean, hasExtras: Boolean): List<BookingStep> =
+            entries.filter { (it != Outlet || hasOutlet) && (it != Extras || hasExtras) }
+
+        fun total(hasExtras: Boolean, hasOutlet: Boolean = false): Int = steps(hasOutlet, hasExtras).size
     }
 }
 

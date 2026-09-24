@@ -44,7 +44,11 @@ data class Me(
         val currency: String,
         val status: TenantStatus,
         val capabilities: Capabilities,
-    )
+        /** How many outlets: the app names one only when there is a choice. */
+        val outlets: Int? = null,
+    ) {
+        val hasSeveralOutlets: Boolean get() = (outlets ?: 1) > 1
+    }
 
     /** One of the shops this person works at. Most people have one. */
     @Serializable

@@ -22,7 +22,7 @@ data class ShopResponse(
     val site: Site = Site(),
 ) {
     @Serializable data class Team(val count: Int = 0, val withoutLogin: Int = 0)
-    @Serializable data class Outlets(val count: Int = 0, val streetPrivate: Int = 0)
+    @Serializable data class Outlets(val count: Int = 0, val streetPrivate: Int = 0, /** Any outlet does home visits. */ val travels: Boolean? = null)
     @Serializable data class Hours(val days: Int = 0)
     @Serializable data class PolicyFacts(val standardDepositPence: Pence = Pence(0), val freeCancellationHours: Int = 0, val noShowPercent: Int = 0)
     @Serializable data class Reminders(val anyOn: Boolean = false, val on: List<Int> = emptyList())
@@ -355,14 +355,27 @@ data class OutletResponse(val outlet: OutletsResponse.Outlet, /** Ascending. Non
 data class OutletWrite(
     val name: String, val addressLine1: String? = null, val city: String? = null, val postcode: String? = null, val timezone: String,
     val servesRadiusMiles: Int? = null, val defaultTravelMinutes: Int, val addressPrivate: Boolean, val travelBands: List<Band> = emptyList(),
+    /** keep, either or venue: the whole menu at once, as the web's outlet form offers. */
+    val homeVisits: String = "keep",
 ) {
     @Serializable data class Band(val upToMiles: Int, val feePence: Int)
+}
+
+/** "I do home visits too", for the whole menu at once (chairtime `homeVisits`). */
+enum class HomeVisits(val raw: String, val label: String) {
+    Keep("keep", "Keep services as they are"),
+    Either("either", "Offer every service here or at the client’s home"),
+    Venue("venue", "Every service here only");
+
+    companion object { fun of(raw: String?): HomeVisits = entries.firstOrNull { it.raw == raw } ?: Keep }
 }
 
 /** An outlet as somebody is typing it. */
 data class OutletDraft(
     val name: String = "", val addressLine1: String = "", val city: String = "", val postcode: String = "", val timezone: String = "Europe/London",
     val servesRadiusMiles: String = "", val defaultTravelMinutes: String = "30", val addressPrivate: Boolean = false, val bands: List<BandDraft> = emptyList(),
+    /** Applied on save, then left alone — the form always opens on "keep". */
+    val homeVisits: HomeVisits = HomeVisits.Keep,
 ) {
     data class BandDraft(val miles: String = "", val fee: String = "")
 
@@ -393,7 +406,7 @@ data class OutletDraft(
             val fee = (if (band.fee.isBlank()) 0 else MoneyInput.pence(band.fee))?.takeIf { it in 0..100_000 } ?: throw DraftProblem("band.$i.fee", "A travel fee must be between £0 and £1000")
             OutletWrite.Band(miles, fee)
         }
-        return OutletWrite(trimmed, addressLine1.trim().ifEmpty { null }, city.trim().ifEmpty { null }, postcode.trim().ifEmpty { null }, timezone, radius, minutes, addressPrivate, ladder.sortedBy { it.upToMiles })
+        return OutletWrite(trimmed, addressLine1.trim().ifEmpty { null }, city.trim().ifEmpty { null }, postcode.trim().ifEmpty { null }, timezone, radius, minutes, addressPrivate, ladder.sortedBy { it.upToMiles }, homeVisits.raw)
     }
 
     companion object { const val MAX_BANDS = 5 }
@@ -404,6 +417,7 @@ object OutletWords {
     val timezones = listOf("Europe/London" to "United Kingdom", "Europe/Dublin" to "Ireland", "Europe/Paris" to "France, Spain, Germany", "Europe/Lisbon" to "Portugal")
 
     const val TIMEZONE_HINT = "Opening hours are local to this outlet, so they stay right through a clock change."
+    const val HOME_VISITS_HINT = "Changes every service on the menu when you save. A service can still be set on its own, under Where it happens."
     const val PRIVATE_LABEL = "Keep my street address private until someone books"
     const val PRIVATE_HINT = "Before booking, people see the area and the start of the postcode — Peckham, SE15 — and no map pin. The full address is in their confirmation."
     const val TRAVELLING = "Leave the distance blank if clients always come to you. Fill it in and clients booking a service marked “at theirs” give their address at checkout, and are told if it is further than you go."

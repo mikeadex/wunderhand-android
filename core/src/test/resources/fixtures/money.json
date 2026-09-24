@@ -3,11 +3,11 @@
   "shopName": "Fold Barbers",
   "currency": "GBP",
   "month": {
-    "earnedPence": 214600,
-    "bookedPence": 36520,
-    "appointments": 72,
+    "earnedPence": 210800,
+    "bookedPence": 39120,
+    "appointments": 71,
     "clients": 3,
-    "walkIns": 64
+    "walkIns": 63
   },
   "lastMonth": {
     "earnedPence": 1794800,
@@ -24,11 +24,11 @@
     "walkIns": 311
   },
   "yearToDate": {
-    "earnedPence": 4459400,
-    "bookedPence": 36520,
-    "appointments": 1588,
+    "earnedPence": 4455600,
+    "bookedPence": 39120,
+    "appointments": 1587,
     "clients": 3,
-    "walkIns": 1480
+    "walkIns": 1479
   },
   "lastYearToDate": {
     "earnedPence": 0,
@@ -38,18 +38,18 @@
     "walkIns": 0
   },
   "today": {
-    "earnedPence": 3800,
-    "bookedPence": 36520,
-    "appointments": 1,
+    "earnedPence": 0,
+    "bookedPence": 39120,
+    "appointments": 0,
     "clients": 0,
-    "walkIns": 1
+    "walkIns": 0
   },
   "week": {
-    "earnedPence": 24200,
-    "bookedPence": 36520,
-    "appointments": 4,
+    "earnedPence": 20400,
+    "bookedPence": 39120,
+    "appointments": 3,
     "clients": 2,
-    "walkIns": 1
+    "walkIns": 0
   },
   "byMonth": [
     {
@@ -72,9 +72,9 @@
     },
     {
       "month": "2026-09",
-      "earnedPence": 214600,
+      "earnedPence": 210800,
       "extraPence": 1900,
-      "appointments": 72
+      "appointments": 71
     }
   ],
   "byPerson": [
@@ -93,8 +93,8 @@
     {
       "staffId": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
       "name": "Kit Alvarez",
-      "earnedPence": 891400,
-      "appointments": 318
+      "earnedPence": 887600,
+      "appointments": 317
     },
     {
       "staffId": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
@@ -112,8 +112,8 @@
   "byService": [
     {
       "name": "Skin fade",
-      "earnedPence": 4439000,
-      "appointments": 1585
+      "earnedPence": 4435200,
+      "appointments": 1584
     },
     {
       "name": "Root tint",
@@ -124,22 +124,22 @@
   "moreServices": false,
   "till": {
     "today": {
-      "settlements": 2,
+      "settlements": 1,
       "extraPence": 1200,
-      "tipPence": 1000,
-      "takenPence": 8800
+      "tipPence": 500,
+      "takenPence": 4500
     },
     "week": {
-      "settlements": 2,
+      "settlements": 1,
       "extraPence": 1200,
-      "tipPence": 1000,
-      "takenPence": 8800
+      "tipPence": 500,
+      "takenPence": 4500
     },
     "month": {
-      "settlements": 3,
+      "settlements": 2,
       "extraPence": 1900,
-      "tipPence": 1000,
-      "takenPence": 8800
+      "tipPence": 500,
+      "takenPence": 4500
     },
     "lastMonth": {
       "settlements": 0,
@@ -154,10 +154,10 @@
       "takenPence": 0
     },
     "yearToDate": {
-      "settlements": 3,
+      "settlements": 2,
       "extraPence": 1900,
-      "tipPence": 1000,
-      "takenPence": 8800
+      "tipPence": 500,
+      "takenPence": 4500
     },
     "lastYearToDate": {
       "settlements": 0,
@@ -168,8 +168,8 @@
     "byMethod": [
       {
         "method": "card",
-        "pence": 8800,
-        "settlements": 2
+        "pence": 4500,
+        "settlements": 1
       },
       {
         "method": "cash",
@@ -180,14 +180,14 @@
     "everUsed": true
   },
   "deposits": {
-    "collectedPence": 252000,
-    "collectedCount": 281,
+    "collectedPence": 236500,
+    "collectedCount": 263,
     "uncollectedPence": 4500,
     "uncollectedCount": 3
   },
   "discounts": {
-    "listPence": 4459400,
-    "agreedPence": 4459400,
+    "listPence": 4455600,
+    "agreedPence": 4455600,
     "givenPence": 0,
     "bookings": 0
   },

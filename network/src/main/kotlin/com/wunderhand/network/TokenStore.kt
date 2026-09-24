@@ -56,10 +56,11 @@ interface ActionsApi {
 /** A new booking, a step at a time. */
 interface BookingApi {
     suspend fun bookingServices(): com.wunderhand.core.BookingServicesResponse
-    suspend fun bookingService(id: String): com.wunderhand.core.BookingServiceResponse
-    /** The next open days for this person, with the extras' time in and each time priced. */
-    suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String? = null): com.wunderhand.core.BookingSlotsResponse
-    suspend fun book(serviceId: String, staffId: String, startsAt: java.time.Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): com.wunderhand.core.BookingCreated
+    /** With an outlet, only the people who work there. */
+    suspend fun bookingService(id: String, outletId: String? = null): com.wunderhand.core.BookingServiceResponse
+    /** The next open days for this person, with the extras' time in and each time priced — at one outlet's hours when an outlet is named. */
+    suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String? = null, outletId: String? = null): com.wunderhand.core.BookingSlotsResponse
+    suspend fun book(serviceId: String, staffId: String, startsAt: java.time.Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String? = null): com.wunderhand.core.BookingCreated
 }
 
 /** Clients, and the medical notes kept apart from them. */

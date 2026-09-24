@@ -36,18 +36,18 @@
     "medicalHistory": "None",
     "patchTestNotes": "Clear at 48h"
   },
-  "updatedAt": "2026-09-17T21:17:16.278Z",
+  "updatedAt": "2026-09-17T04:22:45.311Z",
   "updatedByName": "Kit Alvarez",
-  "retainUntil": "2034-09-17T21:17:16.278Z",
+  "retainUntil": "2034-09-17T04:22:45.311Z",
   "consents": [],
   "accessLog": [
     {
-      "at": "2026-09-17T21:17:17.862Z",
+      "at": "2026-09-17T04:22:46.689Z",
       "who": "Kit Alvarez",
       "what": "opened medical notes"
     },
     {
-      "at": "2026-09-17T21:17:16.278Z",
+      "at": "2026-09-17T04:22:45.311Z",
       "who": "Kit Alvarez",
       "what": "recorded medical notes"
     }

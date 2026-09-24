@@ -202,7 +202,7 @@ fun DiaryScreen(app: AppModel, me: Me) {
             val open = state.openAppointmentId
             if (beside && open != null) {
                 Box(Modifier.fillMaxHeight().width(1.dp).background(WHColors.Divider))
-                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, Modifier.width(420.dp), onRebook = model::startBooking)
+                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, Modifier.width(420.dp), onRebook = model::startBooking, namesOutlet = me.shop.hasSeveralOutlets)
             }
         }
 
@@ -242,7 +242,7 @@ fun DiaryScreen(app: AppModel, me: Me) {
                 containerColor = WHColors.Bg,
                 dragHandle = null,
             ) {
-                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, onRebook = model::startBooking)
+                AppointmentSheet(open, app.client, model.clock, changed = { model.load().join() }, app::handle, onClose = { model.open(null) }, onRebook = model::startBooking, namesOutlet = me.shop.hasSeveralOutlets)
             }
         }
     }

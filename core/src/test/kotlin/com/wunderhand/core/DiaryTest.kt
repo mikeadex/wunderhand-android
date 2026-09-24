@@ -59,6 +59,8 @@ class DiaryContractTest {
         assertTrue(repeat.suggestedWeeks in repeat.intervals)
         assertEquals("Every week", RepeatOptions.label(1))
         assertEquals("Every 4 weeks", RepeatOptions.label(4))
+        // The outlet it is at, for a shop with more than one to show.
+        assertEquals("Hackney Road", response.appointment.outletName)
     }
 
     /** A non-owner is sent no price for a colleague's appointment: the key is

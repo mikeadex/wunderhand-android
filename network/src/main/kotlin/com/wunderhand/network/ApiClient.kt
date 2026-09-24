@@ -153,18 +153,20 @@ class ApiClient(
 
     override suspend fun bookingServices(): BookingServicesResponse = get("api/v1/booking/services")
 
-    override suspend fun bookingService(id: String): BookingServiceResponse = get("api/v1/booking/services/$id")
+    override suspend fun bookingService(id: String, outletId: String?): BookingServiceResponse =
+        get("api/v1/booking/services/$id", outletId?.let { mapOf("outlet" to it) }.orEmpty())
 
-    override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?): BookingSlotsResponse =
+    override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?, outletId: String?): BookingSlotsResponse =
         // An extra is asked for once each: `addon=a&addon=b`, as the web's own form sends them.
         send("GET", "api/v1/booking/slots", buildList {
             add("service" to serviceId); add("staff" to staffId)
             addonIds.forEach { add("addon" to it) }
             from?.let { add("from" to it) }
+            outletId?.let { add("outlet" to it) }
         }, null, BookingSlotsResponse.serializer())
 
-    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): BookingCreated =
-        post("api/v1/bookings", BookingRequest(serviceId, staffId, instant(startsAt), clientId, addonIds, overridePrerequisite))
+    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?): BookingCreated =
+        post("api/v1/bookings", BookingRequest(serviceId, staffId, instant(startsAt), clientId, addonIds, overridePrerequisite, outletId))
 
     // Clients
 

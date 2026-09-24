@@ -3,7 +3,7 @@ package com.wunderhand.core
 /** The fixtures chairtime writes from its own real responses. */
 object Fixtures {
     val names = listOf(
-        "appointment", "booking-service", "booking-services", "booking-slots", "checkout", "client",
+        "appointment", "booking-service-outlets", "booking-service", "booking-services", "booking-slots", "checkout", "client",
         "clients", "diary", "gap", "health", "hours", "me", "menu-extras", "menu-options",
         "menu-service-steps", "menu-service", "menu", "money", "offer-sent", "outlet", "outlets",
         "policy", "reminders", "rules", "shop", "team-invited", "team-person", "team", "waitlist",

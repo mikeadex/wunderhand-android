@@ -35,7 +35,9 @@ class NewBookingTest {
 
     private fun text(name: String) = checkNotNull(javaClass.getResourceAsStream("/$name.json")).bufferedReader().use { it.readText() }
     private val menu = ChairtimeJson.decodeFromString(BookingServicesResponse.serializer(), text("booking-services"))
-    private val detail = ChairtimeJson.decodeFromString(BookingServiceResponse.serializer(), text("booking-service"))
+    // The fixture is Fold's, which has several outlets; most of these tests are about a one-outlet shop.
+    private val withOutlets = ChairtimeJson.decodeFromString(BookingServiceResponse.serializer(), text("booking-service"))
+    private val detail = withOutlets.copy(outlets = null)
     private val times = ChairtimeJson.decodeFromString(BookingSlotsResponse.serializer(), text("booking-slots"))
     private val plain = detail.copy(addons = emptyList())
     private val handled = mutableListOf<ApiError>()
@@ -43,12 +45,14 @@ class NewBookingTest {
     private open inner class Shop(var service: BookingServiceResponse = detail) : StubApi() {
         var onBook: (Instant) -> BookingCreated = { BookingCreated("b1", "a1", it, "2026-09-16") }
         override suspend fun bookingServices() = menu
-        override suspend fun bookingService(id: String): BookingServiceResponse { calls += "service $id"; return service }
-        override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?): BookingSlotsResponse {
-            calls += "slots $staffId $addonIds $from"; return times
+        override suspend fun bookingService(id: String, outletId: String?): BookingServiceResponse {
+            calls += "service $id" + (outletId?.let { " at $it" } ?: ""); return service
         }
-        override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): BookingCreated {
-            calls += "book $staffId $clientId $addonIds $overridePrerequisite"; return onBook(startsAt)
+        override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?, outletId: String?): BookingSlotsResponse {
+            calls += "slots $staffId $addonIds $from" + (outletId?.let { " at $it" } ?: ""); return times
+        }
+        override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?): BookingCreated {
+            calls += "book $staffId $clientId $addonIds $overridePrerequisite" + (outletId?.let { " at $it" } ?: ""); return onBook(startsAt)
         }
     }
 
@@ -205,5 +209,31 @@ class NewBookingTest {
         val state = model(api).state.value
         assertTrue(handled.single() is ApiError.Unauthorized)
         assertNull(state.loadProblem)
+    }
+
+    @Test fun `at a shop with more than one outlet, which comes before who, and rides on every request`() {
+        val outlets = withOutlets.outlets!!
+        assertTrue(outlets.size > 1)
+        val api = Shop(withOutlets)
+        val model = model(api)
+        model.choose(menu.services.first { it.id == withOutlets.service.id })
+        assertEquals(BookingStep.Outlet, model.state.value.step)
+        assertEquals(2, model.state.value.step!!.number(model.state.value.hasExtras, model.state.value.needsOutlet))
+
+        val chosen = outlets.first()
+        model.choose(chosen)
+        assertEquals(BookingStep.Person, model.state.value.step)
+        assertEquals("service ${withOutlets.service.id} at ${chosen.id}", api.calls.last())
+
+        model.choose(someone); model.continueFromExtras()
+        assertEquals("slots ${someone.id} [] null at ${chosen.id}", api.calls.last())
+        model.select(firstTime)
+        model.book {}
+        assertEquals("book ${someone.id} null [] false at ${chosen.id}", api.calls.last())
+
+        // Back from who goes to which, not to the menu.
+        assertTrue(model.back()); assertTrue(model.back()); assertTrue(model.back())
+        assertEquals(BookingStep.Outlet, model.state.value.step)
+        assertEquals(null, model.state.value.outletId)
     }
 }

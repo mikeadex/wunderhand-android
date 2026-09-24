@@ -11,7 +11,8 @@
       "minutes": 60,
       "durationMode": "ranged",
       "minMinutes": 20,
-      "maxMinutes": 40
+      "maxMinutes": 40,
+      "locationMode": "at_venue"
     },
     {
       "id": "58fdad4f-a037-4e2c-86f4-53ac009ad190",
@@ -24,7 +25,8 @@
       "minutes": 45,
       "durationMode": "fixed",
       "minMinutes": null,
-      "maxMinutes": null
+      "maxMinutes": null,
+      "locationMode": "at_venue"
     },
     {
       "id": "b3aabc9b-02ad-4618-9834-a192ea5843bf",
@@ -37,7 +39,8 @@
       "minutes": 90,
       "durationMode": "fixed",
       "minMinutes": null,
-      "maxMinutes": null
+      "maxMinutes": null,
+      "locationMode": "at_venue"
     },
     {
       "id": "dfacd1db-a704-4541-a962-66b1e4a87660",
@@ -50,7 +53,8 @@
       "minutes": 90,
       "durationMode": "fixed",
       "minMinutes": null,
-      "maxMinutes": null
+      "maxMinutes": null,
+      "locationMode": "at_venue"
     },
     {
       "id": "ba06af0c-2c95-41e1-b2fd-60f400ffe010",
@@ -63,7 +67,8 @@
       "minutes": 60,
       "durationMode": "fixed",
       "minMinutes": null,
-      "maxMinutes": null
+      "maxMinutes": null,
+      "locationMode": "at_venue"
     }
   ]
 }

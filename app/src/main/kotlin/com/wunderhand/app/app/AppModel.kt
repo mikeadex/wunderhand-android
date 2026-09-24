@@ -44,6 +44,14 @@ class AppModel(
     private val _phase = MutableStateFlow<Phase>(Phase.Launching)
     val phase: StateFlow<Phase> = _phase.asStateFlow()
 
+    /** Who is signed in, once somebody is. */
+    val me: Me?
+        get() = when (val p = _phase.value) {
+            is Phase.SignedIn -> p.me
+            is Phase.ChoosingShop -> p.me
+            else -> null
+        }
+
     /** Something the app could not do that was nobody's fault and may pass:
      *  no signal, or chairtime mid-deploy. Shown as a bar over whatever is on
      *  screen, never as a screen of its own. */

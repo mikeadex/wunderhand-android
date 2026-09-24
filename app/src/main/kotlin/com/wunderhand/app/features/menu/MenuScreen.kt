@@ -61,6 +61,7 @@ import com.wunderhand.design.WHTag
 import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import java.util.UUID
+import com.wunderhand.core.LocationMode
 
 /**
  * The Menu tab (chairtime `app/(pro)/menu/page.tsx`): what clients book, with
@@ -107,7 +108,7 @@ fun MenuScreen(app: AppModel, me: Me) {
         EditorSheet(onDismiss = { model.adding(false) }) {
             // A new form each time: the last new service's name is not the next one's.
             val form: ServiceFormViewModel = viewModel(key = "service-form-new-${rememberSaveable { UUID.randomUUID().toString() }}") {
-                ServiceFormViewModel(null, app.client, app::handle, createSavedStateHandle())
+                ServiceFormViewModel(null, app.client, app::handle, createSavedStateHandle(), defaultLocationMode = if (state.response?.travels == true) LocationMode.Either else LocationMode.AtVenue)
             }
             ServiceFormScreen(form, onSaved = { model.created(it.service.id) }, onArchived = {}, onClose = { model.adding(false) })
         }

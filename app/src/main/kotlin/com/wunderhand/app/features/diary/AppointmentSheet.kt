@@ -101,6 +101,8 @@ import java.time.Instant
 fun AppointmentSheet(
     id: String, api: WunderhandApi, clock: ShopClock, changed: suspend () -> Unit, handle: suspend (ApiError) -> Unit,
     onClose: () -> Unit, modifier: Modifier = Modifier, onRebook: (NewBookingStart) -> Unit = {},
+    /** Name the outlet on the sheet: only at a shop with more than one. */
+    namesOutlet: Boolean = false,
 ) {
     val model = remember(id) { AppointmentModel(id, api, clock, changed, handle) }
     val state by model.state.collectAsStateWithLifecycle()
@@ -133,7 +135,7 @@ fun AppointmentSheet(
             response != null -> {
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 24.dp)) {
                     state.notice?.let { NoticeLine(it, Modifier.padding(bottom = 16.dp)) }
-                    AppointmentBody(response, model, state)
+                    AppointmentBody(response, model, state, namesOutlet)
                 }
                 AppointmentActions(response, model, state, now, onReschedule = { isRescheduling = true }, onTill = { isTilling = true }, onRebook)
             }
@@ -244,7 +246,7 @@ private fun AppointmentActions(response: AppointmentResponse, model: Appointment
 }
 
 @Composable
-private fun AppointmentBody(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState) {
+private fun AppointmentBody(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, namesOutlet: Boolean = false) {
     val clock = model.clock
     val appt = response.appointment
     val currency = appt.currency
@@ -258,6 +260,11 @@ private fun AppointmentBody(response: AppointmentResponse, model: AppointmentMod
     // "Root tint · 9th visit · usually every 6 weeks"
     val about = DiaryWords.about(appt.clientVisitCount, appt.clientId != null, appt.averageIntervalDays)
     Text(if (about.isEmpty()) appt.serviceName else "${appt.serviceName} · $about", Modifier.padding(top = 6.dp), style = WHType.Medium14, color = WHColors.Neutral700)
+    // Which outlet, where the shop has more than one; a home visit says where below instead.
+    val outlet = appt.outletName
+    if (namesOutlet && !appt.isAtClient && outlet != null) {
+        Text("At $outlet", Modifier.padding(top = 4.dp).testTag("appointmentOutlet"), style = WHType.Medium14, color = WHColors.Neutral700)
+    }
 
     if (appt.isAtClient) WhereSection(appt, Modifier.padding(top = 20.dp))
     response.bill?.let { BillCard(it, appt, Modifier.padding(top = 20.dp)) }

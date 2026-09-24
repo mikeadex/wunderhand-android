@@ -58,6 +58,28 @@ class BookingTest {
         assertEquals(4, BookingStep.Time.number(hasExtras = true))
     }
 
+    @Test fun `the outlet is a step only when there is a choice`() {
+        assertEquals(BookingStep.Outlet, BookingStep.current(true, false, false, false, outletNeeded = true, outletChosen = false))
+        assertEquals(BookingStep.Person, BookingStep.current(true, false, false, false, outletNeeded = true, outletChosen = true))
+        assertEquals(BookingStep.Person, BookingStep.current(true, false, false, false))
+        assertEquals(5, BookingStep.total(hasExtras = true, hasOutlet = true))
+        assertEquals(4, BookingStep.total(hasExtras = false, hasOutlet = true))
+        assertEquals(3, BookingStep.Person.number(hasExtras = false, hasOutlet = true))
+        assertEquals(4, BookingStep.Time.number(hasExtras = false, hasOutlet = true))
+        assertEquals(3, BookingStep.Time.number(hasExtras = false))
+    }
+
+    @Test fun `a service names the outlets where it is done`() {
+        // Fold Barbers has more than one outlet, so the outlet is a step.
+        val all = ChairtimeJson.decodeFromString(BookingServiceResponse.serializer(), Fixtures.text("booking-service"))
+        assertTrue(all.needsOutlet)
+        // Asked with ?outlet=: every outlet still listed, only the people at that one offered.
+        val at = ChairtimeJson.decodeFromString(BookingServiceResponse.serializer(), Fixtures.text("booking-service-outlets"))
+        assertEquals(all.outlets!!.size, at.outlets!!.size)
+        assertTrue(at.outlets!!.any { it.name == "ZZ Mobile Booking Outlet Two" && it.area == "London" && it.travels })
+        assertEquals(1, at.staff.size)
+    }
+
     @Test fun `only a prerequisite can be answered by the pro`() {
         assertTrue(Ineligible.MissingPrerequisite.isOverridable)
         assertFalse(Ineligible.TooYoung.isOverridable)

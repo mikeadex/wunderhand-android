@@ -1,12 +1,12 @@
 {
   "days": [
     {
-      "isoDate": "2026-10-01",
-      "label": "Thursday 1 Oct",
+      "isoDate": "2026-10-08",
+      "label": "Thursday 8 Oct",
       "slots": [
         {
-          "start": "2026-10-01T08:00:00.000Z",
-          "end": "2026-10-01T08:45:00.000Z",
+          "start": "2026-10-08T08:00:00.000Z",
+          "end": "2026-10-08T08:45:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": 540,
           "price": {
@@ -17,8 +17,8 @@
           }
         },
         {
-          "start": "2026-10-01T08:15:00.000Z",
-          "end": "2026-10-01T09:00:00.000Z",
+          "start": "2026-10-08T08:15:00.000Z",
+          "end": "2026-10-08T09:00:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -29,8 +29,8 @@
           }
         },
         {
-          "start": "2026-10-01T08:30:00.000Z",
-          "end": "2026-10-01T09:15:00.000Z",
+          "start": "2026-10-08T08:30:00.000Z",
+          "end": "2026-10-08T09:15:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -41,8 +41,8 @@
           }
         },
         {
-          "start": "2026-10-01T08:45:00.000Z",
-          "end": "2026-10-01T09:30:00.000Z",
+          "start": "2026-10-08T08:45:00.000Z",
+          "end": "2026-10-08T09:30:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -53,8 +53,8 @@
           }
         },
         {
-          "start": "2026-10-01T09:00:00.000Z",
-          "end": "2026-10-01T09:45:00.000Z",
+          "start": "2026-10-08T09:00:00.000Z",
+          "end": "2026-10-08T09:45:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -65,8 +65,8 @@
           }
         },
         {
-          "start": "2026-10-01T09:15:00.000Z",
-          "end": "2026-10-01T10:00:00.000Z",
+          "start": "2026-10-08T09:15:00.000Z",
+          "end": "2026-10-08T10:00:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -79,12 +79,12 @@
       ]
     },
     {
-      "isoDate": "2026-10-02",
-      "label": "Friday 2 Oct",
+      "isoDate": "2026-10-09",
+      "label": "Friday 9 Oct",
       "slots": [
         {
-          "start": "2026-10-02T08:00:00.000Z",
-          "end": "2026-10-02T08:45:00.000Z",
+          "start": "2026-10-09T08:00:00.000Z",
+          "end": "2026-10-09T08:45:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": 540,
           "price": {
@@ -95,8 +95,8 @@
           }
         },
         {
-          "start": "2026-10-02T08:15:00.000Z",
-          "end": "2026-10-02T09:00:00.000Z",
+          "start": "2026-10-09T08:15:00.000Z",
+          "end": "2026-10-09T09:00:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -107,8 +107,8 @@
           }
         },
         {
-          "start": "2026-10-02T08:30:00.000Z",
-          "end": "2026-10-02T09:15:00.000Z",
+          "start": "2026-10-09T08:30:00.000Z",
+          "end": "2026-10-09T09:15:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -119,8 +119,8 @@
           }
         },
         {
-          "start": "2026-10-02T08:45:00.000Z",
-          "end": "2026-10-02T09:30:00.000Z",
+          "start": "2026-10-09T08:45:00.000Z",
+          "end": "2026-10-09T09:30:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -131,8 +131,8 @@
           }
         },
         {
-          "start": "2026-10-02T09:00:00.000Z",
-          "end": "2026-10-02T09:45:00.000Z",
+          "start": "2026-10-09T09:00:00.000Z",
+          "end": "2026-10-09T09:45:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {
@@ -143,8 +143,8 @@
           }
         },
         {
-          "start": "2026-10-02T09:15:00.000Z",
-          "end": "2026-10-02T10:00:00.000Z",
+          "start": "2026-10-09T09:15:00.000Z",
+          "end": "2026-10-09T10:00:00.000Z",
           "closesGapExactly": false,
           "gapMinutes": null,
           "price": {

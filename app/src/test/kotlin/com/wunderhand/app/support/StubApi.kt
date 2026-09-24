@@ -40,9 +40,9 @@ open class StubApi : WunderhandApi {
     override suspend fun blockTime(request: BlockRequest): BlockCreated = unexpected("blockTime")
     override suspend fun unblock(id: String) { unexpected("unblock") }
     override suspend fun bookingServices(): com.wunderhand.core.BookingServicesResponse = unexpected("bookingServices")
-    override suspend fun bookingService(id: String): com.wunderhand.core.BookingServiceResponse = unexpected("bookingService")
-    override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?): com.wunderhand.core.BookingSlotsResponse = unexpected("bookingSlots")
-    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean): com.wunderhand.core.BookingCreated = unexpected("book")
+    override suspend fun bookingService(id: String, outletId: String?): com.wunderhand.core.BookingServiceResponse = unexpected("bookingService")
+    override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?, outletId: String?): com.wunderhand.core.BookingSlotsResponse = unexpected("bookingSlots")
+    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?): com.wunderhand.core.BookingCreated = unexpected("book")
     override suspend fun clients(filter: com.wunderhand.core.ClientFilter, query: String): com.wunderhand.core.ClientsResponse = unexpected("clients")
     override suspend fun client(id: String): com.wunderhand.core.ClientProfileResponse = unexpected("client")
     override suspend fun createClient(input: com.wunderhand.core.ClientInput): com.wunderhand.core.ClientSaved = unexpected("createClient")

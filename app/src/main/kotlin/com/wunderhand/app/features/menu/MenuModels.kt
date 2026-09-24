@@ -141,8 +141,10 @@ class ServiceFormViewModel(
     private val api: MenuApi,
     private val handle: suspend (ApiError) -> Unit,
     private val saved: SavedStateHandle = SavedStateHandle(),
+    /** Where a new service happens to begin with — "either" at a shop that travels, as the web's form has it. */
+    defaultLocationMode: LocationMode = LocationMode.AtVenue,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ServiceFormState(draft = saved.get<ArrayList<String?>>("draft")?.let(::unpack) ?: existing?.let { ServiceDraft(it.service) } ?: ServiceDraft()))
+    private val _state = MutableStateFlow(ServiceFormState(draft = saved.get<ArrayList<String?>>("draft")?.let(::unpack) ?: existing?.let { ServiceDraft(it.service) } ?: ServiceDraft(locationMode = defaultLocationMode)))
     val state: StateFlow<ServiceFormState> = _state.asStateFlow()
 
     init {

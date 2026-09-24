@@ -11,6 +11,7 @@
     "durationMode": "fixed",
     "minMinutes": null,
     "maxMinutes": null,
+    "locationMode": "at_venue",
     "categoryId": "801134ea-60d5-4338-a6e9-738472dc7d75",
     "prerequisiteServiceId": null,
     "requiresResourceTypeId": "a9d7fd76-f873-43c0-87d1-8515417c28d3",
@@ -18,7 +19,6 @@
     "depositPence": 500,
     "depositPercent": null,
     "bookableOnline": true,
-    "locationMode": "at_venue",
     "prerequisiteName": null,
     "prerequisiteLeadHours": null,
     "minAgeYears": null,
@@ -85,5 +85,5 @@
       "minutes": 0
     }
   ],
-  "timesBooked": 1657
+  "timesBooked": 1662
 }

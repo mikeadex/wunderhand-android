@@ -49,6 +49,10 @@ data class DiaryAppointment(
     val depositPaidPence: Pence? = null,
     val atClient: Boolean? = null,
     val clientPostcode: String? = null,
+    /** The outlet it is at, at a shop with more than one. Null for a booking
+     *  made before outlets were recorded. */
+    val outletId: String? = null,
+    val outletName: String? = null,
     /** What is left to take once any deposit is off. Worked out by chairtime
      *  (`lib/money/bill.ts`); null wherever the price is. */
     val toTakePence: Pence? = null,
