@@ -658,3 +658,53 @@ its node_modules is a symlink Turbopack refuses):
 
 Still to do for 1.1: the Firebase project and the three `FCM_*` values on Vercel, and the app
 release builds once the API branch is merged and deployed (the apps must not ship before the API).
+
+## 1.2 — the three Shop rows that still open the web (planned 24 September 2026)
+
+Quiet times, Offers and Consent forms, native in both apps, in that order of value. The other
+web rows stay on the web: Getting paid (Stripe Connect onboarding), Your page / Your website
+(photos, domains), Export (file downloads), Billing (Stripe's portal; Apple's is the app's own).
+
+Every screen follows the pattern the Shop tab already uses: an owner-only API route pair in
+chairtime under `app/api/v1/shop/…`, zod schemas in `lib/api/v1/schemas.ts`, a fixture written by
+an `api-v1-*` test and decoded by both apps' contract tests, then one screen per app modelled on
+HoursView / RulesView (iOS) and ShopSettings (Android).
+
+### 1. Consent forms (half a day)
+The wording clients sign, one document per kind, versioned: a new save makes a new version and
+retires the old, and every signature points at the version it was signed against
+(`consent_documents`: kind, version, body, retired_at; `lib/consent/documents.ts`,
+`lib/actions/consent-documents.ts`).
+- `GET /api/v1/shop/consent` → `{ documents: [{ kind, version, body, updatedAt, signatures }] }`
+- `PUT /api/v1/shop/consent/{kind}` `{ body }` → the new version. Refuse an empty body.
+- App: a screen with the wording in a text editor, "Version 3 · signed 41 times" under it, Save.
+  Same words as the web's page.
+
+### 2. Quiet times (1–1.5 days)
+Not a free-form rule editor. The web (`app/(pro)/shop/pricing`) reads demand by weekday and part
+of day (`lib/pricing/demand.ts` → `loadDemand`) and *suggests* a percentage off for the quiet parts;
+the owner accepts a suggestion, switches whether the saving is shown to clients, or stops a rule
+(`lib/actions/pricing.ts`: acceptSuggestion(weekday, part, percent), toggleSaving(ruleId),
+stopRule(ruleId); rules in `price_rules`: name, weekdays, from/to time, kind percent|fixed|absolute,
+value, show_saving).
+- `GET /api/v1/shop/quiet-times` → `{ demand: [{ weekday, part, soldPercent }], suggestions: [{ weekday, part, percent, wouldEarnPence }], rules: [{ id, name, weekdays, from, to, kind, value, showSaving, startsOn, endsOn }] }`
+- `POST /api/v1/shop/quiet-times` `{ weekday, part, percent }` (accept a suggestion)
+- `PATCH /api/v1/shop/quiet-times/{id}` `{ showSaving }`; `DELETE …/{id}` (stop)
+- App: the week as a grid of parts of the day shaded by how much sold, each quiet cell offering
+  "10% off · Accept"; live rules listed under it with a switch for "show the saving" and Stop.
+
+### 3. Offers (1–1.5 days)
+Discounts to win a client back (`promotions`: name, code, audience anyone|first_visit|lapsed|
+returning, lapsed_after_days, optional service/person, weekdays, time window, dates, kind/value,
+quiet-only; `lib/actions/promotions.ts`: createPromotion, stopPromotion; `lib/promotions/query.ts`
+for the list and what each has earned).
+- `GET /api/v1/shop/offers` → `{ offers: [{ id, name, code, audience, lapsedAfterDays, kind, value, quietOnly, startsOn, endsOn, redemptions, earnedPence, stoppedAt }] }`
+- `POST /api/v1/shop/offers` `{ name, code?, audience, lapsedAfterDays?, kind, value, quietOnly, startsOn?, endsOn? }`
+- `DELETE /api/v1/shop/offers/{id}` (stop; the row stays for its history)
+- App: the list with what each earned, and a form: name, audience as a segmented control, the
+  discount as the same kind/value control as quiet times, "only at quiet times", dates.
+
+### Order and rules
+Consent first (smallest, unblocks a real need), then quiet times, then offers. Each lands as its
+own chairtime branch and PR, fixtures synced to both apps, and both apps' screens in the same day
+so the two stay level. 1.2 does not start until 1.1 is uploaded to both stores.
