@@ -638,3 +638,23 @@ scripts/firebase-config.sh ~/Downloads/google-services.json
 ./gradlew :app:generateReleaseBaselineProfile
 # a pretended push, debug build only — see app/src/debug/AndroidManifest.xml
 ```
+
+## 1.1 — outlets (24 September 2026, local only, nothing pushed)
+
+Built and tested end to end against the dev database on the emulator and the iPhone simulator, with
+chairtime's branch `feat/mobile-api-outlets` (worktree `chairtime-a7`, port 3100, `--webpack` because
+its node_modules is a symlink Turbopack refuses):
+
+- **API** (chairtime, 2 commits): `GET /booking/services/{id}?outlet=` lists `outlets` and filters
+  `staff`; `GET /booking/slots?outlet=`; `POST /bookings { outletId }`; `outletId`/`outletName` on the
+  diary and appointment; move-slots at the booking's own outlet; `homeVisits` on the outlet write;
+  `/me` `shop.outlets` (count); menu `travels`; shop `outlets.travels`. 49 API tests pass, seven new.
+- **iOS** (`17e1aee`): outlet step ("Which outlet?", step 2 of 5) only when the service is done at more
+  than one; people and times filtered to it; "At Dalston Lane" on the sheet at a multi-outlet shop;
+  home-visits picker on the outlet form; new service defaults to "either" when the shop travels.
+- **Android** (`ec45459`): the same, with the state saved across process death.
+- Two offline-cache package tests fail under `swift test` in a sandboxed shell only (file protection
+  on the temp folder); they pass in Xcode.
+
+Still to do for 1.1: the Firebase project and the three `FCM_*` values on Vercel, and the app
+release builds once the API branch is merged and deployed (the apps must not ship before the API).
