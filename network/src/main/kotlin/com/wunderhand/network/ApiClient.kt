@@ -21,6 +21,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
@@ -32,6 +33,8 @@ import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration
+import okhttp3.MultipartBody
+import com.wunderhand.core.ServicePhotoResponse
 
 /**
  * The one way the app talks to chairtime.
@@ -207,6 +210,14 @@ class ApiClient(
     override suspend fun archiveService(id: String) { delete<SavedId>("api/v1/menu/$id") }
     override suspend fun saveSteps(serviceId: String, write: StepsWrite): MenuServiceResponse = put("api/v1/menu/$serviceId/steps", write)
     override suspend fun savePerformers(serviceId: String, write: PerformersWrite): MenuServiceResponse = put("api/v1/menu/$serviceId/performers", write)
+    override suspend fun uploadServicePhoto(serviceId: String, jpeg: ByteArray): ServicePhotoResponse {
+        // One request, no retry — a body this size is not sent twice on a hunch.
+        val body = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("photo", "photo.jpg", jpeg.toRequestBody("image/jpeg".toMediaType()))
+            .build()
+        return once("POST", "api/v1/menu/$serviceId/photo", emptyList(), body, serializer<ServicePhotoResponse>())
+    }
+    override suspend fun removeServicePhoto(serviceId: String): ServicePhotoResponse = delete("api/v1/menu/$serviceId/photo")
     override suspend fun extras(serviceId: String): ExtrasResponse = get("api/v1/menu/$serviceId/extras")
     override suspend fun saveExtraLinks(serviceId: String, write: ExtraLinksWrite): ExtrasResponse = put("api/v1/menu/$serviceId/extras", write)
     override suspend fun createExtra(write: ExtraWrite): SavedId = post("api/v1/menu/extras", write)
@@ -292,9 +303,10 @@ class ApiClient(
     ): T {
         var attempt = 1
         var pause = retry.firstWait
+        val requestBody = body?.toRequestBody(JSON) ?: if (method == "POST" || method == "PUT") "".toRequestBody(null) else null
         while (true) {
             try {
-                return once(method, path, query, body, reply)
+                return once(method, path, query, requestBody, reply)
             } catch (error: ApiError) {
                 val worthAnotherGo = method == "GET" && error.isPassing && attempt < retry.attempts
                 if (!worthAnotherGo) throw error
@@ -307,14 +319,14 @@ class ApiClient(
     }
 
     private suspend fun <T> once(
-        method: String, path: String, query: List<Pair<String, String>>, body: String?, reply: KSerializer<T>,
+        method: String, path: String, query: List<Pair<String, String>>, body: RequestBody?, reply: KSerializer<T>,
     ): T {
         val token = tokens.read() ?: throw ApiError.Unauthorized("Sign in to carry on.")
 
         val url = url(path).newBuilder().apply { query.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
         val request = Request.Builder()
             .url(url)
-            .method(method, body?.toRequestBody(JSON) ?: if (method == "POST" || method == "PUT") "".toRequestBody(null) else null)
+            .method(method, body)
             .header("Authorization", "Bearer $token")
             .header("Accept", "application/json")
             .header("X-Wunderhand-Client", clientHeader)

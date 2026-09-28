@@ -92,6 +92,9 @@ interface MenuApi {
     suspend fun archiveService(id: String)
     suspend fun saveSteps(serviceId: String, write: com.wunderhand.core.StepsWrite): com.wunderhand.core.MenuServiceResponse
     suspend fun savePerformers(serviceId: String, write: com.wunderhand.core.PerformersWrite): com.wunderhand.core.MenuServiceResponse
+    /** A photograph for the booking page: a JPEG the app has already brought down to size (ServicePhoto). Owner only. */
+    suspend fun uploadServicePhoto(serviceId: String, jpeg: ByteArray): com.wunderhand.core.ServicePhotoResponse
+    suspend fun removeServicePhoto(serviceId: String): com.wunderhand.core.ServicePhotoResponse
     suspend fun extras(serviceId: String): com.wunderhand.core.ExtrasResponse
     suspend fun saveExtraLinks(serviceId: String, write: com.wunderhand.core.ExtraLinksWrite): com.wunderhand.core.ExtrasResponse
     suspend fun createExtra(write: com.wunderhand.core.ExtraWrite): com.wunderhand.core.SavedId

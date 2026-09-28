@@ -62,6 +62,11 @@ import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import java.util.UUID
 import com.wunderhand.core.LocationMode
+import coil.compose.AsyncImage
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.size
 
 /**
  * The Menu tab (chairtime `app/(pro)/menu/page.tsx`): what clients book, with
@@ -195,6 +200,7 @@ private fun ServiceRow(service: MenuService, currency: String, selected: Boolean
             .semantics(mergeDescendants = true) { contentDescription = spoken; this.selected = selected }.testTag("menuService"),
     ) {
         Row(Modifier.weight(1f).clearAndSetSemantics { }.padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+            service.imageUrl?.let { AsyncImage(it, contentDescription = null, Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(service.name, style = WHType.RowName, color = WHColors.Ink)
                 Text(service.metaLine, style = WHType.Meta, color = WHColors.Neutral700)

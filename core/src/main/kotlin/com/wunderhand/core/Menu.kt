@@ -30,6 +30,8 @@ data class MenuService(
     val hasDevelopGap: Boolean = false,
     /** Zero means nobody can book it, online or in the diary. */
     val performerCount: Int = 0,
+    /** Its photograph on the booking page, if it has one. */
+    val imageUrl: String? = null,
 ) : ServiceFacts {
     val isUnbookable: Boolean get() = performerCount == 0
 
@@ -87,6 +89,8 @@ data class MenuServiceResponse(
         val requiresResourceTypeId: String? = null,
         /** Left the menu. Still readable, because appointments refer to it. */
         val isArchived: Boolean? = null,
+        /** Its photograph on the booking page, if it has one. */
+        val imageUrl: String? = null,
         val depositPence: Pence? = null,
         val depositPercent: Int? = null,
         val bookableOnline: Boolean = true,
@@ -356,3 +360,7 @@ data class ExtrasResponse(val extras: List<Extra> = emptyList()) {
 @Serializable data class SavedId(val id: String)
 
 // endregion
+
+/** `POST` and `DELETE /api/v1/menu/{id}/photo`: the photograph after the change — null once removed. */
+@Serializable
+data class ServicePhotoResponse(val imageUrl: String? = null)

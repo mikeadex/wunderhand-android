@@ -130,6 +130,8 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    // The photograph of a service, in the menu and on its page.
+    implementation(libs.coil.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.process)

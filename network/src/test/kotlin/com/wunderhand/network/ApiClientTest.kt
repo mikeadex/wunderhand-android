@@ -634,4 +634,18 @@ class DeviceCallsTest {
             assertEquals("""{"token":"$token","platform":"android"}""", it.body!!.utf8())
         }
     }
+
+    @Test fun `a photograph goes as a file under its own name`() = runTest {
+        server.enqueue(MockResponse.Builder().code(200).body("""{"imageUrl":"https://wunderhand.com/media/s1.jpg"}""").build())
+        val jpeg = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte())
+        val r = client().uploadServicePhoto("s1", jpeg)
+        assertEquals("https://wunderhand.com/media/s1.jpg", r.imageUrl)
+        val sent = server.takeRequest()
+        assertEquals("POST", sent.method)
+        assertEquals("/api/v1/menu/s1/photo", sent.url.encodedPath)
+        assertTrue(sent.headers["Content-Type"]!!.startsWith("multipart/form-data; boundary="))
+        val body = sent.body!!.utf8()
+        assertTrue(body.contains("name=\"photo\"; filename=\"photo.jpg\""))
+        assertTrue(body.contains("Content-Type: image/jpeg"))
+    }
 }

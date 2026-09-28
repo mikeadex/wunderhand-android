@@ -61,6 +61,8 @@ open class StubApi : WunderhandApi {
     override suspend fun archiveService(id: String) { unexpected("archiveService") }
     override suspend fun saveSteps(serviceId: String, write: com.wunderhand.core.StepsWrite): com.wunderhand.core.MenuServiceResponse = unexpected("saveSteps")
     override suspend fun savePerformers(serviceId: String, write: com.wunderhand.core.PerformersWrite): com.wunderhand.core.MenuServiceResponse = unexpected("savePerformers")
+    override suspend fun uploadServicePhoto(serviceId: String, jpeg: ByteArray): com.wunderhand.core.ServicePhotoResponse = unexpected("uploadServicePhoto")
+    override suspend fun removeServicePhoto(serviceId: String): com.wunderhand.core.ServicePhotoResponse = unexpected("removeServicePhoto")
     override suspend fun extras(serviceId: String): com.wunderhand.core.ExtrasResponse = unexpected("extras")
     override suspend fun saveExtraLinks(serviceId: String, write: com.wunderhand.core.ExtraLinksWrite): com.wunderhand.core.ExtrasResponse = unexpected("saveExtraLinks")
     override suspend fun createExtra(write: com.wunderhand.core.ExtraWrite): com.wunderhand.core.SavedId = unexpected("createExtra")

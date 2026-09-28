@@ -42,6 +42,7 @@ androidxTestRunner = "1.7.0"
 benchmark = "1.4.1"
 uiautomator = "2.3.0"
 profileinstaller = "1.4.1"
+coil = "2.7.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -56,6 +57,7 @@ androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "frag
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
