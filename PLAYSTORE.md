@@ -343,3 +343,11 @@ The first Wunderhand release: the diary by day and week, bookings made, moved an
 ## Live
 
 Approved and live on Google Play and the App Store, 24 September 2026 (Android production release, iOS 1.0 build 7). The push freeze on chairtime is over. PR #41 merged and deployed 24 September 2026: `/.well-known/assetlinks.json` serves the four fingerprints, and `/delete-account` is live. **To do in Play Console**: App content → Data safety → account deletion URL → `https://wunderhand.com/delete-account` (was the support page).
+
+## 1.2 (versionCode 3), 28 September 2026
+Built against chairtime main 2a5c034 (PRs 82–88, live). New: links out open the web signed in as this
+person; a visible "Change" on extras; walk-ins become clients from the appointment sheet (plus a
+Walk-ins filter); service photos from the phone (Coil draws them; shrunk to 2048 px JPEG on the
+device); and, server-side, the removal email and self-closing appointments. Do not upload while 1.0 is
+still in Google's first review; when it clears, 1.2 replaces the never-uploaded 1.1 — use the internal
+testing track first.
