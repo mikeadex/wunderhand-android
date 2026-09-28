@@ -25,7 +25,8 @@
       "prerequisiteName": null,
       "prerequisiteLeadHours": null,
       "hasDevelopGap": false,
-      "performerCount": 5
+      "performerCount": 5,
+      "imageUrl": null
     },
     {
       "id": "58fdad4f-a037-4e2c-86f4-53ac009ad190",
@@ -46,7 +47,8 @@
       "prerequisiteName": null,
       "prerequisiteLeadHours": null,
       "hasDevelopGap": false,
-      "performerCount": 5
+      "performerCount": 5,
+      "imageUrl": null
     },
     {
       "id": "b3aabc9b-02ad-4618-9834-a192ea5843bf",
@@ -67,7 +69,8 @@
       "prerequisiteName": null,
       "prerequisiteLeadHours": null,
       "hasDevelopGap": true,
-      "performerCount": 3
+      "performerCount": 3,
+      "imageUrl": null
     },
     {
       "id": "dfacd1db-a704-4541-a962-66b1e4a87660",
@@ -88,7 +91,8 @@
       "prerequisiteName": null,
       "prerequisiteLeadHours": null,
       "hasDevelopGap": true,
-      "performerCount": 1
+      "performerCount": 1,
+      "imageUrl": null
     },
     {
       "id": "ba06af0c-2c95-41e1-b2fd-60f400ffe010",
@@ -109,7 +113,8 @@
       "prerequisiteName": null,
       "prerequisiteLeadHours": null,
       "hasDevelopGap": false,
-      "performerCount": 1
+      "performerCount": 1,
+      "imageUrl": null
     }
   ],
   "travels": false

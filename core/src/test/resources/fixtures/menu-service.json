@@ -16,6 +16,7 @@
     "prerequisiteServiceId": null,
     "requiresResourceTypeId": "a9d7fd76-f873-43c0-87d1-8515417c28d3",
     "isArchived": false,
+    "imageUrl": null,
     "depositPence": 500,
     "depositPercent": null,
     "bookableOnline": true,
@@ -85,5 +86,5 @@
       "minutes": 0
     }
   ],
-  "timesBooked": 1662
+  "timesBooked": 1665
 }

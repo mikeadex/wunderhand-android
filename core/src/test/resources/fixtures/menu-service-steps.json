@@ -1,6 +1,6 @@
 {
   "service": {
-    "id": "3b94993d-6932-404c-9102-9659839e876c",
+    "id": "a0013ee2-cafc-43a4-a699-dc8ae1501a1b",
     "name": "ZZ Mobile Service",
     "description": null,
     "categoryName": null,
@@ -16,6 +16,7 @@
     "prerequisiteServiceId": null,
     "requiresResourceTypeId": null,
     "isArchived": false,
+    "imageUrl": null,
     "depositPence": null,
     "depositPercent": null,
     "bookableOnline": true,
