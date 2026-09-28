@@ -84,6 +84,11 @@ import java.net.URLEncoder
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Duration
 import java.time.Instant
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalFocusManager
+import com.wunderhand.design.WHField
 
 /**
  * One appointment, opened over the diary (chairtime
@@ -270,6 +275,7 @@ private fun AppointmentBody(response: AppointmentResponse, model: AppointmentMod
     response.bill?.let { BillCard(it, appt, Modifier.padding(top = 20.dp)) }
     if (appt.depositState == "uncollected" && !appt.isClosed) MissedDeposit(response, Modifier.padding(top = 12.dp))
     appt.project?.let { ProjectCard(it, currency, Modifier.padding(top = 12.dp)) }
+    if (appt.clientId == null && appt.status !in setOf("cancelled", "expired", "held")) AddClientSection(model, state, Modifier.padding(top = 20.dp))
     if (appt.needsConsent && appt.clientId != null && !appt.isClosed) ConsentSection(response, model, state, Modifier.padding(top = 20.dp))
     if (response.replies.isNotEmpty()) RepliesSection(response, clock, Modifier.padding(top = 20.dp))
     if (appt.standingFormula != null || appt.clientNotes != null) OnFileSection(appt, Modifier.padding(top = 20.dp))
@@ -390,6 +396,23 @@ private fun ProjectCard(project: AppointmentDetail.Project, currency: String, mo
 
 /** A form still to go through, signed in the chair. The words themselves are
  *  shown: a button beside no wording would attest to a document nobody saw. */
+/** A walk-in gave nothing about themselves; this is where they can. Their name is enough — a phone or email is what makes them findable next time. */
+@Composable
+private fun AddClientSection(model: AppointmentModel, state: AppointmentState, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    val focus = LocalFocusManager.current
+    var name by rememberSaveable { mutableStateOf("") }
+    var phone by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    SheetSection("Who was it?", modifier.testTag("addWalkIn")) {
+        Text("A walk-in with a name is a client: the visit counts, and there is somebody to book again.", style = WHType.Summary, color = WHColors.Ink)
+        WHField("Name", name, { name = it }, inputModifier = Modifier.testTag("walkInName"), keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words), placeholder = "Their name")
+        WHField("Mobile", phone, { phone = it }, inputModifier = Modifier.testTag("walkInPhone"), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), placeholder = "07…")
+        WHField("Email", email, { email = it }, inputModifier = Modifier.testTag("walkInEmail"), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), placeholder = "Optional")
+        InkButton("Add to clients", { focus.clearFocus(); scope.launch { model.addClient(name.trim(), phone, email) } }, Modifier.fillMaxWidth().testTag("addWalkInSave"), enabled = state.busy == null && name.isNotBlank(), loading = state.busy == SheetAction.AddClient)
+    }
+}
+
 @Composable
 private fun ConsentSection(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()

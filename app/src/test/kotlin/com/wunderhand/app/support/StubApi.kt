@@ -36,6 +36,7 @@ open class StubApi : WunderhandApi {
     override suspend fun move(appointmentId: String, to: Instant) { unexpected("move") }
     override suspend fun resize(appointmentId: String, endsAt: Instant) { unexpected("resize") }
     override suspend fun recordConsent(appointmentId: String) { unexpected("recordConsent") }
+    override suspend fun attachClient(appointmentId: String, input: com.wunderhand.core.AttachClientRequest): com.wunderhand.core.AppointmentResponse = unexpected("attachClient")
     override suspend fun startRepeat(appointmentId: String, intervalWeeks: Int): RepeatStarted = unexpected("startRepeat")
     override suspend fun stopRepeat(appointmentId: String, cancelUpcoming: Boolean): RepeatStopped = unexpected("stopRepeat")
     override suspend fun blockTime(request: BlockRequest): BlockCreated = unexpected("blockTime")

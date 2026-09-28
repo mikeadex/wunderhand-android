@@ -13,6 +13,22 @@ import kotlin.math.roundToInt
 /** The list's filters, as the web's chips name them. */
 enum class ClientFilter(val raw: String, val label: String) {
     All("all", "All"), Regulars("regulars", "Regulars"), Due("due", "Due a rebook"), Lapsed("lapsed", "Lapsed"), NoShows("no_shows", "No-shows"),
+    /** Added from an appointment that had nobody on it (see [AttachClientRequest]). */
+    WalkIns("walk_ins", "Walk-ins"),
+}
+
+/**
+ * `POST /api/v1/appointments/{id}/client`: somebody for an appointment that had
+ * nobody on it. A walk-in who gave their name at the chair becomes a client, so
+ * the visit counts and there is somebody to book again. Either an existing
+ * client, or a new one made from what they said.
+ */
+@Serializable
+data class AttachClientRequest(val clientId: String? = null, val name: String? = null, val phone: String? = null, val email: String? = null) {
+    companion object {
+        fun existing(clientId: String) = AttachClientRequest(clientId = clientId)
+        fun new(name: String, phone: String = "", email: String = "") = AttachClientRequest(name = name, phone = phone.ifBlank { null }, email = email.ifBlank { null })
+    }
 }
 
 /** The first two words' initials, as the web's avatars have always shown them. */
@@ -28,6 +44,8 @@ data class ClientRow(
     /** What they have spent here: an owner's to see, null for anyone else. */
     val spendPence: Pence? = null,
     val noShowCount: Int = 0,
+    /** How they came to be on the list: "walk_in", "online", "import", "manual" — or null, from before it was kept. */
+    val source: String? = null,
     val averageIntervalDays: Double? = null,
     val lastVisitAt: Instant? = null,
     val nextAppointmentAt: Instant? = null,

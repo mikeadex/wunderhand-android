@@ -12,9 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.time.Instant
+import com.wunderhand.core.AttachClientRequest
 
 /** What an open appointment is in the middle of doing. One thing at a time. */
-enum class SheetAction { Done, NoShow, Cancel, Consent, RepeatStart, RepeatStop, RepeatStopAndCancel }
+enum class SheetAction { Done, NoShow, Cancel, Consent, RepeatStart, RepeatStop, RepeatStopAndCancel, AddClient }
 
 /** A sentence after something happened — or was refused. */
 data class Notice(val text: String, val isProblem: Boolean)
@@ -77,6 +78,12 @@ class AppointmentModel(
             CloseOutcome.Cancelled -> SheetAction.Cancel
         },
     ) { ActionWords.closed(outcome, api.close(id, outcome).refund, currency) }
+
+    /** A walk-in who gave their name: made a client and put on this appointment. */
+    suspend fun addClient(name: String, phone: String, email: String) = run(SheetAction.AddClient) {
+        api.attachClient(id, AttachClientRequest.new(name, phone, email))
+        "$name is in your clients now."
+    }
 
     suspend fun recordConsent() {
         val version = _state.value.response?.consentWording?.version

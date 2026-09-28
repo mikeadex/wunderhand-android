@@ -134,6 +134,7 @@ class ApiClient(
         post<Map<String, String>, Ack>("api/v1/appointments/$appointmentId/resize", mapOf("endsAt" to instant(endsAt)))
     }
 
+    override suspend fun attachClient(appointmentId: String, input: AttachClientRequest): AppointmentResponse = post("api/v1/appointments/$appointmentId/client", input)
     override suspend fun recordConsent(appointmentId: String) {
         post<Map<String, String>, Ack>("api/v1/appointments/$appointmentId/consent", emptyMap())
     }

@@ -1,6 +1,6 @@
 {
   "client": {
-    "id": "daec7074-0694-4ce5-8a14-d56c0e5480a3",
+    "id": "7aeff0f4-4ad9-4689-8344-bd486209c5e9",
     "name": "ZZ Mobile Clients Renamed",
     "phone": "+447700900999",
     "visitCount": 0,
@@ -10,6 +10,7 @@
     "lastVisitAt": null,
     "nextAppointmentAt": null,
     "overdue": false,
+    "source": "manual",
     "email": null,
     "dateOfBirth": null,
     "notes": null,

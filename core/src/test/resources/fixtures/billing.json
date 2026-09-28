@@ -1,0 +1,10 @@
+{
+  "status": "active",
+  "source": "none",
+  "canBuyInApp": false,
+  "productIds": [
+    "com.wunderhand.app.onechair.monthly",
+    "com.wunderhand.app.onechair.yearly"
+  ],
+  "originalTransactionId": null
+}

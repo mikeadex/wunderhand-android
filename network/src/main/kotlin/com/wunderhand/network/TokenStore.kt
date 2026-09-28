@@ -49,6 +49,8 @@ interface ActionsApi {
     suspend fun move(appointmentId: String, to: java.time.Instant)
     suspend fun resize(appointmentId: String, endsAt: java.time.Instant)
     suspend fun recordConsent(appointmentId: String)
+    /** Somebody for an appointment that had nobody on it: the appointment comes back with them on it. */
+    suspend fun attachClient(appointmentId: String, input: com.wunderhand.core.AttachClientRequest): com.wunderhand.core.AppointmentResponse
     suspend fun startRepeat(appointmentId: String, intervalWeeks: Int): com.wunderhand.core.RepeatStarted
     suspend fun stopRepeat(appointmentId: String, cancelUpcoming: Boolean): com.wunderhand.core.RepeatStopped
     suspend fun blockTime(request: com.wunderhand.core.BlockRequest): com.wunderhand.core.BlockCreated

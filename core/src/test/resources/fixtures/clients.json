@@ -1,6 +1,19 @@
 {
   "clients": [
     {
+      "id": "441ee3f4-5b0f-4f94-9369-671ec59c1f54",
+      "name": "Audit Client",
+      "phone": "+447700900123",
+      "visitCount": 0,
+      "spendPence": 0,
+      "noShowCount": 0,
+      "averageIntervalDays": null,
+      "lastVisitAt": null,
+      "nextAppointmentAt": null,
+      "overdue": false,
+      "source": null
+    },
+    {
       "id": "3903974d-2562-4d12-9aa5-99f065b2e0f0",
       "name": "Bo Tremaine",
       "phone": null,
@@ -10,7 +23,8 @@
       "averageIntervalDays": 41,
       "lastVisitAt": null,
       "nextAppointmentAt": null,
-      "overdue": false
+      "overdue": false,
+      "source": null
     },
     {
       "id": "1862a134-2c40-47b8-b1ca-f224fc584c4f",
@@ -22,7 +36,8 @@
       "averageIntervalDays": 48,
       "lastVisitAt": null,
       "nextAppointmentAt": null,
-      "overdue": false
+      "overdue": false,
+      "source": null
     },
     {
       "id": "8ee80b26-ffad-4e09-bbae-d13d98645b26",
@@ -34,7 +49,8 @@
       "averageIntervalDays": 32,
       "lastVisitAt": null,
       "nextAppointmentAt": null,
-      "overdue": false
+      "overdue": false,
+      "source": null
     },
     {
       "id": "7c3e6f80-5629-4055-8bec-2ba85defee87",
@@ -46,7 +62,8 @@
       "averageIntervalDays": 37,
       "lastVisitAt": null,
       "nextAppointmentAt": null,
-      "overdue": false
+      "overdue": false,
+      "source": null
     },
     {
       "id": "fde35e49-5f9f-4f8a-b71e-278d9e68c904",
@@ -58,27 +75,17 @@
       "averageIntervalDays": 45,
       "lastVisitAt": null,
       "nextAppointmentAt": null,
-      "overdue": false
-    },
-    {
-      "id": "226650a5-4d4e-44ac-9996-1f42653994a8",
-      "name": "Jonah Pike",
-      "phone": null,
-      "visitCount": 5,
-      "spendPence": 19600,
-      "noShowCount": 0,
-      "averageIntervalDays": 48,
-      "lastVisitAt": null,
-      "nextAppointmentAt": null,
-      "overdue": false
+      "overdue": false,
+      "source": null
     }
   ],
   "counts": {
-    "all": 22,
+    "all": 50,
     "regulars": 10,
     "due": 1,
     "lapsed": 0,
-    "no_shows": 0
+    "no_shows": 0,
+    "walk_ins": 0
   },
   "limit": 200
 }
