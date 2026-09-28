@@ -232,7 +232,8 @@ fun ExtrasEditorScreen(model: ExtrasViewModel, currency: String, onClose: () -> 
                     if (index > 0) RowDivider(Modifier.padding(start = 16.dp))
                     Row(Modifier.padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         SwitchRow(extra.name, extra.id in state.offered, { on -> model.offer(extra.id, on) }, Modifier.weight(1f).padding(vertical = 10.dp).testTag("extraOffered-$index"), hint = extra.line(currency))
-                        IconPress(WHIcons.Pencil, "Change ${extra.name}", { model.editing(extra) }, Modifier.testTag("changeExtra-$index"))
+                        // A word as well as the pencil: testers looked for a way to change or delete an extra and did not find the icon.
+                        WordsButton("Change", { model.editing(extra) }, Modifier.padding(end = 8.dp).semantics { contentDescription = "Change ${extra.name}" }.testTag("changeExtra-$index"), color = WHColors.Accent)
                     }
                 }
             }
@@ -256,6 +257,7 @@ private fun ExtraForm(model: ExtrasViewModel, form: ExtraFormState, isSaving: Bo
             WHField("Price", form.price, { v -> model.type { it.copy(price = v) } }, inputModifier = Modifier.testTag("extraPrice"), keyboardOptions = money, prefix = "£", placeholder = "10", isProblem = form.problem?.field == "pricePence")
             WHField("Extra time (minutes)", form.minutes, { v -> model.type { it.copy(minutes = v) } }, inputModifier = Modifier.testTag("extraMinutes"), keyboardOptions = number, isProblem = form.problem?.field == "minutes")
             Hint("Zero for anything that costs money but no time, like an aftercare product.")
+            if (existing != null) Hint("Changing it changes it on every service that offers it. Bookings that already include it keep the name and price they were charged.")
         }
         if (existing != null) Column(Modifier.padding(top = 22.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Box(Modifier.alpha(if (isSaving) 0.5f else 1f)) { WordsButton("Retire ${existing.name}", { confirmingRetire = true }, Modifier.testTag("retireExtra"), color = WHColors.Accent, enabled = !isSaving) }
