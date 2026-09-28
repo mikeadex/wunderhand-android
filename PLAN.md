@@ -708,3 +708,23 @@ for the list and what each has earned).
 Consent first (smallest, unblocks a real need), then quiet times, then offers. Each lands as its
 own chairtime branch and PR, fixtures synced to both apps, and both apps' screens in the same day
 so the two stay level. 1.2 does not start until 1.1 is uploaded to both stores.
+
+## 1.2 revised (28 September 2026) — TestFlight feedback first
+
+The 24 September 1.2 (consent, quiet times, offers) moves to 1.3. 1.2 is the fixes the testers hit, then two features.
+
+Fixes first:
+
+1. **App-to-web links opened as the wrong account** (built 28 September). `POST /api/v1/web-session { path }` mints a single-use, 60-second link, `wunderhand.com/handoff?token=…&path=…` (better-auth one-time token, stored hashed). The page swaps it for a cookie session as the same person and shop, then 303s to the path; a spent or bad token goes to `/sign-in?next=path`. Paths must be site-relative and may not point at `/api`, `/handoff` or the sign-in pages. Both apps ask for the link at the moment of tapping (Shop-tab web rows, "Open it there" on a service) and fall back to the plain address when the call fails. chairtime branch `feat/web-handoff` in `chairtime-a7`, tests `tests/api-v1-web-session.test.ts` (4).
+2. **Email on removal from a team.** A new template sent from the API delete and the web action, only when the person had a login: "{shop} has ended your access. Your login still works for any other shop you're part of, and your own data is unchanged."
+3. **Extras edit and delete in the app.** The API already has PUT and DELETE. Tapping an extra opens the add form prefilled, with Save and Remove. Both platforms.
+4. **Auto-complete.** A sweep job completes any confirmed or in-progress appointment four hours past its end. One push to the pro an hour after the end: "Done with {client}? Mark it, or it closes itself in three hours." Tested with a fixed clock.
+
+Then the features:
+
+5. **Walk-ins into the client base.** A `source` column on clients (walk-in, booked online, added). `PATCH /api/v1/appointments/{id}/client` attaches an existing client or creates one from name, phone, email. "Add their details" on the appointment sheet and at the till. A Walk-ins filter on the clients list.
+6. **Service photos from the app.** `POST /api/v1/menu/{id}/photo` (multipart, up to 8 MB, resized as the web does), a delete, and an image URL on menu rows. A picker on the service form and thumbnails in the menu.
+
+**1.3**: consent forms, quiet times, offers (as planned above), then reviews: the client rates the visit after auto-completion, the pro replies once, the shop page shows the average, and the pro rates the client privately.
+
+**Order**: fixes 1 to 4 (about three days), then 5 and 6 (about two), each its own chairtime branch and pull request, with both apps' screens the same day. Nothing pushed until asked.

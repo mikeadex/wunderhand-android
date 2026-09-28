@@ -61,6 +61,7 @@ import com.wunderhand.design.WHIcons
 import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import kotlinx.coroutines.launch
+import com.wunderhand.app.app.WebLink
 
 /**
  * The Shop tab (chairtime `app/(pro)/shop/page.tsx`): the web's groups, each
@@ -145,10 +146,10 @@ private fun ShopIndex(app: AppModel, model: ShopViewModel, state: ShopState, wid
     fun Link(route: ShopRoute, label: String, value: String, hint: String?, tag: String) =
         IndexRow(label, value, hint, Modifier.testTag(tag), selected = open == route, onClick = { model.open(route) })
 
-    /** Opens on the web, where the page is. The web asks for its own sign-in. */
+    /** Opens on the web, where the page is — signed in as this person (WebLink). */
     @Composable
     fun Web(path: String, label: String, value: String, hint: String) =
-        IndexRow(label, value, hint, web = true, onClick = { runCatching { web.openUri("${server.trimEnd('/')}/$path") } })
+        IndexRow(label, value, hint, web = true, onClick = { scope.launch { WebLink.open(path, app.client, server, web) } })
 
     PullToRefreshBox(state.isRefreshing, onRefresh = { model.load(byHand = true) }, modifier) {
         Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {

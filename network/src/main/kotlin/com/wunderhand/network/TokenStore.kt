@@ -26,6 +26,8 @@ interface SessionApi {
     suspend fun signIn(email: String, password: String)
     suspend fun signOut()
     suspend fun me(): com.wunderhand.core.Me
+    /** A link into the web that signs the browser in as this person and lands on [path] ("/shop/payments"). Once, for a minute. */
+    suspend fun webSession(path: String): com.wunderhand.core.WebSession
 }
 
 /** The day, and one appointment in it. */

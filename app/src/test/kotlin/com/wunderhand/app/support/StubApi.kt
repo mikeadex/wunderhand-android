@@ -28,6 +28,7 @@ open class StubApi : WunderhandApi {
     override suspend fun signIn(email: String, password: String) { hasToken = true }
     override suspend fun signOut() { hasToken = false }
     override suspend fun me(): Me = unexpected("me()")
+    override suspend fun webSession(path: String): com.wunderhand.core.WebSession = unexpected("webSession")
     override suspend fun diary(date: String?): DiaryResponse = unexpected("diary($date)")
     override suspend fun appointment(id: String): AppointmentResponse = unexpected("appointment($id)")
     override suspend fun close(appointmentId: String, outcome: CloseOutcome): CloseResponse = unexpected("close")

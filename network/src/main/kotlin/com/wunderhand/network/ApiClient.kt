@@ -111,6 +111,7 @@ class ApiClient(
     // region API v1
 
     override suspend fun me(): Me = get("api/v1/me")
+    override suspend fun webSession(path: String): WebSession = post("api/v1/web-session", WebSessionRequest(if (path.startsWith("/")) path else "/$path"))
 
     override suspend fun diary(date: String?): DiaryResponse =
         get("api/v1/diary", if (date == null) emptyMap() else mapOf("date" to date))

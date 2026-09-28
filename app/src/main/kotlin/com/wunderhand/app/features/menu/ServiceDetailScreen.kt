@@ -58,6 +58,7 @@ import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import kotlinx.coroutines.launch
 import java.util.UUID
+import com.wunderhand.app.app.WebLink
 
 private enum class Editing { Service, Steps, Performers, Extras }
 
@@ -102,7 +103,10 @@ fun ServiceDetailScreen(id: String, app: AppModel, menu: MenuViewModel, wide: Bo
                     if (response == null) WordsButton("Try again", { scope.launch { model.load() } })
                 }
                 if (response != null) {
-                    Content(response, menu, twoColumns, canEdit = menu.isOwner && live, webAddress = "${app.server.collectAsStateWithLifecycle().value.trimEnd('/')}/menu/$id/edit", onEdit = ::edit)
+                    val server by app.server.collectAsStateWithLifecycle()
+                    val uri = LocalUriHandler.current
+                    val scope = rememberCoroutineScope()
+                    Content(response, menu, twoColumns, canEdit = menu.isOwner && live, openOnWeb = { scope.launch { WebLink.open("menu/$id/edit", app.client, server, uri) } }, onEdit = ::edit)
                 } else if (state.failure == null) {
                     Column(Modifier.padding(top = 20.dp).semantics { contentDescription = "Loading the service" }, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         repeat(3) { SkeletonBlock(120.dp, radius = 12.dp) }
@@ -151,7 +155,7 @@ fun ServiceDetailScreen(id: String, app: AppModel, menu: MenuViewModel, wide: Bo
 }
 
 @Composable
-private fun Content(r: MenuServiceResponse, menu: MenuViewModel, twoColumns: Boolean, canEdit: Boolean, webAddress: String, onEdit: (Editing) -> Unit) {
+private fun Content(r: MenuServiceResponse, menu: MenuViewModel, twoColumns: Boolean, canEdit: Boolean, openOnWeb: () -> Unit, onEdit: (Editing) -> Unit) {
     val currency = menu.currency
     Column(Modifier.padding(top = 20.dp)) {
         if (r.performers.isEmpty()) {
@@ -213,10 +217,9 @@ private fun Content(r: MenuServiceResponse, menu: MenuViewModel, twoColumns: Boo
         if (r.service.isArchived == true) {
             NoteCard("This has left the menu. It is kept because appointments refer to it.", Modifier.padding(top = 20.dp))
         } else if (canEdit) {
-            val uri = LocalUriHandler.current
             Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Its photograph is changed on the web.", Modifier.weight(1f, fill = false).padding(start = 4.dp), style = WHType.Meta, color = WHColors.Neutral700)
-                WordsButton("Open it there", { runCatching { uri.openUri(webAddress) } })
+                WordsButton("Open it there", openOnWeb)
             }
         }
     }
