@@ -1,0 +1,4 @@
+{
+  "url": "http://localhost:3000/handoff?token=TOKEN&path=%2Fshop%2Fpayments",
+  "expiresInSeconds": 60
+}

@@ -14,6 +14,7 @@
     "slug": "fold-barbers",
     "timezone": "Europe/London",
     "currency": "GBP",
+    "outlets": 2,
     "status": "active",
     "capabilities": {
       "signIn": true,
@@ -22,6 +23,10 @@
       "takePayments": true,
       "messaging": true,
       "addSeats": true
+    },
+    "billing": {
+      "source": "none",
+      "canBuyInApp": false
     }
   },
   "shops": [

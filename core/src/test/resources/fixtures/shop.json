@@ -1,12 +1,13 @@
 {
   "isOwner": true,
   "team": {
-    "count": 6,
+    "count": 33,
     "withoutLogin": 0
   },
   "outlets": {
     "count": 2,
-    "streetPrivate": 0
+    "streetPrivate": 0,
+    "travels": false
   },
   "hours": {
     "days": 5
@@ -26,7 +27,7 @@
     "noShowPercent": 50,
     "payInFullAfterNoShows": 2,
     "clientFacingWording": null,
-    "wordingVersion": "v7"
+    "wordingVersion": "v55"
   },
   "reminders": {
     "anyOn": false,
