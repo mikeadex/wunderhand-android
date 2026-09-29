@@ -71,6 +71,9 @@ class ShopClock(val zone: ZoneId) {
     /** The shop's calendar date for an instant, as the API writes it: "2026-09-16". */
     fun isoDate(instant: Instant): String = at(instant).toLocalDate().toString()
 
+    /** The hour of the shop's day, 0–23. */
+    fun hourOf(instant: Instant): Int = at(instant).hour
+
     /** The instant the shop's day begins, and the next one's — half-open. */
     fun dayBounds(containing: Instant): DayBounds {
         val day: LocalDate = at(containing).toLocalDate()

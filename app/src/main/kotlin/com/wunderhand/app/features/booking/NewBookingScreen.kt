@@ -312,64 +312,26 @@ private fun TimeStep(model: NewBookingViewModel, state: NewBookingState, wide: B
         return
     }
 
-    // Prices show on the times only when a rule brings some of them down; otherwise every time costs the same.
-    val showPrices = slots.firstDiscounted != null
     if (slots.days.isEmpty()) {
         Column(Modifier.padding(horizontal = if (wide) 0.dp else 22.dp).padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Nothing free soon", style = WHType.EmptyTitle, color = WHColors.Ink)
             Text("This person has no room in the next few working days. Try another professional, or open up more hours in Settings.", style = WHType.Body, color = WHColors.Neutral800)
         }
+        return
     }
     slots.firstExact?.let { exact ->
         exact.gapMinutes?.let { gap -> NoteCard("${model.clock.time(exact.start)} closes a ${Durations.label(gap)} gap exactly.", Modifier.padding(horizontal = side).padding(top = 20.dp)) }
     }
-    // Named, so the pro can explain the number rather than discover it.
-    slots.firstDiscounted?.let { cheaper ->
-        cheaper.price.ruleName?.let { rule ->
-            Text("“$rule” brings some of these down to ${cheaper.price.pence.formatted(model.currency)}.", Modifier.padding(horizontal = if (wide) 0.dp else 22.dp).padding(top = 16.dp), style = WHType.CardMeta, color = WHColors.Accent)
-        }
-    }
-
-    val across = if (wide) 4 else 3
-    for (day in slots.days) {
-        Column(Modifier.padding(horizontal = side).padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Eyebrow(day.label, Modifier.padding(horizontal = 4.dp))
-            for (line in day.slots.chunked(across)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (slot in line) SlotButton(slot, model, state, showPrices, Modifier.weight(1f))
-                    repeat(across - line.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
-    }
-    if (slots.days.isNotEmpty()) WordsButton("Later days ›", { model.laterDays() }, Modifier.padding(horizontal = if (wide) 0.dp else 14.dp).padding(top = 12.dp).testTag("bookingLaterDays"))
-}
-
-@Composable
-private fun SlotButton(slot: BookingSlotsResponse.Slot, model: NewBookingViewModel, state: NewBookingState, showPrice: Boolean, modifier: Modifier = Modifier) {
-    val selected = state.slot == slot.start
-    val haptics = LocalHapticFeedback.current
-    val shape = RoundedCornerShape(10.dp)
-    val time = model.clock.time(slot.start)
-    val price = slot.price.pence.formatted(model.currency)
-    Column(
-        modifier.heightIn(min = if (showPrice) 58.dp else 48.dp).liftSmall(shape).clip(shape)
-            .background(if (selected) WHColors.Ink else if (slot.closesGapExactly) WHColors.Accent100 else WHColors.Surface)
-            .then(if (selected || slot.closesGapExactly) Modifier else Modifier.border(1.dp, WHColors.Divider, shape))
-            .clickable(role = Role.RadioButton) { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); model.select(slot.start) }
-            .semantics(mergeDescendants = true) {
-                contentDescription = listOfNotNull(time, price.takeIf { showPrice }, "closes a gap exactly".takeIf { slot.closesGapExactly }).joinToString(", ")
-                this.selected = selected
-            }
-            .padding(vertical = 6.dp).testTag("bookingSlot"),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
-    ) {
-        Text(time, Modifier.clearAndSetSemantics { }, style = WHType.Button, color = if (selected) WHColors.Bg else if (slot.closesGapExactly) WHColors.Accent else WHColors.Ink)
-        if (showPrice) {
-            Text(price, Modifier.clearAndSetSemantics { }, style = WHType.Tag.copy(fontWeight = if (slot.price.isDiscounted && !selected) FontWeight.Medium else FontWeight.Normal),
-                color = if (selected) WHColors.Bg.copy(alpha = 0.8f) else if (slot.price.isDiscounted) WHColors.Accent else WHColors.Neutral700)
-        }
-    }
+    TimeStripPicker(
+        days = slots.days, selectedIso = state.dayIso, onSelectDay = model::selectDay, chosen = state.slot,
+        clock = model.clock, wide = wide, currency = model.currency,
+        canGoEarlier = model.canGoEarlier, canGoLater = slots.nextFrom != null,
+        onEarlier = { model.earlierDays() }, onLater = { model.laterDays() },
+        onPick = { model.select(it.start) },
+        cheaperDays = slots.days.filter { it.hasCheaper }.map { it.isoDate }.toSet(),
+        cheaperRule = slots.firstDiscounted?.price?.ruleName,
+        price = { s -> if (s.price.isDiscounted) s.price.pence to s.price.listPence else null },
+    )
 }
 
 // endregion

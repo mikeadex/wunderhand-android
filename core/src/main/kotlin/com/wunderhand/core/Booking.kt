@@ -105,12 +105,33 @@ data class BookingSlotsResponse(
     val days: List<Day>,
     /** The booking at the standard price, before a time is picked. */
     val standard: Standard,
+    /** `from` for the week after these days; null when there were none, or from a server without it. */
+    val nextFrom: String? = null,
 ) {
     @Serializable
-    data class Day(val isoDate: String, val label: String, val slots: List<Slot>)
+    data class Day(
+        override val isoDate: String,
+        val label: String,
+        /** The strip's labels, in the shop's time zone: "Tue", "29", "September". Absent from an older server. */
+        override val dow: String? = null,
+        override val dom: String? = null,
+        override val month: String? = null,
+        override val slots: List<Slot>,
+    ) : StripDay<Slot> {
+        /** A dot on the strip: some time this day is cheaper. */
+        val hasCheaper: Boolean get() = slots.any { it.price.isDiscounted }
+    }
 
     @Serializable
-    data class Slot(val start: Instant, val end: Instant, val closesGapExactly: Boolean = false, val gapMinutes: Int? = null, val price: Price)
+    data class Slot(
+        override val start: Instant,
+        val end: Instant,
+        override val closesGapExactly: Boolean = false,
+        val gapMinutes: Int? = null,
+        /** "morning", "afternoon" or "evening"; absent from an older server. */
+        override val period: String? = null,
+        val price: Price,
+    ) : StripSlot
 
     @Serializable
     data class Price(val pence: Pence, val listPence: Pence, val savingPence: Pence = Pence(0), val ruleName: String? = null) {

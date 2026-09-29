@@ -41,12 +41,31 @@ data class CloseResponse(
 
 /** `GET /api/v1/appointments/{id}/slots`: where an appointment could move to. */
 @Serializable
-data class SlotsResponse(val currentStartsAt: Instant, val days: List<SlotDay>) {
+data class SlotsResponse(
+    val currentStartsAt: Instant,
+    val days: List<SlotDay>,
+    /** `from` for the week after these days; null when there were none, or from a server without it. */
+    val nextFrom: String? = null,
+) {
     @Serializable
-    data class SlotDay(val isoDate: String, val label: String, val slots: List<Slot>)
+    data class SlotDay(
+        override val isoDate: String,
+        val label: String,
+        /** The strip's labels, in the shop's time zone: "Tue", "29", "September". Absent from an older server. */
+        override val dow: String? = null,
+        override val dom: String? = null,
+        override val month: String? = null,
+        override val slots: List<Slot>,
+    ) : StripDay<Slot>
 
     @Serializable
-    data class Slot(val start: Instant, val end: Instant, val closesGapExactly: Boolean = false)
+    data class Slot(
+        override val start: Instant,
+        val end: Instant,
+        override val closesGapExactly: Boolean = false,
+        /** "morning", "afternoon" or "evening"; absent from an older server. */
+        override val period: String? = null,
+    ) : StripSlot
 }
 
 @Serializable

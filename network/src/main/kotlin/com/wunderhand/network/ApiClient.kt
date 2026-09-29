@@ -127,7 +127,8 @@ class ApiClient(
         post("api/v1/appointments/$appointmentId/close", mapOf("outcome" to outcome.raw))
 
     override suspend fun slots(appointmentId: String, from: String?): SlotsResponse =
-        get("api/v1/appointments/$appointmentId/slots", if (from == null) emptyMap() else mapOf("from" to from))
+        // A week of days for the strip. `from` is a date, or "around" for the days about the appointment's own.
+        get("api/v1/appointments/$appointmentId/slots", buildMap { put("days", "7"); from?.let { put("from", it) } })
 
     override suspend fun move(appointmentId: String, to: Instant) {
         post<Map<String, String>, Ack>("api/v1/appointments/$appointmentId/move", mapOf("startsAt" to instant(to)))
@@ -164,7 +165,7 @@ class ApiClient(
     override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?, outletId: String?): BookingSlotsResponse =
         // An extra is asked for once each: `addon=a&addon=b`, as the web's own form sends them.
         send("GET", "api/v1/booking/slots", buildList {
-            add("service" to serviceId); add("staff" to staffId)
+            add("service" to serviceId); add("staff" to staffId); add("days" to "7")
             addonIds.forEach { add("addon" to it) }
             from?.let { add("from" to it) }
             outletId?.let { add("outlet" to it) }

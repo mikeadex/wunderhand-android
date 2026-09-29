@@ -55,11 +55,13 @@ import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import com.wunderhand.design.liftSmall
 import kotlinx.coroutines.launch
+import com.wunderhand.app.features.booking.TimeStripPicker
+import com.wunderhand.core.TimeStrip
 
 /**
- * "Move this appointment" (chairtime `app/(pro)/diary/[id]/reschedule`): the
- * next open days with the same person, three times across. Tapping a time
- * moves it there.
+ * "Move this appointment" (chairtime `app/(pro)/diary/[id]/reschedule`): a
+ * week of days with the same person, opened on the appointment's own, and the
+ * chosen day's times. Tapping a time moves it there.
  *
  * @param onDone back to the appointment — after a move, or without one.
  */
@@ -67,9 +69,13 @@ import kotlinx.coroutines.launch
 fun RescheduleScreen(appointment: AppointmentDetail, model: AppointmentModel, state: AppointmentState, onDone: () -> Unit, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val clock = model.clock
-    var from by rememberSaveable { mutableStateOf<String?>(null) }
+    // "around": the days about the appointment's own, as the web opens.
+    var from by rememberSaveable { mutableStateOf<String?>("around") }
+    var selectedIso by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(from) { model.loadSlots(from) }
+    // Opened on the appointment's own day when it is among these.
+    LaunchedEffect(state.slots) { state.slots?.let { selectedIso = TimeStrip.openingDay(it.days, selectedIso ?: clock.isoDate(appointment.startsAt)) } }
     // The system's back is back to the appointment, not out of the sheet.
     BackHandler(onBack = onDone)
 
@@ -109,43 +115,23 @@ fun RescheduleScreen(appointment: AppointmentDetail, model: AppointmentModel, st
             } else {
                 if (slots.days.isEmpty()) {
                     Text("Nothing free in the next few working days. Free some time up first, or block less out.", Modifier.padding(horizontal = 22.dp).padding(top = 24.dp), style = WHType.Body, color = WHColors.Neutral800)
-                }
-                for (day in slots.days) DaySection(day, model, state) { slot -> scope.launch { if (model.moveTo(slot.start)) onDone() } }
-                slots.days.lastOrNull()?.let { last ->
-                    WordsButton("Later days ›", { from = IsoDay.shift(last.isoDate, 1) }, Modifier.padding(horizontal = 14.dp).padding(top = 12.dp).testTag("laterDays"))
+                } else {
+                    val today = clock.isoDate(java.time.Instant.now())
+                    val earlier = slots.days.firstOrNull()?.let { TimeStrip.previousFrom(it.isoDate, today) }
+                    val later = slots.nextFrom ?: slots.days.lastOrNull()?.let { IsoDay.shift(it.isoDate, 1) }
+                    TimeStripPicker(
+                        days = slots.days, selectedIso = selectedIso, onSelectDay = { selectedIso = it }, chosen = null,
+                        clock = clock, wide = false, currency = "GBP",
+                        canGoEarlier = earlier != null, canGoLater = later != null,
+                        onEarlier = { earlier?.let { selectedIso = null; model.forgetSlots(); from = it } },
+                        onLater = { later?.let { selectedIso = null; model.forgetSlots(); from = it } },
+                        onPick = { slot -> scope.launch { if (model.moveTo(slot.start)) onDone() } },
+                        moving = state.moving,
+                    )
                 }
             }
         }
 
         FooterBar(Modifier.navigationBarsPadding()) { Text("Tap a time to move it there.", style = WHType.CardMeta, color = WHColors.Neutral700) }
-    }
-}
-
-@Composable
-private fun DaySection(day: SlotsResponse.SlotDay, model: AppointmentModel, state: AppointmentState, onPick: (SlotsResponse.Slot) -> Unit) {
-    Column(Modifier.padding(horizontal = 18.dp).padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Eyebrow(day.label, Modifier.padding(horizontal = 4.dp))
-        for (row in day.slots.chunked(3)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                for (slot in row) {
-                    val shape = RoundedCornerShape(10.dp)
-                    val time = model.clock.time(slot.start)
-                    val isMoving = state.moving == slot.start
-                    Box(
-                        Modifier.weight(1f).heightIn(min = 48.dp).liftSmall(shape).clip(shape)
-                            .background(if (slot.closesGapExactly) WHColors.Accent100 else WHColors.Surface).border(1.dp, WHColors.Divider, shape)
-                            .clickable(enabled = state.moving == null, role = Role.Button) { onPick(slot) }
-                            .semantics { contentDescription = time + if (slot.closesGapExactly) ", closes a gap exactly" else "" }
-                            .testTag("slot"),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (isMoving) CircularProgressIndicator(Modifier.size(18.dp), color = WHColors.Ink, strokeWidth = 2.dp)
-                        else Text(time, style = WHType.Button, color = if (slot.closesGapExactly) WHColors.Accent else WHColors.Ink)
-                    }
-                }
-                // A short last row keeps its thirds.
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
     }
 }

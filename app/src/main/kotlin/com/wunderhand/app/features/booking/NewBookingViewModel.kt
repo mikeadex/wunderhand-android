@@ -10,6 +10,7 @@ import com.wunderhand.core.BookingSlotsResponse
 import com.wunderhand.core.BookingStep
 import com.wunderhand.core.Ineligible
 import com.wunderhand.core.IsoDay
+import com.wunderhand.core.TimeStrip
 import com.wunderhand.core.ShopClock
 import com.wunderhand.network.ApiError
 import com.wunderhand.network.BookingApi
@@ -59,6 +60,8 @@ data class NewBookingState(
     val slot: Instant? = null,
     /** The first day of times shown; null is today. */
     val from: String? = null,
+    /** The day open on the strip. */
+    val dayIso: String? = null,
     val overridePrerequisite: Boolean = false,
     val refusal: Refusal? = null,
     val isBooking: Boolean = false,
@@ -172,7 +175,11 @@ class NewBookingViewModel(
             // An answer to a question that has since changed is nobody's answer.
             if (asked != _state.value.let { listOf(it.serviceId, it.staffId, it.addonIds, it.from, it.outletId) }) return
             val wanted = wantedSlot.also { wantedSlot = null }
-            set { it.copy(slots = loaded, loadProblem = null, slot = if (wanted != null && loaded.slot(wanted) != null) wanted else it.slot?.takeIf { at -> loaded.slot(at) != null }) }
+            set {
+                val slot = if (wanted != null && loaded.slot(wanted) != null) wanted else it.slot?.takeIf { at -> loaded.slot(at) != null }
+                // The strip opens on the chosen time's day, else the first.
+                it.copy(slots = loaded, loadProblem = null, slot = slot, dayIso = TimeStrip.openingDay(loaded.days, slot?.let(clock::isoDate) ?: it.dayIso))
+            }
         } catch (error: ApiError) { fail(error) }
     }
 
@@ -215,11 +222,26 @@ class NewBookingViewModel(
 
     fun setOverride(ticked: Boolean) = set { it.copy(overridePrerequisite = ticked) }
 
+    fun selectDay(iso: String) = set { it.copy(dayIso = iso) }
+
+    /** Next week: from where the server said, or the day after the last shown. */
     fun laterDays(): Job? {
-        val last = _state.value.slots?.days?.lastOrNull() ?: return null
-        set { it.copy(from = IsoDay.shift(last.isoDate, 1), slots = null) }
+        val slots = _state.value.slots ?: return null
+        val next = slots.nextFrom ?: slots.days.lastOrNull()?.let { IsoDay.shift(it.isoDate, 1) } ?: return null
+        set { it.copy(from = next, slots = null, dayIso = null) }
         return viewModelScope.launch { loadSlots() }
     }
+
+    /** Previous week: seven days back, never before today. */
+    fun earlierDays(): Job? {
+        val first = _state.value.slots?.days?.firstOrNull() ?: return null
+        val back = TimeStrip.previousFrom(first.isoDate, clock.isoDate(java.time.Instant.now())) ?: return null
+        set { it.copy(from = back, slots = null, dayIso = null) }
+        return viewModelScope.launch { loadSlots() }
+    }
+
+    val canGoEarlier: Boolean
+        get() = _state.value.slots?.days?.firstOrNull()?.let { TimeStrip.previousFrom(it.isoDate, clock.isoDate(java.time.Instant.now())) } != null
 
     /** One step back, undoing its answer. False on the first step: there is
      *  nothing to go back to, and the booking is abandoned. */
