@@ -353,6 +353,6 @@ still in Google's first review; when it clears, 1.2 replaces the never-uploaded 
 testing track first.
 
 ## Live, 5 October 2026
-Google cleared the app. Next: upload 1.2 (versionCode 3, signed bundle from main 1c35deb) to the
+Google cleared 1.0 (versionCode 1). Next: upload 1.2 (versionCode 3, signed bundle from main 1c35deb) to the
 internal testing track, then production; set the deletion URL to https://wunderhand.com/delete-account
 in Data safety; put the Firebase FCM_* values on Vercel so Android pushes go out.
