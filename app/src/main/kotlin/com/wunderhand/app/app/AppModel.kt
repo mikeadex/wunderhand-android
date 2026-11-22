@@ -3,6 +3,10 @@ package com.wunderhand.app.app
 import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
 import com.wunderhand.network.ApiError
+import com.wunderhand.network.Pending
+import com.wunderhand.network.SignIn
+import com.wunderhand.network.TwoFactorCode
+import com.wunderhand.network.TwoFactorRefusal
 import com.wunderhand.network.WunderhandApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +17,9 @@ sealed interface Phase {
     /** Deciding: a stored token is being checked. */
     data object Launching : Phase
     data object SignedOut : Phase
+    /** The password was right, and this login asks for a code as well.
+     *  Nothing is signed in yet and no token is stored. */
+    data class NeedsCode(val pending: Pending) : Phase
     /** Signed in to more than one shop and none chosen yet. */
     data class ChoosingShop(val me: Me) : Phase
     data class SignedIn(val me: Me) : Phase
@@ -57,6 +64,12 @@ class AppModel(
      *  screen, never as a screen of its own. */
     private val _trouble = MutableStateFlow<String?>(null)
     val trouble: StateFlow<String?> = _trouble.asStateFlow()
+
+    /** Something for the sign-in screen to say the next time it opens: a
+     *  two-step sign-in that was spent or ran out of time, which can only
+     *  begin again at the password. */
+    private val _signInNote = MutableStateFlow<String?>(null)
+    val signInNote: StateFlow<String?> = _signInNote.asStateFlow()
 
     /** A screen already saying it — the diary's bar over a day it kept, which
      *  says the same thing and more. Two bars about one lost connection read
@@ -108,11 +121,47 @@ class AppModel(
     private fun phaseFor(me: Me, chosen: String?): Phase =
         if (me.worksAtSeveral && chosen == null) Phase.ChoosingShop(me) else Phase.SignedIn(me)
 
-    /** Throws the refusal, for the sign-in screen to say. */
+    /**
+     * The email and the password. Throws the refusal, for the sign-in screen
+     * to say.
+     *
+     * A login with two-step sign-in on is not signed in by a right password:
+     * it goes to [Phase.NeedsCode], which is the code screen.
+     */
     suspend fun signIn(email: String, password: String) {
         settings.setChosenShopId(null)
-        client.signIn(email.trim(), password)
+        _signInNote.value = null
+        when (val outcome = client.signIn(email.trim(), password)) {
+            SignIn.SignedIn -> refresh()
+            is SignIn.NeedsCode -> _phase.value = Phase.NeedsCode(outcome.pending)
+        }
+    }
+
+    /**
+     * The code from the authenticator app, or one of the backup codes.
+     * Throws the refusal, for the code screen to say.
+     *
+     * A sign-in that is spent or has lapsed can never be finished, so that one
+     * refusal is handled here rather than on the screen: it puts them back on
+     * the password with the reason, instead of leaving somebody typing codes
+     * into something that will not take another.
+     */
+    suspend fun signIn(code: String, from: Pending, kind: TwoFactorCode) {
+        try {
+            client.signIn(code, from, kind)
+        } catch (refusal: ApiError.TwoFactor) {
+            if (refusal.refusal != TwoFactorRefusal.StartAgain) throw refusal
+            startSignInAgain(refusal.message)
+            return
+        }
         refresh()
+    }
+
+    /** Back to the email and password — by their own choice, or because the
+     *  half-done sign-in is no longer good for anything. */
+    fun startSignInAgain(note: String? = null) {
+        _signInNote.value = note
+        _phase.value = Phase.SignedOut
     }
 
     suspend fun choose(shopId: String) {

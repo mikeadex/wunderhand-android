@@ -25,7 +25,8 @@ open class StubApi : WunderhandApi {
 
     override var hasToken: Boolean = true
     override var tenantId: String? = null
-    override suspend fun signIn(email: String, password: String) { hasToken = true }
+    override suspend fun signIn(email: String, password: String): com.wunderhand.network.SignIn { hasToken = true; return com.wunderhand.network.SignIn.SignedIn }
+    override suspend fun signIn(code: String, from: com.wunderhand.network.Pending, kind: com.wunderhand.network.TwoFactorCode) { unexpected("signIn(code)") }
     override suspend fun signOut() { hasToken = false }
     override suspend fun me(): Me = unexpected("me()")
     override suspend fun webSession(path: String): com.wunderhand.core.WebSession = unexpected("webSession")

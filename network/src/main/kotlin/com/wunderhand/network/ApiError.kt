@@ -17,6 +17,9 @@ sealed class ApiError(override val message: String) : Exception(message) {
     class Unauthorized(message: String) : ApiError(message)
     /** Sign-in refused: wrong details, a malformed email, too many tries. */
     class SignInRefused(message: String) : ApiError(message)
+    /** The code step of a two-step sign-in refused the code. [refusal] says
+     *  whether another go is worth anything. */
+    class TwoFactor(val refusal: TwoFactorRefusal, message: String) : ApiError(message)
     /** The shop asked for is not one this person works at any more. */
     class NotMember(message: String) : ApiError(message)
     /** The shop is an owner's to change. The screen shows the owner-only note. */
@@ -96,6 +99,40 @@ sealed class ApiError(override val message: String) : Exception(message) {
                 status == 429 -> SignInRefused("Too many attempts in a short time. Wait a few minutes and try again.")
                 code == "INVALID_EMAIL" -> SignInRefused("That does not look like an email address. Check it and try again.")
                 status == 401 || code == "INVALID_EMAIL_OR_PASSWORD" -> SignInRefused("That email and password do not match. Try again.")
+                else -> Server(SERVER_MESSAGE)
+            }
+        }
+
+        /**
+         * A refusal from the code step, by the `code` in its body.
+         *
+         * Worded as the web's own two pages word it: the code page for a wrong
+         * code and for a pause, the sign-in page for a sign-in that is spent.
+         *
+         * **The code in the body decides, before the status.** A login whose
+         * second step is paused answers 429 with `ACCOUNT_TEMPORARILY_LOCKED`,
+         * and the plain rate limit answers 429 with no code at all. Going by
+         * the status would tell somebody locked out for a quarter of an hour
+         * to try again in a few minutes.
+         */
+        internal fun twoFactorStep(status: Int, body: String): ApiError {
+            val code = runCatching { ChairtimeJson.decodeFromString(AuthErrorBody.serializer(), body).code }.getOrNull()
+            return when {
+                code == "ACCOUNT_TEMPORARILY_LOCKED" ->
+                    TwoFactor(TwoFactorRefusal.Locked, "Too many wrong codes. Sign-in with a code is paused for 15 minutes on this login.")
+                code == "TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE" || code == "INVALID_TWO_FACTOR_COOKIE" ->
+                    TwoFactor(TwoFactorRefusal.StartAgain, "That sign-in ran out of time. Start again with your email and password.")
+                /* INVALID_CODE, INVALID_BACKUP_CODE, and anything else this
+                 * endpoint refuses the code with: the web says one thing for
+                 * all of them, because a code either worked or it did not. */
+                code != null ->
+                    TwoFactor(TwoFactorRefusal.WrongCode, "That code isn’t right. Codes change every 30 seconds, so check it’s the newest one and try again.")
+                /* The rate limit refuses before the handler reads the code, so
+                 * it answers with a message and no code of its own. Nothing is
+                 * wrong with the code; it came too quickly. */
+                status == 429 ->
+                    TwoFactor(TwoFactorRefusal.TooFast, "Too many tries in a short time. Wait a few minutes and try again.")
+                // A gateway's own page, or a shape this build cannot read. Not the code's fault, so not said as if it were.
                 else -> Server(SERVER_MESSAGE)
             }
         }

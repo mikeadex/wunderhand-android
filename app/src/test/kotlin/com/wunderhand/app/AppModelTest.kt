@@ -39,7 +39,7 @@ class AppModelTest {
             get() = token
             set(value) { token = value }
         val askedFor = mutableListOf<String?>()
-        override suspend fun signIn(email: String, password: String) { token = true }
+        override suspend fun signIn(email: String, password: String): com.wunderhand.network.SignIn { token = true; return com.wunderhand.network.SignIn.SignedIn }
         override suspend fun signOut() { token = false }
         override suspend fun me(): Me { askedFor += tenantId; return answer() }
     }

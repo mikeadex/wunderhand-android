@@ -67,6 +67,10 @@ class SignInForm : ViewModel() {
     var isSigningIn by mutableStateOf(false)
         private set
 
+    /** What this screen has to say: its own refusal, or the reason a two-step
+     *  sign-in was sent back here to start over. */
+    fun note(sessionNote: String?): String? = error ?: sessionNote
+
     fun signIn(model: AppModel) {
         if (isSigningIn) return
         if (email.isBlank() || password.isEmpty()) {
@@ -106,6 +110,8 @@ fun SignInScreen(model: AppModel, form: SignInForm = viewModel()) {
     val focus = LocalFocusManager.current
     val links = LocalUriHandler.current
     val server by model.server.collectAsStateWithLifecycle()
+    val sessionNote by model.signInNote.collectAsStateWithLifecycle()
+    val note = form.note(sessionNote)
     val passwordField = remember { FocusRequester() }
 
     fun submit() {
@@ -121,8 +127,8 @@ fun SignInScreen(model: AppModel, form: SignInForm = viewModel()) {
                     ScreenHeader("Sign in", style = WHType.PageTitle)
                 }
 
-                AnimatedVisibility(form.error != null) {
-                    NoteCard(form.error.orEmpty(), Modifier.padding(top = 20.dp).testTag("signInError"))
+                AnimatedVisibility(note != null) {
+                    NoteCard(note.orEmpty(), Modifier.padding(top = 20.dp).testTag("signInError"))
                 }
 
                 Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
