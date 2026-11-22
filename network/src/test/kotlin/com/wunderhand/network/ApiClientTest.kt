@@ -127,6 +127,203 @@ class ApiClientTest {
         assertEquals("Too many attempts in a short time. Wait a few minutes and try again.", error.message)
     }
 
+    // Two-step sign-in: the code after the password
+
+    /** What the password step answers for a login with two-step sign-in on. */
+    private val asksForACode = """{"twoFactorRedirect":true,"twoFactorMethods":["totp"]}"""
+
+    /** The real cookie, alongside the two clearings Better Auth sends with it. */
+    private val halfDoneSignIn = arrayOf(
+        "Set-Cookie" to "better-auth.session_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
+        "Set-Cookie" to "better-auth.session_data=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
+        "Set-Cookie" to "better-auth.two_factor=half-done; Path=/; Max-Age=600; HttpOnly; SameSite=Lax",
+    )
+
+    private fun authRefusal(code: String, message: String = "ignored") = """{"code":"$code","message":"$message"}"""
+
+    /** A sign-in waiting for its code, got the only way there is to get one. */
+    private suspend fun pending(vararg cookies: Pair<String, String>): Pending {
+        tokens.write(null)
+        reply(200, asksForACode, *(if (cookies.isEmpty()) halfDoneSignIn else cookies))
+        val outcome = client().signIn("nadia@okonjo.example", "secret")
+        server.takeRequest()
+        return (outcome as SignIn.NeedsCode).pending
+    }
+
+    @Test fun `a right password with two-step on asks for a code rather than failing`() = runTest {
+        tokens.write(null)
+        reply(200, asksForACode, *halfDoneSignIn)
+        val outcome = client().signIn("nadia@okonjo.example", "secret")
+        assertTrue(outcome is SignIn.NeedsCode)
+        assertEquals(listOf("totp"), (outcome as SignIn.NeedsCode).pending.methods)
+        // Nothing is signed in yet.
+        assertNull(tokens.read())
+    }
+
+    @Test fun `a password step with no two-step is signed in, as it always was`() = runTest {
+        tokens.write(null)
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        assertEquals(SignIn.SignedIn, client().signIn("kit@fold.example", "secret"))
+        assertEquals("fresh-token", tokens.read())
+    }
+
+    /** Without the cookie there is nothing to finish the sign-in with, so this
+     *  is a shape the build cannot act on rather than a second step. */
+    @Test fun `asking for a code with no cookie to carry is a server error`() = runTest {
+        tokens.write(null)
+        reply(200, asksForACode)
+        val error = refused { client().signIn("nadia@okonjo.example", "secret") }
+        assertTrue(error is ApiError.Server)
+        assertEquals(ApiError.SERVER_MESSAGE, error.message)
+    }
+
+    @Test fun `a right code is a token, stored as the password step stores one`() = runTest {
+        val half = pending()
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = "123456", from = half)
+        assertEquals("fresh-token", tokens.read())
+        val sent = server.takeRequest()
+        assertEquals("/api/auth/two-factor/verify-totp", sent.url.encodedPath)
+        assertEquals("""{"code":"123456"}""", sent.body!!.utf8())
+        assertEquals("android/1.0", sent.headers["X-Wunderhand-Client"])
+    }
+
+    /** Better Auth refuses a request that carries a cookie and no Origin, so
+     *  the server exempts exactly these two endpoints. A made-up Origin would
+     *  be working around a question that is already settled. */
+    @Test fun `the code step sends no Origin`() = runTest {
+        val half = pending()
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = "123456", from = half)
+        assertNull(server.takeRequest().headers["Origin"])
+    }
+
+    @Test fun `every cookie the password step set goes back, exactly as given`() = runTest {
+        val half = pending()
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = "123456", from = half)
+        assertEquals(
+            "better-auth.session_token=; better-auth.session_data=; better-auth.two_factor=half-done",
+            server.takeRequest().headers["Cookie"],
+        )
+    }
+
+    /** Over https the server names it `__Secure-better-auth.two_factor`.
+     *  Nothing here reads the name, so there is nothing to keep in step. */
+    @Test fun `a cookie named for https is carried without being recognised`() = runTest {
+        val half = pending("Set-Cookie" to "__Secure-better-auth.two_factor=half-done; Path=/; Secure; HttpOnly; SameSite=Lax")
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = "123456", from = half)
+        assertEquals("__Secure-better-auth.two_factor=half-done", server.takeRequest().headers["Cookie"])
+    }
+
+    @Test fun `spaces and hyphens come off an authenticator code, as the web takes them off`() = runTest {
+        val half = pending()
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = " 123 456 ", from = half)
+        assertEquals("""{"code":"123456"}""", server.takeRequest().body!!.utf8())
+    }
+
+    @Test fun `a backup code has its own endpoint, and keeps the hyphens that belong to it`() = runTest {
+        val half = pending()
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = "  abcd-efgh  ", from = half, kind = TwoFactorCode.Backup)
+        val sent = server.takeRequest()
+        assertEquals("/api/auth/two-factor/verify-backup-code", sent.url.encodedPath)
+        assertEquals("""{"code":"abcd-efgh"}""", sent.body!!.utf8())
+        assertEquals("fresh-token", tokens.read())
+    }
+
+    @Test fun `a code the server takes but answers without a token is a server error`() = runTest {
+        val half = pending()
+        reply(200, "{}")
+        val error = refused { client().signIn(code = "123456", from = half) }
+        assertTrue(error is ApiError.Server)
+        assertNull(tokens.read())
+    }
+
+    @Test fun `a wrong code says what the web's code page says`() = runTest {
+        val half = pending()
+        reply(401, authRefusal("INVALID_CODE"))
+        val error = refused { client().signIn(code = "000000", from = half) }
+        assertEquals(TwoFactorRefusal.WrongCode, (error as ApiError.TwoFactor).refusal)
+        assertEquals("That code isn’t right. Codes change every 30 seconds, so check it’s the newest one and try again.", error.message)
+    }
+
+    /** One sentence for both, because a code either worked or it did not. */
+    @Test fun `a backup code that is not one of theirs says the same thing`() = runTest {
+        val half = pending()
+        reply(401, authRefusal("INVALID_BACKUP_CODE"))
+        val error = refused { client().signIn(code = "nope-nope", from = half, kind = TwoFactorCode.Backup) }
+        assertEquals(TwoFactorRefusal.WrongCode, (error as ApiError.TwoFactor).refusal)
+        assertEquals("That code isn’t right. Codes change every 30 seconds, so check it’s the newest one and try again.", error.message)
+    }
+
+    /** A wrong code does not spend the half-done sign-in, so the screen can
+     *  ask again with the one it has. */
+    @Test fun `a wrong code leaves the sign-in good for another go`() = runTest {
+        val half = pending()
+        reply(401, authRefusal("INVALID_CODE"))
+        refused { client().signIn(code = "000000", from = half) }
+        server.takeRequest()
+        reply(200, "{}", "set-auth-token" to "fresh-token")
+        client().signIn(code = "123456", from = half)
+        assertEquals("fresh-token", tokens.read())
+        assertEquals(
+            "better-auth.session_token=; better-auth.session_data=; better-auth.two_factor=half-done",
+            server.takeRequest().headers["Cookie"],
+        )
+    }
+
+    /**
+     * The pause and the rate limit are both 429, and only the body tells them
+     * apart. Read by status, this would tell somebody locked out for a quarter
+     * of an hour to try again in a few minutes.
+     */
+    @Test fun `a paused login is told about the pause, not the rate limit`() = runTest {
+        val half = pending()
+        reply(429, authRefusal("ACCOUNT_TEMPORARILY_LOCKED"))
+        val error = refused { client().signIn(code = "000000", from = half) }
+        assertEquals(TwoFactorRefusal.Locked, (error as ApiError.TwoFactor).refusal)
+        assertEquals("Too many wrong codes. Sign-in with a code is paused for 15 minutes on this login.", error.message)
+    }
+
+    /** The rate limit refuses before the handler reads the code, so it answers
+     *  with a message and no code of its own. */
+    @Test fun `a 429 with no code at all is the rate limit`() = runTest {
+        val half = pending()
+        reply(429, """{"message":"Too many requests. Please try again later."}""")
+        val error = refused { client().signIn(code = "123456", from = half) }
+        assertEquals(TwoFactorRefusal.TooFast, (error as ApiError.TwoFactor).refusal)
+        assertEquals("Too many tries in a short time. Wait a few minutes and try again.", error.message)
+    }
+
+    @Test fun `five wrong codes against one sign-in sends them back to the password`() = runTest {
+        val half = pending()
+        reply(401, authRefusal("TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE"))
+        val error = refused { client().signIn(code = "000000", from = half) }
+        assertEquals(TwoFactorRefusal.StartAgain, (error as ApiError.TwoFactor).refusal)
+        assertEquals("That sign-in ran out of time. Start again with your email and password.", error.message)
+    }
+
+    @Test fun `a sign-in whose ten minutes lapsed sends them back with the same sentence`() = runTest {
+        val half = pending()
+        reply(401, authRefusal("INVALID_TWO_FACTOR_COOKIE"))
+        val error = refused { client().signIn(code = "123456", from = half) }
+        assertEquals(TwoFactorRefusal.StartAgain, (error as ApiError.TwoFactor).refusal)
+        assertEquals("That sign-in ran out of time. Start again with your email and password.", error.message)
+    }
+
+    /** A gateway's own page, mid-deploy: nothing about the code, so nothing
+     *  that tells somebody their code is wrong. */
+    @Test fun `a gateway between us is not blamed on the code`() = runTest {
+        val half = pending()
+        reply(502, "<html>502 Bad Gateway</html>")
+        val error = refused { client().signIn(code = "123456", from = half) }
+        assertTrue(error is ApiError.Server)
+        assertEquals(ApiError.SERVER_MESSAGE, error.message)
+    }
+
     // The session
 
     @Test fun `sends the chosen shop`() = runTest {

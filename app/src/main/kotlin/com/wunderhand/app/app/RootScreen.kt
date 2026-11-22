@@ -36,6 +36,7 @@ import com.wunderhand.app.features.clients.LocalNotesGate
 import com.wunderhand.app.push.LocalPush
 import com.wunderhand.app.push.PushServices
 import com.wunderhand.app.features.clients.NotesGate
+import com.wunderhand.app.features.auth.CodeScreen
 import com.wunderhand.app.features.auth.SignInScreen
 import com.wunderhand.app.features.shell.MainScaffold
 import com.wunderhand.design.SignalBar
@@ -102,6 +103,7 @@ fun RootScreen(model: AppModel, reachability: Reachability, notesGate: NotesGate
                 when (now) {
                     Phase.Launching -> LaunchScreen()
                     Phase.SignedOut -> SignInScreen(model)
+                    is Phase.NeedsCode -> CodeScreen(model, now.pending)
                     is Phase.ChoosingShop -> ShopPickerScreen(model, now.me)
                     is Phase.SignedIn -> MainScaffold(model, now.me)
                     is Phase.Unreachable -> MessageScreen("Could not reach Wunderhand", now.message, "Try again") {

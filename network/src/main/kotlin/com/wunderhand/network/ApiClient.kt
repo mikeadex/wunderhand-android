@@ -73,9 +73,15 @@ class ApiClient(
 
     // region Session
 
-    /** Sign in with an email and password. The token is stored; nothing is
-     *  returned, because what matters next is [me]. */
-    override suspend fun signIn(email: String, password: String) {
+    /**
+     * Sign in with an email and password.
+     *
+     * A login with two-step sign-in on answers a right password with 200, no
+     * `set-auth-token` and `twoFactorRedirect` in the body — the second step
+     * asking to begin. That is an outcome, not a failure: it comes back as
+     * [SignIn.NeedsCode] so the screen can ask for the code.
+     */
+    override suspend fun signIn(email: String, password: String): SignIn {
         val body = ChairtimeJson.encodeToString(
             MapSerializer(String.serializer(), String.serializer()),
             mapOf("email" to email, "password" to password),
@@ -87,6 +93,47 @@ class ApiClient(
             .build()
         val reply = perform(request)
         if (!reply.isSuccessful) throw ApiError.signIn(reply.status, reply.body)
+        val token = reply.header("set-auth-token")
+        if (!token.isNullOrEmpty()) {
+            tokens.write(token)
+            return SignIn.SignedIn
+        }
+        /* No token, so either the code step is being asked for or this is a
+         * shape the build cannot read. Both the flag and a cookie to carry are
+         * needed: without the cookie there is nothing to finish with. */
+        val asked = runCatching { ChairtimeJson.decodeFromString(TwoFactorRedirect.serializer(), reply.body) }.getOrNull()
+        val cookie = reply.cookiePairs()
+        if (asked?.twoFactorRedirect != true || cookie.isEmpty()) throw ApiError.Server(ApiError.SERVER_MESSAGE)
+        return SignIn.NeedsCode(Pending(cookie, asked.twoFactorMethods.orEmpty()))
+    }
+
+    /**
+     * The second step: the code, with the half-done sign-in handed back as it
+     * was given. A code that is accepted hands back a token, which is stored
+     * exactly as the password step stores one.
+     *
+     * **No Origin header.** Better Auth refuses a request that carries a
+     * cookie and no Origin, which is what an app sends; the server exempts
+     * these two endpoints for exactly this reason (`advanced.disableOriginCheck`,
+     * lib/auth/config.ts). A made-up Origin would be working around a question
+     * that is already settled.
+     *
+     * One request, never retried: a code is good for thirty seconds and each
+     * backup code works once.
+     */
+    override suspend fun signIn(code: String, from: Pending, kind: TwoFactorCode) {
+        val body = ChairtimeJson.encodeToString(
+            MapSerializer(String.serializer(), String.serializer()),
+            mapOf("code" to kind.tidied(code)),
+        )
+        val request = Request.Builder()
+            .url(url(kind.path))
+            .post(body.toRequestBody(JSON))
+            .header("X-Wunderhand-Client", clientHeader)
+            .header("Cookie", from.cookie)
+            .build()
+        val reply = perform(request)
+        if (!reply.isSuccessful) throw ApiError.twoFactorStep(reply.status, reply.body)
         val token = reply.header("set-auth-token")
         if (token.isNullOrEmpty()) throw ApiError.Server(ApiError.SERVER_MESSAGE)
         tokens.write(token)
@@ -360,6 +407,20 @@ class ApiClient(
     private class Reply(val status: Int, private val headers: Headers, val body: String) {
         val isSuccessful get() = status in 200..299
         fun header(name: String): String? = headers[name]
+
+        /**
+         * The `name=value` pairs this answer set, ready to be a `Cookie`
+         * header: everything before each `Set-Cookie`'s first semicolon, with
+         * the attributes after it dropped.
+         *
+         * Nothing is read or recognised here — not the name, which differs by
+         * scheme, and not `Max-Age=0`, which the password step sends to clear
+         * two cookies alongside the one that matters. All of them go back.
+         */
+        fun cookiePairs(): String = headers.values("Set-Cookie")
+            .map { it.substringBefore(';').trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString("; ")
     }
 
     /**
@@ -413,3 +474,10 @@ class ApiClient(
 /** A reply whose body the app does not need, only that it succeeded. */
 @kotlinx.serialization.Serializable
 class Ack
+
+/** The body the password step sends when two-step sign-in is on for a login. */
+@kotlinx.serialization.Serializable
+internal data class TwoFactorRedirect(
+    val twoFactorRedirect: Boolean = false,
+    val twoFactorMethods: List<String>? = null,
+)

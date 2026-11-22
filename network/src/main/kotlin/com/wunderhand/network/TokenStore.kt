@@ -23,7 +23,12 @@ class InMemoryTokenStore(private var token: String? = null) : TokenStore {
 interface SessionApi {
     val hasToken: Boolean
     var tenantId: String?
-    suspend fun signIn(email: String, password: String)
+    /** A right password, which for a login with two-step sign-in on is not a
+     *  session yet — see [SignIn]. */
+    suspend fun signIn(email: String, password: String): SignIn
+    /** The second step: a code from the authenticator app, or one of the ten
+     *  backup codes. Only reachable with a [Pending] from the password step. */
+    suspend fun signIn(code: String, from: Pending, kind: TwoFactorCode = TwoFactorCode.Authenticator)
     suspend fun signOut()
     suspend fun me(): com.wunderhand.core.Me
     /** A link into the web that signs the browser in as this person and lands on [path] ("/shop/payments"). Once, for a minute. */

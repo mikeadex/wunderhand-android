@@ -33,10 +33,11 @@ class SignInFormTest {
     private class Api(val accepts: Boolean, val me: Me) : StubApi() {
         var sent: Pair<String, String>? = null
         init { hasToken = false }
-        override suspend fun signIn(email: String, password: String) {
+        override suspend fun signIn(email: String, password: String): com.wunderhand.network.SignIn {
             sent = email to password
             if (!accepts) throw ApiError.SignInRefused("That email and password do not match. Try again.")
             hasToken = true
+            return com.wunderhand.network.SignIn.SignedIn
         }
         override suspend fun me() = me
     }

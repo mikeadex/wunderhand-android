@@ -53,6 +53,32 @@ class DiaryTest {
         it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
     }
 
+    /** The first day of the week on screen that has an appointment in it, or
+     *  null if none of them has. Leaves the week list open either way, so the
+     *  caller can move on a week and ask again. */
+    private fun findABusyDay(): String? {
+        val days = openDays()
+        assertTrue("an open day in the week", days.isNotEmpty())
+        return days.firstOrNull { day ->
+            app.onNodeWithTag(day).performScrollTo().performClick()
+            waitFor("showing-" + day.removePrefix("week-"))
+            app.waitUntil(20_000) { isOnScreen("agenda") || isOnScreen("teamGrid") || isOnScreen("emptyDay") || isOnScreen("closedDay") }
+            runCatching { app.waitUntil(3_000) { anyOnScreen("appointment-") } }.isSuccess.also { found ->
+                if (!found) { app.onNodeWithText("Week").performClick(); waitFor("weekList") }
+            }
+        }
+    }
+
+    private fun openDays(): List<String> = app.onAllNodes(tagStartsWith("week-")).fetchSemanticsNodes()
+        .map { it.config[SemanticsProperties.TestTag] }
+
+    /** On a week: a text button on a phone, an arrow in the header on anything wider. */
+    private fun nextWeek() {
+        if (isOnScreen("nextWeek")) app.onNodeWithTag("nextWeek").performScrollTo().performClick()
+        else app.onNodeWithContentDescription("Next week").performClick()
+        app.waitForIdle()
+    }
+
     private fun isOnScreen(tag: String) = app.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
     private fun anyOnScreen(prefix: String) = app.onAllNodes(tagStartsWith(prefix)).fetchSemanticsNodes().isNotEmpty()
     private fun waitFor(tag: String) = app.waitUntil(20_000) { isOnScreen(tag) }
@@ -87,18 +113,23 @@ class DiaryTest {
         app.onNodeWithContentDescription("Booked, ", substring = true).assertExists()
         everyControlSaysWhatItIs("the week")
 
-        // Find a day with somebody in it, wherever the seed has put them this week.
-        val days = app.onAllNodes(tagStartsWith("week-")).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
-        assertTrue("an open day in the week", days.isNotEmpty())
-        val busy = days.firstOrNull { day ->
-            app.onNodeWithTag(day).performScrollTo().performClick()
-            waitFor("showing-" + day.removePrefix("week-"))
-            app.waitUntil(20_000) { isOnScreen("agenda") || isOnScreen("teamGrid") || isOnScreen("emptyDay") || isOnScreen("closedDay") }
-            runCatching { app.waitUntil(3_000) { anyOnScreen("appointment-") } }.isSuccess.also { found ->
-                if (!found) { app.onNodeWithText("Week").performClick(); waitFor("weekList") }
-            }
+        // Find a day with somebody in it, wherever the seed has put them.
+        //
+        // This week first, then the next one. The demo diary goes on the shop's
+        // next OPEN day (chairtime's scripts/seed-diary.ts), and this shop is
+        // shut on Sundays and Mondays — so on those two days the seeded day is
+        // in the week after the one that opens here. Looking only at this week
+        // failed every weekend for a reason that was nothing to do with the app.
+        val busy = findABusyDay() ?: run {
+            // The week on screen stays until the next one arrives (DiaryViewModel.show),
+            // so "the list is there" is true at once and proves nothing. Wait for
+            // the days themselves to change, or this reads last week's a second time.
+            val before = openDays()
+            nextWeek()
+            app.waitUntil(20_000) { openDays().let { it.isNotEmpty() && it != before } }
+            findABusyDay()
         }
-        assertTrue("a booking somewhere in the seeded week", busy != null)
+        assertTrue("a booking in this week or the next", busy != null)
         everyControlSaysWhatItIs("a busy day")
 
         // Open it: who, when, and — for an owner — what to take.
@@ -114,7 +145,11 @@ class DiaryTest {
             // Where it could move to. Looked at, not used: the seed stays as it was found.
             app.onNodeWithTag("reschedule").performClick()
             waitFor("moveScreen")
-            app.waitUntil(20_000) { isOnScreen("slot") || isOnScreen("laterDays") || isOnScreen("slotsProblem") }
+            // The day strip the web has (TimeStripPicker), a line saying nothing is free, or why the times could not be fetched.
+            app.waitUntil(20_000) {
+                isOnScreen("stripMonth") || isOnScreen("slotsProblem") ||
+                    app.onAllNodesWithText("Nothing free in the next few working days", substring = true).fetchSemanticsNodes().isNotEmpty()
+            }
             everyControlSaysWhatItIs("the move screen")
             app.onNodeWithTag("backToAppointment").performClick()
             waitFor("appointmentName")
@@ -296,12 +331,19 @@ class DiaryTest {
         everyControlSaysWhatItIs("the menu step")
         app.onAllNodesWithTag("bookingService").onFirst().performClick()
 
+        // Where, at a shop with more than one outlet — asked before who, and not at all otherwise.
+        app.waitUntil(20_000) { anyOnScreen("bookingOutlet") || anyOnScreen("bookingPerson") }
+        if (anyOnScreen("bookingOutlet")) {
+            everyControlSaysWhatItIs("the outlet step")
+            app.onAllNodesWithTag("bookingOutlet").onFirst().performClick()
+        }
+
         app.waitUntil(20_000) { anyOnScreen("bookingPerson") }
         everyControlSaysWhatItIs("the person step")
         app.onAllNodesWithTag("bookingPerson").onFirst().performClick()
 
         // Extras are a step only for a service that has some.
-        app.waitUntil(20_000) { isOnScreen("bookingContinue") || anyOnScreen("bookingSlot") || isOnScreen("bookingLaterDays") }
+        app.waitUntil(20_000) { isOnScreen("bookingContinue") || anyOnScreen("bookingSlot") }
         if (isOnScreen("bookingContinue")) {
             everyControlSaysWhatItIs("the extras step")
             app.onNodeWithTag("bookingContinue").performClick()
@@ -354,9 +396,7 @@ class DiaryTest {
         app.onNodeWithText("Week").performClick()
         waitFor("weekList")
         repeat(6) {
-            if (isOnScreen("nextWeek")) app.onNodeWithTag("nextWeek").performScrollTo().performClick()
-            else app.onNodeWithContentDescription("Next week").performClick()
-            app.waitForIdle()
+            nextWeek()
         }
         fun quietDays() = app.onAllNodes(tagStartsWith("week-")).fetchSemanticsNodes()
             .filter { node -> node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().any { ", 0 booked" in it } }
