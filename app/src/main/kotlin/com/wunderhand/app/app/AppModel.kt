@@ -192,12 +192,27 @@ class AppModel(
         _phase.value = Phase.SignedOut
     }
 
+    /**
+     * Signed out by the server rather than by the button: the session was ended
+     * somewhere else, or they were taken off the team. The same goes as when
+     * they press Sign out — the notes lock again, and the days kept for a bad
+     * signal are dropped. Those are kept by shop, so left behind they were what
+     * the next person to sign in at this shop saw with no signal: the last
+     * person's diary, prices and all.
+     */
+    private fun forgetWhoWasHere() {
+        onLeaving()
+        cache.clear()
+        lastMe = null
+    }
+
     /** What any screen does with a refusal it cannot handle itself. */
     suspend fun handle(error: ApiError) {
         val chosen = settings.chosenShopId()
         when {
             error is ApiError.Unauthorized -> {
                 settings.setChosenShopId(null)
+                forgetWhoWasHere()
                 _phase.value = Phase.SignedOut
             }
             error is ApiError.NotMember && chosen != null -> {
@@ -205,7 +220,10 @@ class AppModel(
                 settings.setChosenShopId(null)
                 refresh()
             }
-            error is ApiError.NotMember -> _phase.value = Phase.SignedOut
+            error is ApiError.NotMember -> {
+                forgetWhoWasHere()
+                _phase.value = Phase.SignedOut
+            }
             error is ApiError.UpgradeRequired -> _phase.value = Phase.UpgradeRequired(error.message)
             error.isPassing && whoWeCanFallBackOn != null -> {
                 /* The client has already tried again a few times. Rather than

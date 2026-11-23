@@ -1,6 +1,7 @@
 package com.wunderhand.app.push
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -63,6 +64,10 @@ class PushNotifier(private val context: Context) {
         }
     }
 
+    /* Lint cannot see that `mayNotify` is the permission check it asks for —
+     * it follows a check written out in the function, not one behind a call —
+     * and the build's lint failed on `notify` below for want of it. */
+    @SuppressLint("MissingPermission")
     fun show(push: PushPayload) {
         if (!mayNotify()) return
         ensureChannels()

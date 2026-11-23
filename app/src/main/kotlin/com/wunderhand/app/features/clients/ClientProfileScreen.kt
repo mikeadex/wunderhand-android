@@ -81,6 +81,7 @@ import com.wunderhand.design.WordsButton
 import com.wunderhand.design.liftSmall
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.util.UUID
 
 /**
  * One client (chairtime `app/(pro)/clients/[id]/page.tsx`).
@@ -168,7 +169,14 @@ fun ClientProfileScreen(id: String, app: AppModel, list: ClientsViewModel, wide:
     if (isWaitlisting && profile != null) WaitlistSheet(app, list.clock, addFor = WaitingFor(profile.id, profile.name), onClose = { isWaitlisting = false })
     if (isEditing && profile != null) {
         ModalBottomSheet(onDismissRequest = { isEditing = false }, sheetState = sheet, containerColor = WHColors.Bg, dragHandle = null) {
-            val form: ClientFormViewModel = viewModel(key = "client-form-${profile.id}") { ClientFormViewModel(profile, app.client, app::handle, createSavedStateHandle()) }
+            /* A new form each time Edit is pressed, as Add has. Kept under the
+             * client alone it was one form for as long as the app stayed open:
+             * what was typed and abandoned came back, a change made since on
+             * the web was put back by the next save, and it was the same form
+             * for whoever signed in next on this phone. */
+            val form: ClientFormViewModel = viewModel(key = "client-form-${profile.id}-${rememberSaveable { UUID.randomUUID().toString() }}") {
+                ClientFormViewModel(profile, app.client, app::handle, createSavedStateHandle())
+            }
             ClientFormScreen(
                 form,
                 onSaved = { isEditing = false; scope.launch { model.load() }; list.load() },

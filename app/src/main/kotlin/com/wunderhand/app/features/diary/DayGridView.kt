@@ -182,7 +182,13 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, start: Instant, end: Instant,
     val from = maxOf(block.startsAt, start)
     val to = minOf(block.endsAt, end)
     if (to <= from) return
-    val height = maxOf(between(from, to) - 4.dp, MIN_BLOCK)
+    val drawn = between(from, to) - 4.dp
+    val height = maxOf(drawn, MIN_BLOCK)
+    /* The words at the top of anything tall enough to have a top, as the team
+     * grid and the iPhone have them. In the middle, a whole day off opened on
+     * nine hours of hatching and said what it was only to somebody who
+     * scrolled half way down it. */
+    val tall = drawn > MIN_BLOCK
     val label = BlockWords.dayGridLabel(block, model.clock)
     var removing by remember(block.id) { mutableStateOf(false) }
     Box(
@@ -191,8 +197,13 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, start: Instant, end: Instant,
             .then(if (mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = BlockWords.removeConfirm(block)) { removing = true } else Modifier)
             .testTag("break-${block.id}").clearAndSetSemantics { contentDescription = label }
             .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.CenterStart,
-    ) { OneLine(label, WHType.CardMeta.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), WHColors.Muted) }
+        contentAlignment = if (tall) Alignment.TopStart else Alignment.CenterStart,
+    ) {
+        OneLine(
+            label, WHType.CardMeta.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), WHColors.Muted,
+            Modifier.padding(top = if (tall) 8.dp else 0.dp).testTag("break-label-${block.id}"),
+        )
+    }
 
     if (removing) {
         ConfirmDialog(

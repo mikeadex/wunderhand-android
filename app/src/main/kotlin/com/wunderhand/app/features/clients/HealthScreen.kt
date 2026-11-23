@@ -1,7 +1,7 @@
 package com.wunderhand.app.features.clients
 
-import android.app.Activity
 import android.view.WindowManager
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,11 +30,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -69,6 +69,7 @@ import com.wunderhand.design.WHIcons
 import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import com.wunderhand.design.liftSmall
+import java.util.UUID
 
 /**
  * Medical notes (chairtime `app/(pro)/clients/[id]/health/page.tsx`).
@@ -88,10 +89,13 @@ import com.wunderhand.design.liftSmall
 @Composable
 fun HealthScreen(clientId: String, clientName: String?, app: AppModel, clock: ShopClock, wide: Boolean, onBack: () -> Unit) {
     val gate = LocalNotesGate.current
-    val model: HealthViewModel = viewModel(key = "health-$clientId") { HealthViewModel(clientId, clientName ?: "this client", app.client, clock, gate, app::handle) }
+    // One for each time the notes are opened, not one for each client: the next person to sign in on this phone starts their own, and a client renamed since is called what they are called now.
+    val model: HealthViewModel = viewModel(key = "health-$clientId-${rememberSaveable { UUID.randomUUID().toString() }}") {
+        HealthViewModel(clientId, clientName ?: "this client", app.client, clock, gate, app::handle)
+    }
     val state by model.state.collectAsStateWithLifecycle()
     val focus = LocalFocusManager.current
-    val activity = LocalContext.current as? Activity
+    val activity = LocalActivity.current
 
     DisposableEffect(Unit) {
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)

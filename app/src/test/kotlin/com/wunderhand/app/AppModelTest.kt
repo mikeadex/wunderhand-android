@@ -103,6 +103,21 @@ class AppModelTest {
         assertEquals(Phase.SignedOut, model.phase.value)
     }
 
+    /** Not only the button: the days kept for a bad signal are kept by shop, and are not the next person's. */
+    @Test fun `a session the server ends mid-day leaves nothing of the shop on the phone, and locks the notes`() = runTest {
+        var answers = { kit }
+        var locked = 0
+        val model = AppModel(settings, cache(), "http://server", connect = { FakeApi { answers() } }, onLeaving = { locked++ })
+        model.start(allowServerOverride = false)
+        assertEquals(kit, cache().savedMe())
+
+        answers = { throw ApiError.Unauthorized("Sign in again.") }
+        model.refresh()
+        assertEquals(Phase.SignedOut, model.phase.value)
+        assertNull(cache().savedMe())
+        assertEquals(1, locked)
+    }
+
     @Test fun `no signal on a phone that has been here before opens on what it last saw`() = runTest {
         cache().save(kit)
         val model = model(FakeApi { throw ApiError.Offline() })
