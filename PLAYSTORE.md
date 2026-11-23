@@ -438,3 +438,28 @@ Known and not fixed in this build:
   everyone. The server allows it on purpose; the owner's list then names who is still off.
 - On a phone, one person's grid draws a whole day off with its label in the middle of the block, so
   the first screen is hatching with no words until it is scrolled. Looks only.
+
+## 1.4 (versionCode 7), 23 November 2026
+Replaces versionCode 6, which reached internal testing the same day and was not promoted. Same code
+against the same chairtime main (8cbaa09), same release notes, with one fix (PR 8), the one
+versionCode 6 listed as known:
+- After signing out and signing in as somebody else without closing the app, the next person could
+  be shown the last person's Shop pages as they were left, with nothing fetched: an owner's Time
+  off, its "Who" and its half-filled form, in front of a stylist, and on Your calendar the owner's
+  private link. The server refused whatever they were not allowed to do, but the page could be
+  read. Every Shop page is now kept for the person signed in, at the shop they act for, so the next
+  person's first look at a page asks the server for their own.
+
+Seen on the emulator with this build's code: an owner opens Time off, opens the form and types a
+note, signs out; somebody who is not an owner signs in and opens Time off, and sees their own page
+with no form, no Who and no note. Before versionCode 6's fixes were merged the same was seen for
+Working hours and Your calendar.
+
+Known and not fixed in this build:
+- Somebody who is not an owner can take their own day out of a closure the owner made for
+  everyone. The server allows it on purpose; the owner's list then names who is still off.
+- On a phone, one person's grid draws a whole day off with its label in the middle of the block, so
+  the first screen is hatching with no words until it is scrolled. Looks only.
+- Outside Shop, a client's edit form and health notes are kept by the client alone, so two people
+  signing in one after the other on one phone, at one shop, share them. The health notes wipe
+  themselves on leaving; the edit form does not.
