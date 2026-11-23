@@ -407,3 +407,34 @@ already in it; the shop closed for everyone for more than one day, and how the d
 tomorrow); a day taken back from the diary and from Shop. Never seen on a running app: the date
 pickers, an "Everyone" closure, a run of several days, a blocked hour's line in the list, and Time off
 as somebody who is not an owner.
+
+## 1.4 (versionCode 6), 23 November 2026
+Replaces versionCode 5, which reached internal testing the same day and was not promoted. Same code
+against the same chairtime main (8cbaa09), same release notes, with three fixes (PR 6), all found on
+the Pixel Fold emulator signed in as somebody who is not the owner:
+- A tap on a colleague's day off in the team's columns opened New booking. A block answers a tap
+  only from the person whose it is, or an owner, and anybody else's tap went through to the column
+  underneath. A tap on blocked time now books nobody.
+- The notice on a day off shared by several people said "The shop is off this day" whoever was off,
+  and told everybody to take days back in Shop. It now says the shop only when everybody in the
+  diary is off and names who is off otherwise ("Kit and Sam are off this day"). Where to take days
+  back is told to an owner, and to one of the people off for their own day; anyone else is told it
+  is the owner's.
+- Shop → Time off did not look again when it was come back to from another tab: an hour blocked in
+  the diary was missing until the page was left and reopened, and "Saved." stayed up. It now reads
+  its list again, keeps a form half filled in, and drops the notice.
+
+Seen on the emulator with versionCode 5 on 23 November, so no longer "never seen": the date pickers,
+an "Everyone" closure, a run of several days, a blocked hour's line in the list, and Time off as
+somebody who is not an owner. Seen with this build's code as somebody who is not an owner: the
+three fixes above.
+
+Known and not fixed in this build:
+- After signing out and signing in as somebody else without closing the app, the next person can be
+  shown the last person's Shop pages, Time off among them: an owner's list and form in front of a
+  stylist. The server refuses whatever they may not do. A fix is written and was not merged when
+  this build was made; it wants a versionCode 7.
+- Somebody who is not an owner can take their own day out of a closure the owner made for
+  everyone. The server allows it on purpose; the owner's list then names who is still off.
+- On a phone, one person's grid draws a whole day off with its label in the middle of the block, so
+  the first screen is hatching with no words until it is scrolled. Looks only.
