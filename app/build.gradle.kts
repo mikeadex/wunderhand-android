@@ -37,8 +37,8 @@ android {
         applicationId = "com.wunderhand.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "FIREBASE_PROJECT_ID", firebaseField("projectId"))
         buildConfigField("String", "FIREBASE_API_KEY", firebaseField("apiKey"))
