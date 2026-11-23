@@ -1,0 +1,13 @@
+{
+  "days": 3,
+  "inside": [
+    {
+      "id": "221f9f6c-e2ff-49d2-8a2f-1616cdd58031",
+      "startsAt": "2028-04-18T11:00:00.000Z",
+      "staffId": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+      "staffName": "Kit Alvarez",
+      "clientName": "ZZ Time Off Client",
+      "serviceName": "Clean shave"
+    }
+  ]
+}

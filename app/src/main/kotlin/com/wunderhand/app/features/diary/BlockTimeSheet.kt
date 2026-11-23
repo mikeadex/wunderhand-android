@@ -122,6 +122,8 @@ fun BlockTimeSheet(model: DiaryViewModel, state: DiaryState, onBlocked: (String)
                 Column(Modifier.padding(horizontal = 22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Block off time", Modifier.semantics { heading() }, style = WHType.SheetName, color = WHColors.Ink)
                     Text("Clients see the time as unavailable. Appointments already there stay put — move them yourself if you need to.", style = WHType.Body, color = WHColors.Neutral800)
+                    // A fortnight away is not fourteen of these (chairtime `app/(pro)/shop/time-off`).
+                    Text("For whole days — a holiday, the shop shut — use Time off, in Shop.", Modifier.testTag("blockTimeOffHint"), style = WHType.Meta, color = WHColors.Neutral700)
                 }
 
                 problem?.let { NoteCard(it, Modifier.padding(horizontal = 18.dp).padding(top = 16.dp).testTag("blockProblem")) }

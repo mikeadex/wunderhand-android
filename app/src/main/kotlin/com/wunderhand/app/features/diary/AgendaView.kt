@@ -19,6 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import com.wunderhand.app.features.waitlist.GapWindow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,12 +39,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wunderhand.core.Agenda
 import com.wunderhand.core.AgendaItem
+import com.wunderhand.core.BlockWords
 import com.wunderhand.core.DiaryAppointment
 import com.wunderhand.core.DiaryGap
 import com.wunderhand.core.DiaryMember
 import com.wunderhand.core.Durations
 import com.wunderhand.core.Pence
 import com.wunderhand.core.ShopClock
+import com.wunderhand.design.ConfirmDialog
+import com.wunderhand.design.NoticeDialog
 import com.wunderhand.design.OneLine
 import com.wunderhand.design.TagTone
 import com.wunderhand.design.WHColors
@@ -48,6 +55,7 @@ import com.wunderhand.design.WHIcon
 import com.wunderhand.design.WHIcons
 import com.wunderhand.design.WHTag
 import com.wunderhand.design.WHType
+import com.wunderhand.design.hatch
 import com.wunderhand.design.liftSmall
 import java.time.Instant
 
@@ -71,6 +79,10 @@ fun DiaryAppointment.spoken(clock: ShopClock, currency: String, now: Instant, wh
  *
  * Times run down a gutter, gaps are dividers between cards, and the
  * appointment under way is the dark card where it falls in the day.
+ *
+ * Blocked time is in the list too, hatched: a lunch break where it falls, a
+ * day of time off at the top. It used to be left out, so a day somebody had
+ * taken off read as a day with nothing in it and no free time either.
  */
 @Composable
 fun AgendaView(members: List<DiaryMember>, model: DiaryViewModel, now: Instant, modifier: Modifier = Modifier) {
@@ -82,6 +94,7 @@ fun AgendaView(members: List<DiaryMember>, model: DiaryViewModel, now: Instant, 
         for (item in items) {
             when (item) {
                 is AgendaItem.Booked -> AgendaCard(item.appointment, item.who.takeIf { showWho }, model, now)
+                is AgendaItem.Blocked -> BlockLine(item, showWho, model)
                 is AgendaItem.Free -> GapDivider(item.gap, if (showWho) item.who else emptyList(), model.clock) { model.fillGap(GapWindow(item.staffIds.firstOrNull() ?: model.me.staff.id, item.gap.startsAt, item.gap.endsAt)) }
             }
         }
@@ -109,6 +122,45 @@ private fun AgendaCard(row: DiaryAppointment, who: String?, model: DiaryViewMode
         Box(Modifier.weight(1f).clearAndSetSemantics { }) {
             if (inChair) InChairCard(row, who, model) else OrdinaryCard(row, who, model, Modifier.alpha(if (past) 0.7f else 1f))
         }
+    }
+}
+
+/**
+ * Blocked time, hatched as the grids draw it. One person's is theirs, or an
+ * owner's, to take back from here; a day off shared by several is one request
+ * and is taken back where it was made, so the line says where that is.
+ */
+@Composable
+private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, model: DiaryViewModel) {
+    val block = item.block
+    val detail = BlockWords.detail(item, model.clock, showWho)
+    val mayRemove = model.me.staff.isOwner || item.staffIds.all { it == model.me.staff.id }
+    var asking by remember(item.id) { mutableStateOf(false) }
+    val shape = RoundedCornerShape(12.dp)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            if (block.allDay) "" else model.clock.time(block.startsAt),
+            Modifier.width(46.dp).padding(top = 12.dp).clearAndSetSemantics { },
+            style = WHType.GutterTime, color = WHColors.Muted, textAlign = TextAlign.End, maxLines = 1,
+        )
+        Column(
+            Modifier.weight(1f).clip(shape).background(WHColors.Break).hatch()
+                .then(if (item.isFolded || mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = if (item.isFolded) "How to take it back" else BlockWords.removeConfirm(block)) { asking = true } else Modifier)
+                .semantics(mergeDescendants = true) { contentDescription = "${block.label}, $detail" }
+                .testTag("block-${block.id}")
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            OneLine(block.label, WHType.Semi14, WHColors.Neutral800, Modifier.clearAndSetSemantics { })
+            OneLine(detail, WHType.Meta, WHColors.Neutral700, Modifier.clearAndSetSemantics { })
+        }
+    }
+    if (asking) {
+        if (item.isFolded) NoticeDialog(BlockWords.SHOP_OFF, BlockWords.SHOP_OFF_SAYS) { asking = false }
+        else ConfirmDialog(
+            title = BlockWords.removeTitle(block, model.clock), message = BlockWords.removeMessage(block), confirm = BlockWords.removeConfirm(block),
+            onConfirm = { model.unblock(block) }, onDismiss = { asking = false },
+        )
     }
 }
 

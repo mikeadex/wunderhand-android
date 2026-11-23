@@ -137,8 +137,8 @@ internal fun OwnerOnlyNote(what: String, onBack: (() -> Unit)?) {
 
 /**
  * Working hours (chairtime `app/(pro)/shop/hours`): one person at one outlet, a
- * row a day. Switch a day off and it becomes a day off — no times are kept.
- * Breaks and holidays are blocked separately, from the diary.
+ * row a day. Switch a day off and it becomes a day off every week — no times
+ * are kept. A holiday is Time off (TimeOff.kt); a break is blocked from the diary.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,7 +181,7 @@ internal fun HoursScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack:
                         }
                     }
                 }
-                Hint("Switch a day off and it becomes a day off — no times are kept. Breaks and holidays are blocked separately from the diary.", Modifier.padding(top = 14.dp))
+                Hint("Switch a day off and it becomes a day off every week — no times are kept. A holiday, or the shop shut for Christmas, is Time off; a lunch break is blocked from the diary.", Modifier.padding(top = 14.dp))
             }
         }
     }

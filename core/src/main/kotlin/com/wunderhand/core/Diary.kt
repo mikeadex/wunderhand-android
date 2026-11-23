@@ -89,6 +89,10 @@ data class DiaryBreak(
     val startsAt: Instant,
     val endsAt: Instant,
     val note: String? = null,
+    /** It covers the whole of the day shown: time off, not an hour of it
+     *  (chairtime `lib/diary/time-off.ts`). False from a diary cached before
+     *  the server said so. */
+    val allDay: Boolean = false,
 ) {
     val label: String
         get() = note?.takeIf { it.isNotEmpty() } ?: when (kind) {
@@ -147,7 +151,24 @@ data class WeekDay(
     val openMinutes: Double,
     /** Share of rostered time that is sold, 0 to 1. */
     val utilisation: Double,
-)
+    /** How many people have hours this day, and how many of those have the
+     *  whole of them blocked out — time off. Zero from a diary cached before
+     *  the server counted them. */
+    val working: Int = 0,
+    val off: Int = 0,
+) {
+    /** Everybody with hours this day is off: the views say "Time off", not "0 booked". */
+    val isTimeOff: Boolean get() = working > 0 && off >= working
+
+    /** "3 booked" · "Time off" · "Time off · 1 booked" · "3 booked · 1 off". */
+    val bookedLabel: String
+        get() = when {
+            isTimeOff -> if (booked > 0) "Time off · $booked booked" else "Time off"
+            // Some of the team, never all of it: that is time off.
+            off > 0 -> "$booked booked · $off off"
+            else -> "$booked booked"
+        }
+}
 
 @Serializable
 data class StatusNote(val headline: String, val body: String)

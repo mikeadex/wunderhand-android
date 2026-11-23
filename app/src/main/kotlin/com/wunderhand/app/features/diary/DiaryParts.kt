@@ -226,7 +226,9 @@ fun TextButton(text: String, color: androidx.compose.ui.graphics.Color, onClick:
 private fun WeekDay.spoken(today: String?, withSold: Boolean): String {
     val day = "${IsoDay.weekdayLong(isoDate)} ${IsoDay.dayOfMonth(isoDate)}"
     val isToday = if (isoDate == today) ", today" else ""
-    val load = if (!isOpen) ", closed" else if (withSold) ", $booked booked, ${(utilisation * 100).roundToInt()}% sold" else ", $booked booked"
+    // A day everybody is off has nothing to be a percentage of.
+    val words = bookedLabel.replace(" · ", ", ").replaceFirstChar { it.lowercase() }
+    val load = if (!isOpen) ", closed" else if (withSold && !isTimeOff) ", $words, ${(utilisation * 100).roundToInt()}% sold" else ", $words"
     return day + isToday + load
 }
 
@@ -315,7 +317,11 @@ fun WideWeekStrip(model: DiaryViewModel, state: DiaryState, modifier: Modifier =
                         Text(weekday, Modifier.clearAndSetSemantics { }, style = WHType.GridHour, color = faint, maxLines = 1)
                         Text("${IsoDay.dayOfMonth(day.isoDate)}", Modifier.padding(top = 3.dp).clearAndSetSemantics { }, style = WHType.Button, color = strong, maxLines = 1)
                     } else {
-                        val figures = if (day.isOpen) "${day.booked}" + (day.takingsPence?.let { " · ${it.formatted(model.currency)}" } ?: "") else "Closed"
+                        val figures = when {
+                            !day.isOpen -> "Closed"
+                            day.isTimeOff -> day.bookedLabel
+                            else -> "${day.booked}" + (day.takingsPence?.let { " · ${it.formatted(model.currency)}" } ?: "") + if (day.off > 0) " · ${day.off} off" else ""
+                        }
                         Text("$weekday ${IsoDay.dayOfMonth(day.isoDate)}", Modifier.clearAndSetSemantics { }, style = WHType.GridHour, color = faint, maxLines = 1)
                         Text(figures, Modifier.padding(top = 5.dp).clearAndSetSemantics { }, style = WHType.CardMeta.copy(fontWeight = FontWeight.SemiBold), color = strong, maxLines = 1)
                     }

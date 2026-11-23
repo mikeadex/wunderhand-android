@@ -1,0 +1,84 @@
+{
+  "mayChooseWho": true,
+  "people": [
+    {
+      "id": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+      "name": "Ade Balogun"
+    },
+    {
+      "id": "95d32e80-01b2-4e83-afc2-90e433f45286",
+      "name": "Dez Mwangi"
+    },
+    {
+      "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+      "name": "Kit Alvarez"
+    },
+    {
+      "id": "017e0b0b-c611-402e-a0e8-9fb03c6ea8cd",
+      "name": "Sam Reilly"
+    },
+    {
+      "id": "6fe813c9-23f0-4801-972a-b154fc1228d7",
+      "name": "Tomas Novak"
+    }
+  ],
+  "maxDays": 366,
+  "entries": [
+    {
+      "key": "series:e220b3ce-91ff-43a7-9ece-228e158394f6:2028-04-03:2028-04-05",
+      "kind": "holiday",
+      "note": "ZZ api time off test",
+      "wholeDay": true,
+      "from": "2028-04-03",
+      "to": "2028-04-05",
+      "fromTime": null,
+      "toTime": null,
+      "people": [
+        {
+          "id": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+          "name": "Ade Balogun"
+        },
+        {
+          "id": "95d32e80-01b2-4e83-afc2-90e433f45286",
+          "name": "Dez Mwangi"
+        },
+        {
+          "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+          "name": "Kit Alvarez"
+        },
+        {
+          "id": "017e0b0b-c611-402e-a0e8-9fb03c6ea8cd",
+          "name": "Sam Reilly"
+        },
+        {
+          "id": "6fe813c9-23f0-4801-972a-b154fc1228d7",
+          "name": "Tomas Novak"
+        }
+      ],
+      "everyone": true,
+      "inside": 0,
+      "seriesId": "e220b3ce-91ff-43a7-9ece-228e158394f6",
+      "blockId": null
+    },
+    {
+      "key": "block:7511e1aa-47f5-4305-b8fe-0cb05ef14fda",
+      "kind": "admin",
+      "note": "ZZ api time off test",
+      "wholeDay": false,
+      "from": "2028-04-07",
+      "to": "2028-04-07",
+      "fromTime": "13:00",
+      "toTime": "14:00",
+      "people": [
+        {
+          "id": "174ceae4-fc08-4c8f-a801-dd8b20bda2c3",
+          "name": "Kit Alvarez"
+        }
+      ],
+      "everyone": false,
+      "inside": 0,
+      "seriesId": null,
+      "blockId": "7511e1aa-47f5-4305-b8fe-0cb05ef14fda"
+    }
+  ]
+}
