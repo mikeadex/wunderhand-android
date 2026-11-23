@@ -119,4 +119,25 @@ class ShopPagesTest : OnMain() {
         val anybodys = asked.filterNot { "viewModel(key = pageKey(" in it }
         assertTrue("kept under a name the next person to sign in would share:\n" + anybodys.joinToString("\n"), anybodys.isEmpty())
     }
+
+    /**
+     * And outside Shop: a tab's model under the person's name, and anything
+     * opened from one under a name made for that opening.
+     *
+     * The edit form was kept under its client alone, and so were the medical
+     * notes: one of each for as long as the app stayed open, whoever signed in.
+     * Sign-in is left out, which is on screen only when nobody is signed in and
+     * forgets what was typed the moment it has worked.
+     */
+    @Test fun `no screen outside Shop keeps its view model under a name that outlives the visit`() {
+        val features = File("src/main/kotlin/com/wunderhand/app/features")
+        assertTrue("run from the app module: ${features.absolutePath}", features.isDirectory)
+        val asked = features.walkTopDown().filter { it.extension == "kt" && it.parentFile.name !in setOf("shop", "auth") }.flatMap { file ->
+            file.readLines().mapIndexedNotNull { index, line -> "${file.name}:${index + 1}: ${line.trim()}".takeIf { "viewModel(" in line && !line.trimStart().startsWith("import ") && !line.trimStart().startsWith("//") && !line.trimStart().startsWith("*") } }
+        }.toList()
+        assertTrue("the screens were not found", asked.size >= 15)
+        val theirs = listOf("\${me.shop.id}-\${me.staff.id}", "rememberSaveable { UUID.randomUUID().toString() }", "\$opened", "\${start.id}")
+        val anybodys = asked.filterNot { line -> theirs.any { it in line.substringAfter("viewModel(key = \"").substringBefore("\")") } }
+        assertTrue("kept under a name that is the same for everybody, every time:\n" + anybodys.joinToString("\n"), anybodys.isEmpty())
+    }
 }

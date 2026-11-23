@@ -85,7 +85,7 @@ fun DiaryAppointment.spoken(clock: ShopClock, currency: String, now: Instant, wh
  * taken off read as a day with nothing in it and no free time either.
  */
 @Composable
-fun AgendaView(members: List<DiaryMember>, model: DiaryViewModel, now: Instant, modifier: Modifier = Modifier) {
+fun AgendaView(members: List<DiaryMember>, everybody: Int, model: DiaryViewModel, now: Instant, modifier: Modifier = Modifier) {
     val items = Agenda.items(members)
     // "with Sam" on every card of Sam's own day is noise.
     val showWho = members.size > 1
@@ -94,7 +94,7 @@ fun AgendaView(members: List<DiaryMember>, model: DiaryViewModel, now: Instant, 
         for (item in items) {
             when (item) {
                 is AgendaItem.Booked -> AgendaCard(item.appointment, item.who.takeIf { showWho }, model, now)
-                is AgendaItem.Blocked -> BlockLine(item, showWho, model)
+                is AgendaItem.Blocked -> BlockLine(item, showWho, everybody, model)
                 is AgendaItem.Free -> GapDivider(item.gap, if (showWho) item.who else emptyList(), model.clock) { model.fillGap(GapWindow(item.staffIds.firstOrNull() ?: model.me.staff.id, item.gap.startsAt, item.gap.endsAt)) }
             }
         }
@@ -132,7 +132,7 @@ private fun AgendaCard(row: DiaryAppointment, who: String?, model: DiaryViewMode
  * that is, and whether it is the asker's to take back at all.
  */
 @Composable
-private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, model: DiaryViewModel) {
+private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, everybody: Int, model: DiaryViewModel) {
     val block = item.block
     val detail = BlockWords.detail(item, model.clock, showWho)
     val isOwner = model.me.staff.isOwner
@@ -160,7 +160,7 @@ private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, model: DiaryVi
     }
     if (asking) {
         // Everybody in the diary, not everybody on screen: one person's list never folds.
-        if (item.isFolded) NoticeDialog(BlockWords.sharedTitle(item.who, isEverybody = item.staffIds.size >= model.state.value.members.size), BlockWords.sharedSays(isOwner, isOff)) { asking = false }
+        if (item.isFolded) NoticeDialog(BlockWords.sharedTitle(item.who, isEverybody = item.staffIds.size >= everybody), BlockWords.sharedSays(isOwner, isOff)) { asking = false }
         else ConfirmDialog(
             title = BlockWords.removeTitle(block, model.clock), message = BlockWords.removeMessage(block), confirm = BlockWords.removeConfirm(block),
             onConfirm = { model.unblock(block) }, onDismiss = { asking = false },

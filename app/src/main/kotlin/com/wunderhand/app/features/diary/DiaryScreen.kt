@@ -272,7 +272,7 @@ private fun DiaryPhone(model: DiaryViewModel, state: DiaryState, now: Instant) {
                     state.mode == DiaryMode.Grid && gridMember != null && !gridMember.day.isClosed -> DayGridView(gridMember, model, state, now, Modifier.padding(top = 20.dp))
                     state.mode == DiaryMode.Grid -> ClosedDayCard(Modifier.padding(horizontal = 18.dp).padding(top = 24.dp))
                     // Blocked time counts: a day somebody has taken off is listed, not called clear.
-                    summary.hasLines -> AgendaView(shown, model, now, Modifier.padding(horizontal = 18.dp).padding(top = 20.dp))
+                    summary.hasLines -> AgendaView(shown, state.members.size, model, now, Modifier.padding(horizontal = 18.dp).padding(top = 20.dp))
                     else -> EmptyDayCard(Modifier.padding(horizontal = 18.dp).padding(top = 24.dp))
                 }
             }
@@ -297,7 +297,7 @@ private fun DiaryWide(model: DiaryViewModel, state: DiaryState, now: Instant) {
                 state.mode == DiaryMode.List -> Box(Modifier.padding(horizontal = 26.dp).widthIn(max = 760.dp)) {
                     when {
                         team?.isClosed == true -> ClosedDayCard()
-                        DaySummary(state.members).hasLines -> AgendaView(state.members, model, now)
+                        DaySummary(state.members).hasLines -> AgendaView(state.members, state.members.size, model, now)
                         else -> EmptyDayCard()
                     }
                 }
