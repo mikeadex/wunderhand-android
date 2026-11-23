@@ -332,7 +332,7 @@ The first Wunderhand release: the diary by day and week, bookings made, moved an
 - [ ] TalkBack pass on that phone, screen by screen
 - [x] Feature graphic made
 - [x] Screenshots taken: phone, 7-inch, 10-inch
-- [ ] chairtime's `feat/android-push` merged — for `/delete-account`, and for App Links
+- [x] chairtime's `feat/android-push` merged (PR 41, 24 September 2026) — for `/delete-account`, and for App Links
 - [x] Data safety, content rating, target audience, health, financial and advertising-id declarations, category Business (22 September 2026)
 - [x] App access: the demo login (22 September 2026); [ ] production answering (it did not, on the morning of
       19 September 2026, when the database's monthly compute ran out — see PLAN.md)
@@ -463,3 +463,34 @@ Known and not fixed in this build:
 - Outside Shop, a client's edit form and health notes are kept by the client alone, so two people
   signing in one after the other on one phone, at one shop, share them. The health notes wipe
   themselves on leaving; the edit form does not.
+
+## 1.4 (versionCode 8), 23 November 2026
+Replaces versionCode 7, which reached internal testing the same day and was not promoted. Same
+chairtime main (8cbaa09), same release notes, with the two things versionCode 7 listed as known and
+two found while fixing them (PR 10):
+- A client's edit form and their medical notes were kept by the client alone, one of each for as
+  long as the app stayed open. What was typed and abandoned came back the next time Edit was
+  pressed, a save could put back what had been changed on the web since, and two people signing in
+  one after the other on one phone shared them. Each is now opened fresh.
+- On a phone, one person's grid drew a whole day off with its label in the middle of the block. It
+  is at the top, as on the team grid and the iPhone.
+- A session ended by the server — signed out everywhere, or taken off the team — left the days kept
+  for a bad signal on the phone. They are kept by shop, so the next person to sign in at the same
+  shop could be shown the last person's diary with no signal. It now does what Sign out does: the
+  notes lock and those days are dropped.
+- `:app:lintDebug` passes. It had failed on the notification permission, checked behind a call lint
+  cannot follow, and behind that on two more: a cast in the notes screen, and the agenda reading the
+  diary's state in composition (from versionCode 6).
+
+Seen on the emulator with this build's code: text typed into a client's edit form and abandoned is
+gone when Edit is pressed again, and is kept when the phone is turned; the notes reopen empty; on
+the folded screen a day the shop is off says so at the top of the owner's grid. Unit tests (1,005),
+lint and the minified emulator tests pass.
+
+Checked and left as it is: a tap on an empty stretch of a column opens New booking with "With: Not
+chosen" until a service is picked, on both apps. The person's name comes from the service's list of
+who does it, and shows as soon as there is one.
+
+Known and not fixed in this build:
+- Somebody who is not an owner can take their own day out of a closure the owner made for
+  everyone. The server allows it on purpose; the owner's list then names who is still off.
