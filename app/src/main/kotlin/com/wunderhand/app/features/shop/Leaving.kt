@@ -87,7 +87,7 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope
  */
 @Composable
 internal fun AccountScreen(app: AppModel, me: Me, onBack: (() -> Unit)?) {
-    val model: AccountViewModel = viewModel(key = "shop-account-${me.user.email}") { AccountViewModel(me, app.client) { app.signOut() } }
+    val model: AccountViewModel = viewModel(key = pageKey(me, "account-${me.user.email}")) { AccountViewModel(me, app.client) { app.signOut() } }
     val state by model.state.collectAsStateWithLifecycle()
     val focus = LocalFocusManager.current
     var confirming by remember { mutableStateOf(false) }
@@ -132,7 +132,7 @@ internal fun AccountScreen(app: AppModel, me: Me, onBack: (() -> Unit)?) {
  */
 @Composable
 internal fun CloseShopScreen(app: AppModel, me: Me, visit: Int, onBack: (() -> Unit)?) {
-    val model: CloseShopViewModel = viewModel(key = "shop-close-${me.shop.id}") { CloseShopViewModel(me, app.client, app::handle) }
+    val model: CloseShopViewModel = viewModel(key = pageKey(me, "close")) { CloseShopViewModel(me, app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { model.forgetPassword() }
     val state by model.state.collectAsStateWithLifecycle()

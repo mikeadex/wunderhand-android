@@ -79,7 +79,7 @@ import com.wunderhand.core.TimeOffWords
  */
 @Composable
 fun ShopScreen(app: AppModel, me: Me, openMenu: () -> Unit) {
-    val model: ShopViewModel = viewModel(key = "shop-${me.shop.id}-${me.staff.id}") { ShopViewModel(me, app.client, app::handle, createSavedStateHandle()) }
+    val model: ShopViewModel = viewModel(key = pageKey(me)) { ShopViewModel(me, app.client, app::handle, createSavedStateHandle()) }
     val state by model.state.collectAsStateWithLifecycle()
     val wide = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() } >= 840.dp
     val route = state.path.lastOrNull()
@@ -122,18 +122,18 @@ private fun ShopDestination(route: ShopRoute, app: AppModel, shop: ShopViewModel
     when (route) {
         ShopRoute.Hours -> HoursScreen(app, shop, state.visit, onBack)
         ShopRoute.TimeOff -> TimeOffScreen(app, shop, state.visit, onBack)
-        ShopRoute.Rules -> RulesScreen(app, state.visit, onBack)
-        ShopRoute.Policy -> PolicyScreen(app, state.visit, onBack)
-        ShopRoute.Reminders -> RemindersScreen(app, state.visit, onBack)
+        ShopRoute.Rules -> RulesScreen(app, shop.me, state.visit, onBack)
+        ShopRoute.Policy -> PolicyScreen(app, shop.me, state.visit, onBack)
+        ShopRoute.Reminders -> RemindersScreen(app, shop.me, state.visit, onBack)
         ShopRoute.Team -> TeamScreen(app, shop, state.visit, onBack)
-        is ShopRoute.Person -> TeamPersonScreen(route.id, app, state.visit, onBack)
+        is ShopRoute.Person -> TeamPersonScreen(route.id, app, shop.me, state.visit, onBack)
         ShopRoute.Outlets -> OutletsScreen(app, shop, state.visit, onBack)
         ShopRoute.Account -> AccountScreen(app, shop.me, onBack)
         ShopRoute.Close -> CloseShopScreen(app, shop.me, state.visit, onBack)
         ShopRoute.QuietTimes -> QuietTimesScreen(app, shop, state.visit, onBack)
         ShopRoute.Offers -> OffersScreen(app, shop, state.visit, onBack)
         ShopRoute.Consent -> ConsentScreen(app, shop, state.visit, onBack)
-        is ShopRoute.ConsentForm -> ConsentFormScreen(route.kind, app, state.visit, onBack)
+        is ShopRoute.ConsentForm -> ConsentFormScreen(route.kind, app, shop.me, state.visit, onBack)
         ShopRoute.Calendar -> CalendarScreen(app, shop, state.visit, onBack)
         ShopRoute.Page -> PageScreen(app, shop, state.visit, onBack)
         ShopRoute.Site -> SiteScreen(app, shop, state.visit, onBack)

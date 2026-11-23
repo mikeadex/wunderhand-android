@@ -78,7 +78,7 @@ import java.time.ZoneOffset
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TimeOffScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: TimeOffViewModel = viewModel(key = "shop-time-off") { TimeOffViewModel(shop.me, app.client, app.client, app::handle) }
+    val model: TimeOffViewModel = viewModel(key = pageKey(shop.me, "time-off")) { TimeOffViewModel(shop.me, app.client, app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response

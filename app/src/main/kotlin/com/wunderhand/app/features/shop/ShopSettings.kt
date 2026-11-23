@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wunderhand.app.app.AppModel
+import com.wunderhand.core.Me
 import com.wunderhand.app.app.SaveProblem
 import com.wunderhand.app.features.shell.EditorPage
 import com.wunderhand.core.HoursResponse
@@ -143,7 +144,7 @@ internal fun OwnerOnlyNote(what: String, onBack: (() -> Unit)?) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HoursScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: HoursViewModel = viewModel(key = "shop-hours") { HoursViewModel(app.client, app::handle) }
+    val model: HoursViewModel = viewModel(key = pageKey(shop.me, "hours")) { HoursViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -231,8 +232,8 @@ private fun NumberFields(model: NumbersViewModel, state: NumbersState) {
 
 /** Booking rules (chairtime `app/(pro)/shop/rules`): the six numbers that shape every time offered to a client, and whether the team may cancel. */
 @Composable
-internal fun RulesScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: RulesViewModel = viewModel(key = "shop-rules") { RulesViewModel(app.client, app::handle) }
+internal fun RulesScreen(app: AppModel, me: Me, visit: Int, onBack: (() -> Unit)?) {
+    val model: RulesViewModel = viewModel(key = pageKey(me, "rules")) { RulesViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     SettingPage(
@@ -257,8 +258,8 @@ internal fun RulesScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
 
 /** Deposits and cancellation (chairtime `app/(pro)/shop/policy`). */
 @Composable
-internal fun PolicyScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: PolicyViewModel = viewModel(key = "shop-policy") { PolicyViewModel(app.client, app::handle) }
+internal fun PolicyScreen(app: AppModel, me: Me, visit: Int, onBack: (() -> Unit)?) {
+    val model: PolicyViewModel = viewModel(key = pageKey(me, "policy")) { PolicyViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     SettingPage("Deposits and cancellation", "policy", onBack, save = "Save policy".takeIf { state.isLoaded }, onSave = { model.save() }, isSaving = state.isSaving, justSaved = state.justSaved) {
@@ -288,8 +289,8 @@ internal fun PolicyScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
 
 /** Reminders (chairtime `app/(pro)/shop/reminders`): up to three emails before an appointment. */
 @Composable
-internal fun RemindersScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: RemindersViewModel = viewModel(key = "shop-reminders") { RemindersViewModel(app.client, app::handle) }
+internal fun RemindersScreen(app: AppModel, me: Me, visit: Int, onBack: (() -> Unit)?) {
+    val model: RemindersViewModel = viewModel(key = pageKey(me, "reminders")) { RemindersViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response

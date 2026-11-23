@@ -143,6 +143,20 @@ class ShopViewModel(
     fun switching(shopId: String?) = _state.update { it.copy(switchingTo = shopId) }
 }
 
+/**
+ * The name a Shop screen's view model is kept under: this person's, at this
+ * shop. The index's own with no [page]; a page's with its name after.
+ *
+ * Every view model in the app lives as long as the app is open, not as long as
+ * somebody is signed in — and each page looks again only when the index's count
+ * of screens opened moves on, a count that starts again for whoever signs in
+ * next. Kept under the page's name alone, the first page the next person opened
+ * was the last person's, to the notice and the half-filled form: an owner's
+ * time off, with its "Who" and its Remove on every colleague, in front of a
+ * stylist. Found on the emulator, 23 November 2026.
+ */
+internal fun pageKey(me: Me, page: String? = null): String = "shop-${me.shop.id}-${me.staff.id}" + page?.let { "-$it" }.orEmpty()
+
 // endregion
 // region A settings screen
 
