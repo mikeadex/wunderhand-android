@@ -208,6 +208,27 @@ class BlockedTimeTest {
         assertFalse(folded.first { it.block.note == "Lisbon" }.isFolded)
     }
 
+    /** Found on the emulator, 23 November 2026: "The shop is off this day" over a line naming three of five. */
+    @Test fun `a shared day off is the shop's only when everybody is off, and names who otherwise`() {
+        assertEquals("The shop is off this day", BlockWords.sharedTitle(listOf("Ade Balogun", "Kit Alvarez"), isEverybody = true))
+        assertEquals("Ade and Kit are off this day", BlockWords.sharedTitle(listOf("Ade Balogun", "Kit Alvarez"), isEverybody = false))
+        assertEquals("Ade, Kit and Sam are off this day", BlockWords.sharedTitle(listOf("Ade Balogun", "Kit Alvarez", "Sam Reilly"), isEverybody = false))
+        assertEquals("4 people are off this day", BlockWords.sharedTitle(listOf("Ade Balogun", "Kit Alvarez", "Sam Reilly", "Tomas Novak"), isEverybody = false))
+    }
+
+    @Test fun `where a shared day off is taken back is said only to somebody who may`() {
+        assertEquals("To take days back, open Shop, then Time off.", BlockWords.sharedSays(isOwner = true, isOff = false))
+        assertEquals("To take days back, open Shop, then Time off.", BlockWords.sharedSays(isOwner = true, isOff = true))
+        val own = BlockWords.sharedSays(isOwner = false, isOff = true)
+        assertTrue(own.startsWith("To take your own day back, open Shop, then Time off."))
+        assertTrue(own.contains("Only the owner"))
+        val others = BlockWords.sharedSays(isOwner = false, isOff = false)
+        assertEquals("Only the owner of the shop can take these days back.", others)
+        assertFalse(others.contains("open Shop"))
+        assertEquals("How to take it back", BlockWords.sharedTapLabel(isOwner = false, isOff = true))
+        assertEquals("Who can take it back", BlockWords.sharedTapLabel(isOwner = false, isOff = false))
+    }
+
     @Test fun `a whole day off is above everything, and an hour falls where it is`() {
         val early = booking("1", "2026-09-16T08:00:00Z", "2026-09-16T08:30:00Z")
         val late = booking("2", "2026-09-16T14:00:00Z", "2026-09-16T14:30:00Z")
