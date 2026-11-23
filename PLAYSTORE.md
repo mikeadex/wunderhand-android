@@ -382,3 +382,28 @@ website (unit and network tests only).
 **Published to internal testing, 23 November 2026**: 1.3 (versionCode 4), the signed bundle from
 `release/1.3`. Next: install it from the Play Store on a real phone, go through the watch list above,
 then promote it to production (staged, 20% then 100%).
+
+## 1.4 (versionCode 5), 23 November 2026
+Built against chairtime main 8cbaa09 (PR 139, live). 1.3 (versionCode 4) reached internal testing and
+was not promoted, so this build carries everything in the 1.3 entry above as well. New since 1.3:
+Time off — Shop → Time off, for an owner and for anybody else: whole days nobody can book, for one
+person or the whole shop, with what is coming up, the bookings still inside each, and Remove. Taking
+days off names what is already booked in them first; nothing is moved or cancelled, and nothing is
+saved until "Take the time off anyway". The diary's list draws blocked time, which it did not before
+(a day off read as "A clear day"), and the week views say "Time off". Nothing here names a price or
+leads to buying.
+
+Release notes (500 characters):
+
+```
+Time off, from your phone: take a holiday or close the shop for a few days, for yourself, someone on the team or everyone, and see what is already booked in those days before you save. Days off and breaks now show in your diary. Also new: Your page and Your website, offers, quiet-time prices, consent forms, home visits with the travel worked out, your diary in your phone's calendar, and two-step sign-in if your shop uses it.
+```
+
+If 1.3 is promoted first after all, cut the notes at "Also new".
+
+Internal testing first. Watch for, on top of the 1.3 list: a day off taken for yourself with a booking
+already in it; the shop closed for everyone for more than one day, and how the diary's list shows it
+(one line naming everybody); the dates changed in the form (the instrumented test leaves them on
+tomorrow); a day taken back from the diary and from Shop. Never seen on a running app: the date
+pickers, an "Everyone" closure, a run of several days, a blocked hour's line in the list, and Time off
+as somebody who is not an owner.
