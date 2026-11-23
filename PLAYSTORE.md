@@ -356,3 +356,29 @@ testing track first.
 Google cleared 1.0 (versionCode 1). Next: upload 1.2 (versionCode 3, signed bundle from main 1c35deb) to the
 internal testing track, then production; set the deletion URL to https://wunderhand.com/delete-account
 in Data safety; put the Firebase FCM_* values on Vercel so Android pushes go out.
+
+## 1.3 (versionCode 4), 23 November 2026
+Built against chairtime main d0f5810 (PRs 129, 131–137, live). New since 1.2 (versionCode 3): two-step
+sign-in; the Shop rows that opened the web are in the app (consent forms, quiet times, offers with
+days and a cap, Your page, Your website — a domain section only where the plan already includes an
+address of its own, and nothing that names a price or leads to buying); a home visit booked with the
+client's address and the journey priced, with a Travel line on the sheet; buttons that follow who may
+change or cancel; the calendar link; a booking's history. Only Getting paid and Export still open the
+web. Also fixes the service photograph picker, which refused every picture in 1.2.
+
+Release notes (500 characters):
+
+```
+More of your shop in the app: Your page and Your website, offers, quiet-time prices and consent forms. Book a home visit with the client's address and the travel worked out. Your diary in your phone's calendar, a history of each booking, and two-step sign-in if your shop uses it. Fixes adding a photo to a service.
+```
+
+Internal testing first. Watch for: a service photograph added (the 1.2 fault); a photograph, cover and
+logo on Your page; an offer started with days and a cap; a home visit booked and its Travel line; a
+team member who is not an owner on the Shop tab and on somebody else's appointment (never seen on a
+running app: every demo login is an owner). Not seen on a running app either: quiet-time suggestions,
+the last-visit address offered again, a real domain's cards, and most saves on Your page and Your
+website (unit and network tests only).
+
+**Published to internal testing, 23 November 2026**: 1.3 (versionCode 4), the signed bundle from
+`release/1.3`. Next: install it from the Play Store on a real phone, go through the watch list above,
+then promote it to production (staged, 20% then 100%).
