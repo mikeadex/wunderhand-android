@@ -176,6 +176,15 @@ interface ShopApi {
     suspend fun removeDomain(id: String): com.wunderhand.core.SiteResponse
     /** Looks at the DNS again, or finishes a connection that is verified. */
     suspend fun checkDomain(id: String): com.wunderhand.core.SiteResponse
+
+    /** Time off: whole days away, and the hours blocked from the diary beside them. Anybody's, for their own days. */
+    suspend fun timeOff(): com.wunderhand.core.TimeOffResponse
+    /** What is already booked in those days. Changes nothing: asked before [takeTimeOff], and shown. */
+    suspend fun checkTimeOff(write: com.wunderhand.core.TimeOffWrite): com.wunderhand.core.TimeOffCheck
+    /** Appointments already in the days stay put. Answers with the list. */
+    suspend fun takeTimeOff(write: com.wunderhand.core.TimeOffWrite): com.wunderhand.core.TimeOffResponse
+    /** Takes days back: a line's request and its dates, and [staffId] for one person out of several. Answers with the list. */
+    suspend fun removeTimeOff(seriesId: String, from: String, to: String, staffId: String? = null): com.wunderhand.core.TimeOffResponse
 }
 
 /** The two ways out. The password is typed again for each, sent once, and kept nowhere. */

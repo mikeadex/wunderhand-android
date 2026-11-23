@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.wunderhand.design.ConfirmDialog
+import com.wunderhand.core.BlockWords
 import com.wunderhand.core.DiaryAppointment
 import com.wunderhand.core.DiaryBreak
 import com.wunderhand.core.DiaryGap
@@ -236,12 +237,12 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, range: Span, gridHeight: Dp, 
     val top = maxOf(minutes(range.start, block.startsAt), 0.dp)
     val height = minOf(minutes(block.startsAt, block.endsAt), gridHeight - top)
     if (height <= 0.dp) return
-    val label = "${block.label} · ${model.clock.time(block.startsAt)}"
+    val label = BlockWords.gridLabel(block, model.clock)
     var removing by remember(block.id) { mutableStateOf(false) }
     Box(
         Modifier.offset(y = top + 1.dp).padding(horizontal = 4.dp).fillMaxWidth().height(maxOf(height - 2.dp, 2.dp))
             .clip(RoundedCornerShape(7.dp)).background(WHColors.Break).hatch()
-            .then(if (mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = "Remove it") { removing = true } else Modifier)
+            .then(if (mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = BlockWords.removeConfirm(block)) { removing = true } else Modifier)
             .testTag("break-${block.id}").clearAndSetSemantics { contentDescription = label },
         contentAlignment = if (height >= 28.dp) Alignment.TopStart else Alignment.CenterStart,
     ) {
@@ -249,9 +250,9 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, range: Span, gridHeight: Dp, 
     }
     if (removing) {
         ConfirmDialog(
-            title = "Remove ${block.label.lowercase()} at ${model.clock.time(block.startsAt)}?",
-            message = "The time goes back to being bookable.",
-            confirm = "Remove it",
+            title = BlockWords.removeTitle(block, model.clock),
+            message = BlockWords.removeMessage(block),
+            confirm = BlockWords.removeConfirm(block),
             onConfirm = { model.unblock(block) },
             onDismiss = { removing = false },
         )

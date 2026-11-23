@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.wunderhand.core.BlockWords
 import com.wunderhand.core.DiaryAppointment
 import com.wunderhand.core.DiaryBreak
 import com.wunderhand.design.ConfirmDialog
@@ -114,7 +115,7 @@ fun DayGridView(member: DiaryMember, model: DiaryViewModel, state: DiaryState, n
                 if (now >= start && now <= end) NowLine(between(start, now), model.clock.time(now))
             }
             Text(
-                "Hold a booking to pick it up · drag the handle to change how long it takes · hatched time is free to sell",
+                "Hold a booking to pick it up · drag the handle to change how long it takes · hatched time inside a booking is free to sell",
                 Modifier.padding(horizontal = 18.dp, vertical = 16.dp), style = WHType.Meta, color = WHColors.Neutral700,
             )
         }
@@ -182,12 +183,12 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, start: Instant, end: Instant,
     val to = minOf(block.endsAt, end)
     if (to <= from) return
     val height = maxOf(between(from, to) - 4.dp, MIN_BLOCK)
-    val label = "${block.label} · ${model.clock.time(block.startsAt)}–${model.clock.time(block.endsAt)}"
+    val label = BlockWords.dayGridLabel(block, model.clock)
     var removing by remember(block.id) { mutableStateOf(false) }
     Box(
         Modifier.offset(y = between(start, from)).padding(start = GUTTER + 8.dp).fillMaxWidth().height(height)
             .clip(RoundedCornerShape(14.dp)).background(WHColors.Break).hatch()
-            .then(if (mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = "Remove it") { removing = true } else Modifier)
+            .then(if (mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = BlockWords.removeConfirm(block)) { removing = true } else Modifier)
             .testTag("break-${block.id}").clearAndSetSemantics { contentDescription = label }
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart,
@@ -195,9 +196,9 @@ private fun BoxScope.BreakBlock(block: DiaryBreak, start: Instant, end: Instant,
 
     if (removing) {
         ConfirmDialog(
-            title = "Remove ${block.label.lowercase()} at ${model.clock.time(block.startsAt)}?",
-            message = "The time goes back to being bookable.",
-            confirm = "Remove it",
+            title = BlockWords.removeTitle(block, model.clock),
+            message = BlockWords.removeMessage(block),
+            confirm = BlockWords.removeConfirm(block),
             onConfirm = { model.unblock(block) },
             onDismiss = { removing = false },
         )

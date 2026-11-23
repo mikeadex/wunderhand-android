@@ -92,7 +92,7 @@ import java.time.ZoneOffset
 
 /** What just happened, said as it appears. */
 @Composable
-private fun Notice(text: String?, tag: String, modifier: Modifier = Modifier) {
+internal fun Notice(text: String?, tag: String, modifier: Modifier = Modifier) {
     if (text == null) return
     val shape = RoundedCornerShape(12.dp)
     Row(

@@ -344,6 +344,15 @@ class ApiClient(
     override suspend fun removeDomain(id: String): SiteResponse = delete("api/v1/shop/site/domains/$id")
     override suspend fun checkDomain(id: String): SiteResponse = send("POST", "api/v1/shop/site/domains/$id/check", emptyList(), null, SiteResponse.serializer())
 
+    // Time off
+
+    override suspend fun timeOff(): TimeOffResponse = get("api/v1/time-off")
+    // The check takes the save's body without the note: what a day is called is not what is being asked.
+    override suspend fun checkTimeOff(write: TimeOffWrite): TimeOffCheck = post("api/v1/time-off/check", write.copy(note = null))
+    override suspend fun takeTimeOff(write: TimeOffWrite): TimeOffResponse = post("api/v1/time-off", write)
+    override suspend fun removeTimeOff(seriesId: String, from: String, to: String, staffId: String?): TimeOffResponse =
+        delete("api/v1/time-off", buildMap { put("seriesId", seriesId); put("from", from); put("to", to); staffId?.let { put("staffId", it) } })
+
     // A person's own calendar link
 
     override suspend fun calendarLink(): CalendarLinkResponse = get("api/v1/me/calendar")

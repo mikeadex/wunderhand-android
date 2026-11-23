@@ -1,6 +1,6 @@
 {
   "date": "2026-08-22",
-  "today": "2026-09-24",
+  "today": "2026-11-23",
   "dayStart": "2026-08-21T23:00:00.000Z",
   "dayEnd": "2026-08-22T23:00:00.000Z",
   "team": {
@@ -1134,7 +1134,9 @@
       "takingsPence": 0,
       "freeMinutes": 0,
       "openMinutes": 0,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 0,
+      "off": 0
     },
     {
       "isoDate": "2026-08-18",
@@ -1144,7 +1146,9 @@
       "takingsPence": 50400,
       "freeMinutes": 2700,
       "openMinutes": 2700,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 5,
+      "off": 0
     },
     {
       "isoDate": "2026-08-19",
@@ -1154,7 +1158,9 @@
       "takingsPence": 58800,
       "freeMinutes": 2700,
       "openMinutes": 2700,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 5,
+      "off": 0
     },
     {
       "isoDate": "2026-08-20",
@@ -1164,7 +1170,9 @@
       "takingsPence": 100800,
       "freeMinutes": 2700,
       "openMinutes": 2700,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 5,
+      "off": 0
     },
     {
       "isoDate": "2026-08-21",
@@ -1174,7 +1182,9 @@
       "takingsPence": 106400,
       "freeMinutes": 2700,
       "openMinutes": 2700,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 5,
+      "off": 0
     },
     {
       "isoDate": "2026-08-22",
@@ -1184,7 +1194,9 @@
       "takingsPence": 117600,
       "freeMinutes": 2700,
       "openMinutes": 2700,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 5,
+      "off": 0
     },
     {
       "isoDate": "2026-08-23",
@@ -1194,15 +1206,14 @@
       "takingsPence": 0,
       "freeMinutes": 0,
       "openMinutes": 0,
-      "utilisation": 0
+      "utilisation": 0,
+      "working": 0,
+      "off": 0
     }
   ],
-  "waitingCount": 2,
+  "waitingCount": 1,
   "alerts": {
     "status": null,
-    "uncollectedDeposits": {
-      "bookings": 3,
-      "pence": 4500
-    }
+    "uncollectedDeposits": null
   }
 }

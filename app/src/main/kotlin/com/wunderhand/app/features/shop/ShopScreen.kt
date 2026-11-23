@@ -63,10 +63,11 @@ import com.wunderhand.design.WordsButton
 import kotlinx.coroutines.launch
 import com.wunderhand.app.app.WebLink
 import com.wunderhand.core.CalendarWords
+import com.wunderhand.core.TimeOffWords
 
 /**
  * The Shop tab (chairtime `app/(pro)/shop/page.tsx`): the web's groups, each
- * row carrying the one fact that says whether to open it. Hours, rules,
+ * row carrying the one fact that says whether to open it. Hours, time off, rules,
  * policy, reminders, quiet times, offers, consent wording, the page, the
  * website, the team and the outlets are changed here; payments and the export
  * open the web for an owner. Nothing here names a price.
@@ -120,6 +121,7 @@ private fun ShopDestination(route: ShopRoute, app: AppModel, shop: ShopViewModel
     if (!shop.isOwner && !route.isAnybodys) { OwnerOnlyNote(route.title, onBack); return }
     when (route) {
         ShopRoute.Hours -> HoursScreen(app, shop, state.visit, onBack)
+        ShopRoute.TimeOff -> TimeOffScreen(app, shop, state.visit, onBack)
         ShopRoute.Rules -> RulesScreen(app, state.visit, onBack)
         ShopRoute.Policy -> PolicyScreen(app, state.visit, onBack)
         ShopRoute.Reminders -> RemindersScreen(app, state.visit, onBack)
@@ -172,6 +174,8 @@ private fun ShopIndex(app: AppModel, model: ShopViewModel, state: ShopState, wid
                      * would only refuse them. A row saying "Edit" must lead somewhere it can be edited. */
                     !model.isOwner -> Group("Your work") {
                         Link(ShopRoute.Hours, "Working hours", "Edit", "Your own week · ${me.staff.name}", "shopHours")
+                        Rule()
+                        Link(ShopRoute.TimeOff, TimeOffWords.TITLE, "Edit", TimeOffWords.ROW_HINT_YOU, "shopTimeOff")
                         Rule()
                         IndexRow("Your prices", "Look", "What you charge for the services you do", Modifier.testTag("shopYourPrices"), onClick = openMenu)
                     }
@@ -242,6 +246,8 @@ private fun OwnerGroups(
         Link(ShopRoute.Outlets, "Outlets", shop.outletsValue, shop.outletsHint, "shopOutlets")
         Rule()
         Link(ShopRoute.Hours, "Working hours", shop.hoursValue, shop.hoursHint(me.staff.name), "shopHours")
+        Rule()
+        Link(ShopRoute.TimeOff, TimeOffWords.TITLE, "Edit", TimeOffWords.ROW_HINT_SHOP, "shopTimeOff")
     }
     Group("Taking bookings") {
         Link(ShopRoute.Rules, "Booking rules", shop.rules.summary, shop.rules.detail, "shopRules")

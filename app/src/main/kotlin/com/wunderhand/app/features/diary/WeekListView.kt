@@ -92,7 +92,8 @@ private fun DayRow(day: WeekDay, model: DiaryViewModel) {
     Column(
         Modifier.fillMaxWidth()
             .clickable(role = Role.Button, onClickLabel = "Open this day") { model.openDay(day.isoDate) }
-            .semantics(mergeDescendants = true) { contentDescription = "$name, ${day.booked} booked, ${(day.utilisation * 100).roundToInt()} percent sold" }
+            // A day everybody is off has nothing to be a percentage of.
+            .semantics(mergeDescendants = true) { contentDescription = if (day.isTimeOff) "$name, ${day.bookedLabel}" else "$name, ${day.bookedLabel.replace(" · ", ", ")}, ${(day.utilisation * 100).roundToInt()} percent sold" }
             .padding(horizontal = 22.dp, vertical = 15.dp)
             .testTag("week-${day.isoDate}"),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -106,7 +107,7 @@ private fun DayRow(day: WeekDay, model: DiaryViewModel) {
         }
         Text(
             buildAnnotatedString {
-                append("${day.booked} booked")
+                append(day.bookedLabel)
                 if (day.freeMinutes > 0) {
                     append(" · ")
                     withStyle(SpanStyle(color = WHColors.Accent)) { append("${Durations.label(day.freeMinutes.roundToInt())} free") }

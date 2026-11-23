@@ -11,8 +11,9 @@ import kotlin.math.roundToInt
 
 // region The agenda
 
-/** One line of the phone's agenda: an appointment, or a gap shared by
- *  everyone free at exactly that time (chairtime `components/diary/Agenda.tsx`). */
+/** One line of the phone's agenda: an appointment, a gap shared by everyone
+ *  free at exactly that time, or time blocked out
+ *  (chairtime `components/diary/Agenda.tsx`). */
 sealed interface AgendaItem {
     val id: String
     val startsAt: Instant
@@ -26,6 +27,18 @@ sealed interface AgendaItem {
         override val id get() = "gap-${gap.startsAt.epochSecond}-${staffIds.joinToString(",")}"
         override val startsAt get() = gap.startsAt
     }
+
+    /**
+     * Blocked time: a lunch break where it falls, a day off at the top. One
+     * person's block, or the same whole day off for several folded into a
+     * line that names them (chairtime `foldBlocks`).
+     */
+    data class Blocked(val block: DiaryBreak, val who: List<String>, val staffIds: List<String>) : AgendaItem {
+        override val id get() = "block-${block.id}"
+        override val startsAt get() = block.startsAt
+        /** Several people's: taken back in Shop, under Time off, not from the diary. */
+        val isFolded: Boolean get() = staffIds.size > 1
+    }
 }
 
 object Agenda {
@@ -35,8 +48,24 @@ object Agenda {
     fun items(members: List<DiaryMember>): List<AgendaItem> {
         val appointments = members.flatMap { m -> m.day.appointments.map { AgendaItem.Booked(it, m.name) } }
         val gaps = foldGaps(members.flatMap { m -> m.day.gaps.map { Triple(it, m.name, m.id) } })
-        // sortedWith is stable, so lines at the same minute keep the order the team is listed in.
-        return (appointments + gaps).sortedWith(compareBy<AgendaItem> { it.startsAt }.thenBy { it is AgendaItem.Free })
+        val blocks = foldBlocks(members.flatMap { m -> m.day.breaks.map { Triple(it, m.name, m.id) } })
+        // A whole day off sorts above everything on it. sortedWith is stable,
+        // so lines at the same minute keep the order the team is listed in.
+        return (appointments + blocks + gaps).sortedWith(
+            compareBy<AgendaItem> { !(it is AgendaItem.Blocked && it.block.allDay) }.thenBy { it.startsAt }.thenBy { it is AgendaItem.Free },
+        )
+    }
+
+    /**
+     * The same whole day off across the team, as one line naming everyone off
+     * — the shop shut for Christmas is one line, not five. An hour blocked
+     * stays one person's (chairtime `foldBlocks` in `lib/diary/geometry.ts`).
+     */
+    internal fun foldBlocks(blocks: List<Triple<DiaryBreak, String, String>>): List<AgendaItem.Blocked> {
+        val (days, hours) = blocks.partition { it.first.allDay }
+        val folded = days.groupBy { (b, _, _) -> listOf(b.startsAt, b.endsAt, b.kind, b.note.orEmpty()) }
+            .map { (_, same) -> AgendaItem.Blocked(same.first().first, same.map { it.second }, same.map { it.third }) }
+        return folded + hours.map { (b, who, id) -> AgendaItem.Blocked(b, listOf(who), listOf(id)) }
     }
 
     /** Identical gaps across the team, as one naming everyone free
@@ -57,13 +86,19 @@ data class DaySummary(
     val takingsPence: Pence?,
     val gaps: Int,
     val isClosed: Boolean,
+    /** Stretches blocked out: a break, a day off. */
+    val blocks: Int = 0,
 ) {
     constructor(members: List<DiaryMember>) : this(
         booked = members.sumOf { it.day.bookedCount },
         takingsPence = members.map { it.day.takingsPence }.let { all -> if (all.any { it == null }) null else Pence(all.sumOf { it!!.value }) },
         gaps = members.sumOf { it.day.gaps.size },
         isClosed = members.all { it.day.isClosed },
+        blocks = members.sumOf { it.day.breaks.size },
     )
+
+    /** There is something to list. A day somebody has taken off is not "a clear day". */
+    val hasLines: Boolean get() = booked > 0 || gaps > 0 || blocks > 0
 
     val gapsLabel: String?
         get() = when (gaps) {
@@ -180,6 +215,35 @@ object IsoDay {
 
 // endregion
 // region Words
+
+/** Blocked time, as the diary says it: in the list, on the grids, and when it is taken back. */
+object BlockWords {
+    /** "All day" · "13:00–14:00" */
+    fun whenLine(block: DiaryBreak, clock: ShopClock): String =
+        if (block.allDay) "All day" else "${clock.time(block.startsAt)}–${clock.time(block.endsAt)}"
+
+    /** The list's second line: when, and whose when more than one person is on screen or it is several people's. */
+    fun detail(item: AgendaItem.Blocked, clock: ShopClock, showWho: Boolean): String =
+        whenLine(item.block, clock) + if (showWho || item.isFolded) " · ${item.who.joinToString(", ") { it.substringBefore(' ') }}" else ""
+
+    /** On a column of the team's grid: "Lunch · 13:00", "Lisbon · All day". */
+    fun gridLabel(block: DiaryBreak, clock: ShopClock): String = "${block.label} · ${if (block.allDay) "All day" else clock.time(block.startsAt)}"
+
+    /** On one person's grid, where there is room for both ends. */
+    fun dayGridLabel(block: DiaryBreak, clock: ShopClock): String = "${block.label} · ${whenLine(block, clock)}"
+
+    fun removeTitle(block: DiaryBreak, clock: ShopClock): String =
+        if (block.allDay) "Take this day back?" else "Remove ${block.label.lowercase()} at ${clock.time(block.startsAt)}?"
+
+    fun removeMessage(block: DiaryBreak): String =
+        if (block.allDay) "The day goes back to being bookable, in the working hours as they are set." else "The time goes back to being bookable."
+
+    fun removeConfirm(block: DiaryBreak): String = if (block.allDay) "Take it back" else "Remove it"
+
+    /** A day off shared by several people is not one tap's to undo. */
+    const val SHOP_OFF = "The shop is off this day"
+    const val SHOP_OFF_SAYS = "To take days back, open Shop, then Time off."
+}
 
 object DiaryWords {
     /** "9th", "21st", "112th". */

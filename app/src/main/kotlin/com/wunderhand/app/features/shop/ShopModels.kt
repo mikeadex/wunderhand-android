@@ -39,6 +39,8 @@ import kotlinx.coroutines.launch
 sealed interface ShopRoute {
     val raw: String
     data object Hours : ShopRoute { override val raw = "hours" }
+    /** Days nobody can book: a holiday, the shop shut. */
+    data object TimeOff : ShopRoute { override val raw = "time-off" }
     data object Rules : ShopRoute { override val raw = "rules" }
     data object Policy : ShopRoute { override val raw = "policy" }
     data object Reminders : ShopRoute { override val raw = "reminders" }
@@ -61,7 +63,7 @@ sealed interface ShopRoute {
     /** What the owner-only note calls it. */
     val title: String
         get() = when (this) {
-            Hours -> "Working hours"; Rules -> "Booking rules"; Policy -> "Deposits and cancellation"; Reminders -> "Reminders"
+            Hours -> "Working hours"; TimeOff -> "Time off"; Rules -> "Booking rules"; Policy -> "Deposits and cancellation"; Reminders -> "Reminders"
             Team, is Person -> "Team"; Outlets -> "Outlets"; Account -> "Your login"; Close -> "Close this shop"
             QuietTimes -> "Quiet times"; Offers -> "Offers"; Consent, is ConsentForm -> "Consent forms"; Calendar -> "Your calendar"
             Page -> "Your page"; Site -> "Your website"
@@ -70,16 +72,16 @@ sealed interface ShopRoute {
     /**
      * Each of these screens is the shop's, not somebody's own day, so all of
      * them are an owner's (chairtime `lib/auth/owner.ts`) — but for their own
-     * hours, their own login and the link to their own diary, which are one
-     * person's whoever they are.
+     * hours, their own days off, their own login and the link to their own
+     * diary, which are one person's whoever they are.
      */
-    val isAnybodys: Boolean get() = this == Hours || this == Account || this == Calendar
+    val isAnybodys: Boolean get() = this == Hours || this == TimeOff || this == Account || this == Calendar
 
     companion object {
         fun of(raw: String): ShopRoute? = when {
             raw.startsWith("person:") -> Person(raw.removePrefix("person:"))
             raw.startsWith("consent:") -> ConsentForm(raw.removePrefix("consent:"))
-            else -> listOf(Hours, Rules, Policy, Reminders, Team, Outlets, Account, Close, QuietTimes, Offers, Consent, Calendar, Page, Site).firstOrNull { it.raw == raw }
+            else -> listOf(Hours, TimeOff, Rules, Policy, Reminders, Team, Outlets, Account, Close, QuietTimes, Offers, Consent, Calendar, Page, Site).firstOrNull { it.raw == raw }
         }
     }
 }

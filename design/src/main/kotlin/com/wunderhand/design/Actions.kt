@@ -80,3 +80,16 @@ fun ConfirmDialog(title: String, message: String, confirm: String, onConfirm: ()
         shape = RoundedCornerShape(18.dp),
     )
 }
+
+/** Something to know, with nothing to decide: where a thing is done when it is not done here. */
+@Composable
+fun NoticeDialog(title: String, message: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, style = WHType.EmptyTitle, color = WHColors.Ink) },
+        text = { Text(message, style = WHType.Body, color = WHColors.Neutral800) },
+        confirmButton = { WordsButton("OK", onDismiss, Modifier.testTag("noticeOk")) },
+        containerColor = WHColors.Surface,
+        shape = RoundedCornerShape(18.dp),
+    )
+}

@@ -7,7 +7,7 @@ object Fixtures {
         "booking-visit", "calendar", "checkout", "client-visit-address-none", "client-visit-address", "client",
         "clients", "consent-document", "consent", "diary", "gap", "health", "hours", "me", "menu-extras", "menu-options",
         "menu-service-steps", "menu-service", "menu", "money", "offer-sent", "offers-started", "offers", "outlet", "outlets", "page",
-        "policy", "quiet-times-busy", "quiet-times", "reminders", "rules", "shop", "site-domain-pointing", "site", "team-invited", "team-person", "team", "waitlist",
+        "policy", "quiet-times-busy", "quiet-times", "reminders", "rules", "shop", "site-domain-pointing", "site", "team-invited", "team-person", "team", "time-off-check", "time-off", "waitlist",
     )
 
     fun text(name: String): String =
