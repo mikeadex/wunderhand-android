@@ -1,0 +1,266 @@
+{
+  "ready": true,
+  "template": "monolith",
+  "designs": [
+    {
+      "key": "maison",
+      "name": "Maison",
+      "blurb": "Luxury salon. Quiet, warm and unhurried, with a serif headline over a full photograph.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/maison.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=maison"
+    },
+    {
+      "key": "mila",
+      "name": "Mila",
+      "blurb": "Independent stylist. Personal and playful — one chair, one person, your name on it.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/mila.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=mila"
+    },
+    {
+      "key": "rooted",
+      "name": "Rooted",
+      "blurb": "Natural hair. Earthy colours and expressive type for curls, coils and protective styles.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/rooted.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=rooted"
+    },
+    {
+      "key": "chromatic",
+      "name": "Chromatic",
+      "blurb": "Colour studio. Bold and graphic, for blondes, coppers and creative colour.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/chromatic.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=chromatic"
+    },
+    {
+      "key": "veil",
+      "name": "Veil",
+      "blurb": "Bridal stylist. Soft and romantic, with the photograph leading.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/veil.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=veil"
+    },
+    {
+      "key": "grain",
+      "name": "Grain",
+      "blurb": "Barbershop. Classic and industrial, with a ticker and a plain-spoken menu.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/grain.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=grain"
+    },
+    {
+      "key": "forma",
+      "name": "Forma",
+      "blurb": "Editorial stylist. A grid of shapes and photographs — for work chosen on its look.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/forma.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=forma"
+    },
+    {
+      "key": "sunday",
+      "name": "Sunday",
+      "blurb": "Neighbourhood salon. Laid out like a weekend paper: friendly, fresh and easy to read.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/sunday.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=sunday"
+    },
+    {
+      "key": "lengths",
+      "name": "Lengths",
+      "blurb": "Extensions and specialist work. Polished and modern.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/lengths.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=lengths"
+    },
+    {
+      "key": "offbeat",
+      "name": "Offbeat",
+      "blurb": "Alternative studio. Fearless type and a ticker that will not sit still.",
+      "group": "salon",
+      "groupTitle": "Salons and stylists",
+      "imageUrl": "http://localhost:3000/site-designs/offbeat.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=offbeat"
+    },
+    {
+      "key": "monolith",
+      "name": "Monolith",
+      "blurb": "Premium barber. Architectural black and white, your name at the size of the page.",
+      "group": "mono",
+      "groupTitle": "Barbers and tattoo artists",
+      "imageUrl": "http://localhost:3000/site-designs/monolith.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=monolith"
+    },
+    {
+      "key": "sovereign",
+      "name": "Sovereign",
+      "blurb": "Editorial barber. Restrained, serif, quietly exceptional.",
+      "group": "mono",
+      "groupTitle": "Barbers and tattoo artists",
+      "imageUrl": "http://localhost:3000/site-designs/sovereign.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=sovereign"
+    },
+    {
+      "key": "blackmark",
+      "name": "Blackmark",
+      "blurb": "Tattoo studio. Bold and permanent, with the work full-bleed.",
+      "group": "mono",
+      "groupTitle": "Barbers and tattoo artists",
+      "imageUrl": "http://localhost:3000/site-designs/blackmark.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=blackmark"
+    },
+    {
+      "key": "fineform",
+      "name": "Fineform",
+      "blurb": "Independent tattoo artist. Intimate and precise, fine lines and space.",
+      "group": "mono",
+      "groupTitle": "Barbers and tattoo artists",
+      "imageUrl": "http://localhost:3000/site-designs/fineform.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=fineform"
+    },
+    {
+      "key": "ritual",
+      "name": "Ritual",
+      "blurb": "Barber and tattoo studio. Two crafts side by side, under one name.",
+      "group": "mono",
+      "groupTitle": "Barbers and tattoo artists",
+      "imageUrl": "http://localhost:3000/site-designs/ritual.jpg",
+      "previewPath": "/site/preview/fold-barbers?t=ritual"
+    }
+  ],
+  "sides": {
+    "designShows": false,
+    "showing": false,
+    "max": 4,
+    "nameMax": 40,
+    "lineMax": 120,
+    "sides": [
+      {
+        "id": "4c38da23-6196-48c6-8f95-98043b1a195b",
+        "name": "Hair",
+        "line": "Cuts, colour and styling",
+        "portfolioImageId": null,
+        "categoryIds": []
+      },
+      {
+        "id": "eedd5c40-4642-4a84-96f3-000df71127a9",
+        "name": "Make-up",
+        "line": "For occasions",
+        "portfolioImageId": null,
+        "categoryIds": [
+          "8b57f58c-6ffa-4136-99c8-812cd5772537"
+        ]
+      }
+    ],
+    "categories": [
+      {
+        "id": "801134ea-60d5-4338-a6e9-738472dc7d75",
+        "name": "Barber",
+        "sideId": null
+      },
+      {
+        "id": "560b996f-301a-45a6-819f-b08112e1a989",
+        "name": "Colour",
+        "sideId": null
+      },
+      {
+        "id": "8b57f58c-6ffa-4136-99c8-812cd5772537",
+        "name": "Bridal make-up",
+        "sideId": "eedd5c40-4642-4a84-96f3-000df71127a9"
+      }
+    ],
+    "photos": [
+      {
+        "id": "18b06841-b6e3-4654-875b-ae6f5b4c505a",
+        "url": "http://localhost:3000/media/shops/8d907be5-635f-4f90-88af-06320565a918/portfolio/90bd48a3-8ddd-42be-8ac4-adf4b6570150.webp",
+        "caption": "Skin fade"
+      },
+      {
+        "id": "e299a7ea-67c2-4763-af03-61c5064d7f14",
+        "url": "http://localhost:3000/media/shops/8d907be5-635f-4f90-88af-06320565a918/portfolio/8114fd4a-7959-4dca-a388-74e883d78f12.webp",
+        "caption": "Beard trim"
+      },
+      {
+        "id": "a1d2d283-1ed9-4823-9647-6d180cf532dc",
+        "url": "http://localhost:3000/media/shops/8d907be5-635f-4f90-88af-06320565a918/portfolio/176f315a-762b-4df8-9c0e-75a62dfe1b8e.webp",
+        "caption": "Crop"
+      },
+      {
+        "id": "80bd37f1-780d-40fe-ae79-77984a91e417",
+        "url": "http://localhost:3000/media/shops/8d907be5-635f-4f90-88af-06320565a918/portfolio/a09d8fb5-ef2b-4c42-b9df-2a5b21d9c6c0.webp",
+        "caption": "Line up"
+      },
+      {
+        "id": "7d268135-2e6b-42c0-8242-f37cd3f08a2c",
+        "url": "http://localhost:3000/media/shops/8d907be5-635f-4f90-88af-06320565a918/portfolio/25d5b4d5-c231-461a-8cd8-63828eb8fb4a.webp",
+        "caption": "Scissor cut"
+      }
+    ]
+  },
+  "ownAddress": true,
+  "domains": [
+    {
+      "id": "fd918ca7-aae0-4c1d-a958-30dd96bf17f7",
+      "host": "fold-barbers.localhost",
+      "state": "finishing",
+      "status": "Verified — finishing the connection",
+      "message": "The last step has not finished yet. Your domain is verified and nothing is lost.",
+      "records": [],
+      "checkedAt": null,
+      "lastSeen": null
+    },
+    {
+      "id": "2a70803a-6bbf-4176-88c1-dae225c4b20f",
+      "host": "zz-site-api-test.co.uk",
+      "state": "waiting",
+      "status": "Waiting for DNS",
+      "message": "Add these where you bought the domain — GoDaddy, Namecheap, 123 Reg and the rest all call it “DNS” or “DNS records”. The A records must be A records, not a CNAME: a bare domain cannot take a CNAME, and adding one can stop your email.",
+      "records": [
+        {
+          "type": "TXT",
+          "name": "_wunderhand",
+          "fqdn": "_wunderhand.zz-site-api-test.co.uk",
+          "zone": "zz-site-api-test.co.uk",
+          "value": "wunderhand-site-verification=302c288d59c298475e60c0e8b5663956",
+          "why": "Proves the domain is yours"
+        },
+        {
+          "type": "A",
+          "name": "@",
+          "fqdn": "zz-site-api-test.co.uk",
+          "zone": "zz-site-api-test.co.uk",
+          "value": "216.150.1.65",
+          "why": "Sends visitors here"
+        },
+        {
+          "type": "A",
+          "name": "@",
+          "fqdn": "zz-site-api-test.co.uk",
+          "zone": "zz-site-api-test.co.uk",
+          "value": "216.150.1.129",
+          "why": "Sends visitors here"
+        },
+        {
+          "type": "CNAME",
+          "name": "www",
+          "fqdn": "www.zz-site-api-test.co.uk",
+          "zone": "zz-site-api-test.co.uk",
+          "value": "cname.vercel-dns.com",
+          "why": "Sends www.zz-site-api-test.co.uk to the same site"
+        }
+      ],
+      "checkedAt": null,
+      "lastSeen": null
+    }
+  ]
+}

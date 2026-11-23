@@ -728,3 +728,47 @@ Then the features:
 **1.3**: consent forms, quiet times, offers (as planned above), then reviews: the client rates the visit after auto-completion, the pro replies once, the shop page shows the average, and the pro rates the client privately.
 
 **Order**: fixes 1 to 4 (about three days), then 5 and 6 (about two), each its own chairtime branch and pull request, with both apps' screens the same day. Nothing pushed until asked.
+
+## 1.3 — the Shop rows that opened the web, home visits, and who may change what (22 November 2026, local only, nothing committed)
+
+Built on `feat/app-1.3` against chairtime `main` (PRs #131–#135) on the dev database, port 3100. The shapes are chairtime's zod schemas, not the September sketches above.
+
+| | |
+|---|---|
+| **Fixtures** | 41 in `:core` (11 new: `consent`, `consent-document`, `quiet-times`, `quiet-times-busy`, `offers`, `offers-started`, `booking-visit`, `booking-visit-outside`, `calendar`, `client-visit-address`, `client-visit-address-none`; `appointment`, `rules`, `shop` grown). `scripts/sync-api-fixtures.sh` fills `:core` only — `:network` and `:app` keep their own copies under `src/test/resources`, copied by hand. |
+| **Consent forms** | Native, owner-only. The five kinds with "Version N · signed M times" or "Nothing set", and the warning for kinds with no wording; a kind opens its wording in a box that grows to show all of it, "Save as version N+1" only once it is changed, under 20 characters refused before it is sent. |
+| **Quiet times** | Native. The week as parts of the day shaded by how much sold; a quiet part's suggestion to take; live rules with "Show the saving" and Stop. The API is not a rule editor, so there is no by-hand form. |
+| **Offers** | Native. Running and stopped, each with Used / Given away / Came back and chairtime's verdict; an inline form to start one (who, how much, code, quiet mornings only, an end date); Stop behind a confirm. |
+| **Home visits in New booking** | A "Where is it?" step after who, only when the service can be a visit from the chosen (or only) outlet: shop-or-client for one done either way; the address prefilled from the client's last visit when the booking starts from a client; `POST /booking/visit` prices it; the fee with a switch not to charge it; outside the area is a warning and the booking goes ahead. The address is in POST bodies only, never saved with the screen's state, and its types do not print themselves. |
+| **Who may change it** | The sheet follows `mayChange` (move, mark, edit) and `mayCancel` (cancel); absent in an older cached answer means allowed. "Team can cancel their own appointments" is on Booking rules, with the web Team page's words. The diary grid is not gated: the day carries no flags, so chairtime's refusal is what shows. |
+| **Your calendar** | A Shop row for everybody. Make a link (shown once: Google Calendar, Outlook, copy, share), make a new one, stop sharing; the words are chairtime's. The link is held on screen only. |
+| **History** | On the appointment sheet, read apart from the appointment so it never holds it up, and again after anything is done to it. |
+| **Still the web** | Getting paid, Export. (Your page and Your website went native in the second batch, below.) Nothing names a price for the plan or an add-on. |
+| **Tests** | JVM: `:core` 177, `:network` 93, `:app` 210, all passing; the minified build compiles. On the Pixel Fold emulator with the demo shop, folded and unfolded: every Shop screen above saved and read back, a visit priced inside and outside the area and booked, the history after booking and cancelling. Not seen with live data: a quiet-time suggestion (the demo week has none), and the sheet as somebody who may not change it (no second demo login). |
+
+### 1.3, second batch — Your page and Your website (23 November 2026, local only, nothing committed)
+
+Against chairtime `main` with PR #136 (`/api/v1/shop/page…`, `/api/v1/shop/site…`). Owner-only, as on the web.
+
+| | |
+|---|---|
+| **Fixtures** | 44 in `:core` (3 new: `page`, `site`, `site-domain-pointing`), copied by hand into `:network` and `:app`. `ownAddress` missing from an answer reads as false. |
+| **Your page** | The Shop row opens it. What you do, About, Trades (chips), Where else (Instagram shown with an @ and stored without, website, phone) save together from one footer button that appears only once something is changed; a refusal sits under the field it names. Cover and Logo: choose, replace, remove behind a confirm. Each outlet's "keep the street private" switch saves on its own. Your link with Copy and Share; Publish, or "Take the page down" behind a confirm, with the list of what is worth adding first. Your work: the grid, a caption and "Who did it?", add (up to the server's limit) and remove behind a confirm. Every write answers with the whole screen and the screen is redrawn from it, one change at a time. |
+| **Your website** | The Shop row opens it. The designs in chairtime's groups, the chosen one bordered, "Use this design" and "See it with your shop in it" (the web preview, through the signed hand-off). Sides: name, line, categories ("In Hair — ticking it moves it here"), a photograph from Your work, save, remove behind a confirm, move up and down, add. Until the page is published: a note and a button to Your page. |
+| **The domain section** | Drawn only when `ownAddress` is true: add, the records to set with Copy, "Look again", when it was last checked, remove behind a confirm. **When it is false there is nothing at all** — no section, no price, no "learn more", no link to billing. That is the stores' rule. |
+| **Uploads** | One multipart request, the file in `photo`, never retried. Photographs go as JPEG (long edge 2000, as service photographs do); a logo that is already a PNG under 4 MB goes as it is, so its transparency survives. When the answer says `storage` is false the upload buttons are off, because chairtime's 503 `storage_unavailable` would otherwise read as "Wunderhand is busy". |
+| **Pictures on a dev server** | Dev answers name pictures at `http://localhost:3000/…`, which an emulator cannot reach. `ServerImage.reachable(url, server)` swaps a localhost host for the app's own server; it does nothing to any other host, so nothing changes in production. |
+| **A 1.2 bug found on the way** | `ServicePhoto.jpeg` returned null for every picture: a bounds-only decode hands back no bitmap by design and the code treated that as failure. So the service-photograph picker has been saying "That picture could not be read" on Android since 1.2. Fixed in `features/menu/ServicePhoto.kt`; it now reads the size the decode filled in. |
+| **Tests** | JVM: `:core` 197, `:network` 103, `:app` 230, all passing; `:app:assembleMinified` and `:app:assembleMinifiedAndroidTest -Pminified` build. On the Pixel Fold emulator with the demo shop, folded and unfolded: both screens read through; one photograph added and removed, one side added, moved and removed. Not done with live data (JVM tests only): saving the page's words, publish and take down, cover and logo, the address switch, choosing a design, saving a side's fields, and the whole domain section (the demo shop does not have the add-on). |
+
+### 1.3, third pass — the journey on the sheet, an offer's days and its ceiling (23 November 2026, local only, nothing committed)
+
+Against chairtime branch `feat/app-api-1.3-followups` (not merged when this was written).
+
+| | |
+|---|---|
+| **Fixtures** | 46 in `:core` (2 new: `appointment-visit`, `appointment-history`; `appointment`, `offers`, `offers-started` regenerated), the changed ones copied by hand into `:network` and `:app`. |
+| **The appointment sheet** | `bill.travelPence` gets a "Travel" line: after what was had and anything taken off, before "Deposit paid online", as on the web's sheet. The rows are worked out in `:core` (`Bill.lines`) so they are tested there; the sheet only draws them. An answer without the key reads as no journey. |
+| **Offers** | An offer's line names its days ("· Tue, Wed", Monday first). The form gains "Stop after this many (optional)" and "Days it applies" (seven chips, none ticked is every day), sent as `maxRedemptions` and `weekdays` (0 is Sunday). A refusal of either stays at its field. |
+| **History** | The contract and network tests decode chairtime's own `appointment-history`. |
+| **Server-only** | A bare website no longer comes back with a slash, and `site.domain` is null without the add-on, so the Shop row reads "Set up". Neither needed a change here. |

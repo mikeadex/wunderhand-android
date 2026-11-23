@@ -1,0 +1,77 @@
+{
+  "appointment": {
+    "kind": "appointment",
+    "replyCount": 0,
+    "repeats": false,
+    "id": "189b1f7b-17b5-4bb6-90ed-63a6116514a3",
+    "bookingId": "22ab1094-5e7e-4e45-a7ad-88cf6ce98ae6",
+    "startsAt": "2026-12-13T09:00:00.000Z",
+    "endsAt": "2026-12-13T10:00:00.000Z",
+    "minutes": 60,
+    "status": "confirmed",
+    "clientId": "13fe79f0-e67a-476e-8759-91ef27ee5e08",
+    "serviceId": "d410443e-43ca-43e8-b485-af1b71a435ef",
+    "staffId": "c6c5a02c-d45c-4335-8b84-d2670b428f54",
+    "staffName": "Ade Balogun",
+    "completedAt": null,
+    "atClient": true,
+    "clientAddress": "9 Bellenden Road\nFlat 1\nLondon",
+    "clientPostcode": "SE15 4QL",
+    "travelMinutes": null,
+    "travelFeePence": 700,
+    "outletId": "f1595b32-5628-4c0a-ab3a-a29b771460cf",
+    "outletName": "ZZ Mobile Booking Outlet Two",
+    "needsConsent": false,
+    "project": null,
+    "clientName": "ZZ Mobile Booking Client",
+    "clientVisitCount": 0,
+    "serviceName": "ZZ Mobile Visit Service",
+    "pricePence": 4000,
+    "standingFormula": null,
+    "clientNotes": null,
+    "averageIntervalDays": null,
+    "depositMissing": false,
+    "depositPaidPence": null,
+    "depositState": "required",
+    "depositPence": 1700,
+    "currency": "GBP",
+    "totalPence": 4700,
+    "listPricePence": 4000,
+    "promotionPence": 0,
+    "promotionName": null,
+    "lineItems": [
+      {
+        "name": "ZZ Mobile Visit Service",
+        "pricePence": 4000
+      }
+    ]
+  },
+  "seesMoney": true,
+  "mayChange": true,
+  "mayCancel": true,
+  "bill": {
+    "chargePence": 4700,
+    "discountPence": 0,
+    "travelPence": 700,
+    "depositPaid": false,
+    "toTakePence": 4700
+  },
+  "replies": [],
+  "series": null,
+  "consentWording": null,
+  "repeat": {
+    "intervals": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12
+    ],
+    "suggestedWeeks": 4,
+    "keepAhead": 3
+  }
+}

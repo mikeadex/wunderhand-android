@@ -1,0 +1,45 @@
+{
+  "offers": [
+    {
+      "id": "126200ea-2859-4718-adfc-5f019a619d90",
+      "name": "ZZ Test offer",
+      "code": "ZZTESTOFFER",
+      "audience": "first_visit",
+      "lapsedAfterDays": null,
+      "kind": "percent",
+      "value": 20,
+      "quietOnly": true,
+      "weekdays": [],
+      "startsOn": null,
+      "endsOn": null,
+      "redemptions": 0,
+      "maxRedemptions": null,
+      "givenAwayPence": 0,
+      "firstVisits": 0,
+      "cameBack": 0,
+      "stopped": false
+    },
+    {
+      "id": "b785f5bb-eaa8-49ec-a1a7-5c344aefe8ba",
+      "name": "First cut with us",
+      "code": null,
+      "audience": "first_visit",
+      "lapsedAfterDays": null,
+      "kind": "percent",
+      "value": 25,
+      "quietOnly": false,
+      "weekdays": [
+        2,
+        3
+      ],
+      "startsOn": null,
+      "endsOn": null,
+      "redemptions": 19,
+      "maxRedemptions": null,
+      "givenAwayPence": 11535,
+      "firstVisits": 19,
+      "cameBack": 0,
+      "stopped": false
+    }
+  ]
+}

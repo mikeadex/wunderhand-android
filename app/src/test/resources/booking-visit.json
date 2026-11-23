@@ -1,0 +1,15 @@
+{
+  "address": {
+    "addressLine1": "9 Bellenden Road",
+    "addressLine2": "Flat 1",
+    "town": "London",
+    "postcode": "SE15 4QL"
+  },
+  "feePence": 700,
+  "aboutMiles": 1,
+  "area": "London",
+  "radiusMiles": 5,
+  "travelMinutes": 30,
+  "outsideArea": false,
+  "warning": null
+}

@@ -1,0 +1,136 @@
+{
+  "demand": [
+    {
+      "weekday": 1,
+      "part": "m",
+      "soldPercent": 72
+    },
+    {
+      "weekday": 1,
+      "part": "a",
+      "soldPercent": 81
+    },
+    {
+      "weekday": 1,
+      "part": "e",
+      "soldPercent": 64
+    },
+    {
+      "weekday": 2,
+      "part": "m",
+      "soldPercent": 8
+    },
+    {
+      "weekday": 2,
+      "part": "a",
+      "soldPercent": 55
+    },
+    {
+      "weekday": 2,
+      "part": "e",
+      "soldPercent": 70
+    },
+    {
+      "weekday": 3,
+      "part": "m",
+      "soldPercent": 31
+    },
+    {
+      "weekday": 3,
+      "part": "a",
+      "soldPercent": 78
+    },
+    {
+      "weekday": 3,
+      "part": "e",
+      "soldPercent": 83
+    },
+    {
+      "weekday": 4,
+      "part": "m",
+      "soldPercent": 69
+    },
+    {
+      "weekday": 4,
+      "part": "a",
+      "soldPercent": 88
+    },
+    {
+      "weekday": 4,
+      "part": "e",
+      "soldPercent": 91
+    },
+    {
+      "weekday": 5,
+      "part": "m",
+      "soldPercent": 74
+    },
+    {
+      "weekday": 5,
+      "part": "a",
+      "soldPercent": 86
+    },
+    {
+      "weekday": 5,
+      "part": "e",
+      "soldPercent": 94
+    },
+    {
+      "weekday": 6,
+      "part": "m",
+      "soldPercent": 80
+    },
+    {
+      "weekday": 6,
+      "part": "a",
+      "soldPercent": 92
+    },
+    {
+      "weekday": 6,
+      "part": "e",
+      "soldPercent": 58
+    }
+  ],
+  "suggestions": [
+    {
+      "weekday": 2,
+      "part": "m",
+      "percent": 25,
+      "wouldEarnPence": 14720
+    },
+    {
+      "weekday": 3,
+      "part": "m",
+      "percent": 25,
+      "wouldEarnPence": 11040
+    },
+    {
+      "weekday": 2,
+      "part": "a",
+      "percent": 15,
+      "wouldEarnPence": 7200
+    },
+    {
+      "weekday": 6,
+      "part": "e",
+      "percent": 10,
+      "wouldEarnPence": 6720
+    }
+  ],
+  "rules": [
+    {
+      "id": "54a055d9-3bd6-4efe-9c4e-77e618704a3a",
+      "name": "Wednesday mornings",
+      "weekdays": [
+        3
+      ],
+      "from": "00:00",
+      "to": "11:59",
+      "kind": "percent",
+      "value": 20,
+      "showSaving": true,
+      "startsOn": null,
+      "endsOn": null
+    }
+  ]
+}

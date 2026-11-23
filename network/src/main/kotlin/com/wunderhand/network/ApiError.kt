@@ -79,7 +79,8 @@ sealed class ApiError(override val message: String) : Exception(message) {
                 "not_owner" -> NotOwner(detail.message)
                 "shop_inactive" -> ShopInactive(detail.message)
                 "not_found" -> NotFound(detail.message)
-                "validation" -> Validation(detail.message, detail.field)
+                // A visit a service does not offer is a refusal with a sentence, like any other a form shows.
+                "validation", "visit_not_offered" -> Validation(detail.message, detail.field)
                 "slot_taken" -> SlotTaken(detail.message)
                 "too_early" -> TooEarly(detail.message)
                 "already_settled" -> AlreadySettled(detail.message)

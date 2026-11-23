@@ -26,6 +26,7 @@
     "completedAt": null,
     "clientAddress": null,
     "travelMinutes": null,
+    "travelFeePence": 0,
     "needsConsent": false,
     "project": null,
     "standingFormula": null,
@@ -46,9 +47,12 @@
     ]
   },
   "seesMoney": true,
+  "mayChange": true,
+  "mayCancel": true,
   "bill": {
     "chargePence": 2800,
     "discountPence": 0,
+    "travelPence": 0,
     "depositPaid": false,
     "toTakePence": 2800
   },

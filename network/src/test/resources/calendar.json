@@ -1,0 +1,19 @@
+{
+  "feed": {
+    "createdAt": "2026-11-22T10:25:28.695Z",
+    "lastFetchedAt": null
+  },
+  "url": "http://localhost:3000/api/calendar/not-a-real-link.ics",
+  "webcalUrl": "webcal://localhost:3000/api/calendar/not-a-real-link.ics",
+  "refreshMinutes": 30,
+  "words": {
+    "intro": "Your appointments in Apple Calendar, Google Calendar or Outlook, kept up to date on their own. Bookings, moves and cancellations show up there without you doing anything.",
+    "heading": "What goes into it",
+    "points": [
+      "Your own appointments from the last month and the next four: the time, the service and a short name — “Skin fade · Ada N.”",
+      "Never a phone number, an email, a price, a note or anything from a health record. Tap an event to open the full appointment here, behind your sign-in.",
+      "Calendars check for changes on their own schedule — every 30 minutes or so on an iPhone, and every few hours on Google Calendar. For something booked in the last hour, look here."
+    ],
+    "careful": "Anyone with the link can see what is in it, so treat it like a key. If it ends up somewhere it should not, make a new one or stop sharing."
+  }
+}

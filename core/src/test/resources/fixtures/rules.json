@@ -4,5 +4,6 @@
   "noticeHours": 2,
   "horizonWeeks": 12,
   "paymentHoldMinutes": 12,
-  "waitlistHoldMinutes": 20
+  "waitlistHoldMinutes": 20,
+  "staffMayCancel": true
 }

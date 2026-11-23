@@ -68,11 +68,21 @@ data class BookingRules(
     val horizonWeeks: Int = 12,
     val paymentHoldMinutes: Int = 10,
     val waitlistHoldMinutes: Int = 30,
+    /** Whether a stylist or chair renter may cancel their own appointments, or only owners and the front desk. */
+    val staffMayCancel: Boolean = true,
 ) {
     /** "15 min slots" — the index row's value. */
     val summary: String get() = "$slotIntervalMinutes min slots"
     /** "2h notice · 10 min buffer · books 12 weeks ahead". */
     val detail: String get() = "${Durations.label(noticeHours * 60)} notice · $bufferMinutes min buffer · books $horizonWeeks weeks ahead"
+}
+
+/** The cancel switch, as the web's Team page words it. */
+object RulesWords {
+    const val TEAM_MAY_CANCEL = "Team can cancel their own appointments"
+    const val MAY_CANCEL_ON = "On. A cancellation refunds the client’s deposit from the shop’s account. Turn this off and only owners and the front desk can cancel."
+    const val MAY_CANCEL_OFF = "Off. Only owners and the front desk can cancel. Your team can still move, mark done and record a no-show on their own appointments."
+    const val OWN_ONLY = "Stylists and chair renters can change their own appointments only. Owners and the front desk can change anybody’s."
 }
 
 /** `GET /api/v1/shop/policy`: deposits and cancellation, with the line a client is told when the wording is left blank. */

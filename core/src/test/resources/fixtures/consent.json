@@ -1,0 +1,39 @@
+{
+  "documents": [
+    {
+      "kind": "patch_test",
+      "version": 1,
+      "body": "[ SPECIMEN TEXT — demo data, not a consent form. Replace this with the wording your insurer, trade body or licence requires. ]\n\nColour has to be patch-tested before we use it. This is set by the manufacturer, not by us, and our insurance depends on it.\n\nThe test goes on at least forty-eight hours before your appointment. You agree to leave it alone, to keep it dry, and to ring us if the area becomes itchy, sore or swollen at any point — and not to come in for the colour if it does.\n\nA patch test is good for six months. After that it has to be done again, even if nothing has changed, because sensitivities develop.",
+      "updatedAt": "2026-09-04T17:59:28.763Z",
+      "signatures": 0
+    },
+    {
+      "kind": "medical_history",
+      "version": 0,
+      "body": "",
+      "updatedAt": null,
+      "signatures": 0
+    },
+    {
+      "kind": "aftercare",
+      "version": 0,
+      "body": "",
+      "updatedAt": null,
+      "signatures": 0
+    },
+    {
+      "kind": "age_verification",
+      "version": 0,
+      "body": "",
+      "updatedAt": null,
+      "signatures": 0
+    },
+    {
+      "kind": "photo_release",
+      "version": 1,
+      "body": "[ SPECIMEN TEXT — demo data, not a consent form. Replace this with the wording your insurer, trade body or licence requires. ]\n\nWe would like to photograph your cut for our own social media and website. You can say no, and it changes nothing about your appointment or what you pay.\n\nWe will not use your face unless you say we may, and we will not pass the images to anybody else. Tell us at any time and we will take them down.",
+      "updatedAt": "2026-09-04T17:59:29.001Z",
+      "signatures": 0
+    }
+  ]
+}

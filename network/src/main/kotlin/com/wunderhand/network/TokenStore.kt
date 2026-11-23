@@ -40,6 +40,8 @@ interface DiaryApi {
     /** The diary screen for a day, as the shop's calendar date; today when null. */
     suspend fun diary(date: String?): com.wunderhand.core.DiaryResponse
     suspend fun appointment(id: String): com.wunderhand.core.AppointmentResponse
+    /** What has happened to the booking behind an appointment: who changed it, and what was sent. */
+    suspend fun history(appointmentId: String): com.wunderhand.core.HistoryResponse
 }
 
 /**
@@ -69,7 +71,11 @@ interface BookingApi {
     suspend fun bookingService(id: String, outletId: String? = null): com.wunderhand.core.BookingServiceResponse
     /** The next open days for this person, with the extras' time in and each time priced — at one outlet's hours when an outlet is named. */
     suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String? = null, outletId: String? = null): com.wunderhand.core.BookingSlotsResponse
-    suspend fun book(serviceId: String, staffId: String, startsAt: java.time.Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String? = null): com.wunderhand.core.BookingCreated
+    suspend fun book(serviceId: String, staffId: String, startsAt: java.time.Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String? = null, visit: com.wunderhand.core.BookingRequest.Visit? = null): com.wunderhand.core.BookingCreated
+    /** What travelling to an address costs, before anything is booked. A POST: the address stays out of the URL. */
+    suspend fun visitQuote(request: com.wunderhand.core.VisitQuoteRequest): com.wunderhand.core.VisitQuote
+    /** Where a client was last visited, to offer again. Its address is null when they never have been. */
+    suspend fun clientVisitAddress(clientId: String): com.wunderhand.core.ClientVisitAddressResponse
 }
 
 /** Clients, and the medical notes kept apart from them. */
@@ -130,6 +136,46 @@ interface ShopApi {
     suspend fun outlet(id: String): com.wunderhand.core.OutletResponse
     suspend fun addOutlet(write: com.wunderhand.core.OutletWrite): com.wunderhand.core.OutletResponse
     suspend fun updateOutlet(id: String, write: com.wunderhand.core.OutletWrite): com.wunderhand.core.OutletResponse
+    suspend fun consent(): com.wunderhand.core.ConsentResponse
+    /** Every save is a new version; the one before it is kept for whoever signed it. */
+    suspend fun saveConsent(kind: String, body: String): com.wunderhand.core.ConsentDocument
+    suspend fun quietTimes(): com.wunderhand.core.QuietTimesResponse
+    /** Take a suggestion: one part of one weekday, priced down. Each of these answers with the whole screen. */
+    suspend fun acceptQuietTime(weekday: Int, part: String, percent: Int): com.wunderhand.core.QuietTimesResponse
+    suspend fun showSaving(ruleId: String, show: Boolean): com.wunderhand.core.QuietTimesResponse
+    suspend fun stopQuietTime(ruleId: String): com.wunderhand.core.QuietTimesResponse
+    suspend fun offers(): com.wunderhand.core.OffersResponse
+    suspend fun startOffer(write: com.wunderhand.core.OfferWrite): com.wunderhand.core.OffersResponse
+    suspend fun stopOffer(id: String): com.wunderhand.core.OffersResponse
+    /** A person's own diary as a link for a calendar app: anybody's, not only an owner's. */
+    suspend fun calendarLink(): com.wunderhand.core.CalendarLinkResponse
+    /** Makes a link, switching off the one before it. The address comes back this once. */
+    suspend fun makeCalendarLink(): com.wunderhand.core.CalendarLinkResponse
+    suspend fun stopCalendarLink(): com.wunderhand.core.CalendarLinkResponse
+
+    /** Your page: what a stranger sees. Each change answers with the whole page. */
+    suspend fun page(): com.wunderhand.core.PageResponse
+    suspend fun savePage(write: com.wunderhand.core.PageWrite): com.wunderhand.core.PageResponse
+    suspend fun publishPage(published: Boolean): com.wunderhand.core.PageResponse
+    /** @param kind `cover` or `logo`. @param type what [image] is: a JPEG, or a logo's own PNG. */
+    suspend fun uploadPageImage(kind: String, image: ByteArray, type: String = "image/jpeg"): com.wunderhand.core.PageResponse
+    suspend fun removePageImage(kind: String): com.wunderhand.core.PageResponse
+    suspend fun setAddressPrivate(outletId: String, isPrivate: Boolean): com.wunderhand.core.PageResponse
+    suspend fun addWorkPhoto(jpeg: ByteArray, caption: String?, staffId: String?): com.wunderhand.core.PageResponse
+    suspend fun removeWorkPhoto(id: String): com.wunderhand.core.PageResponse
+
+    /** Your website: its design, the sides of the business, and a domain of its own. Each change answers with the whole screen. */
+    suspend fun site(): com.wunderhand.core.SiteResponse
+    suspend fun chooseDesign(template: String): com.wunderhand.core.SiteResponse
+    suspend fun addSide(name: String): com.wunderhand.core.SiteResponse
+    suspend fun saveSide(id: String, write: com.wunderhand.core.SideWrite): com.wunderhand.core.SiteResponse
+    suspend fun removeSide(id: String): com.wunderhand.core.SiteResponse
+    /** @param direction `up` or `down`. */
+    suspend fun moveSide(id: String, direction: String): com.wunderhand.core.SiteResponse
+    suspend fun addDomain(domain: String): com.wunderhand.core.SiteResponse
+    suspend fun removeDomain(id: String): com.wunderhand.core.SiteResponse
+    /** Looks at the DNS again, or finishes a connection that is verified. */
+    suspend fun checkDomain(id: String): com.wunderhand.core.SiteResponse
 }
 
 /** The two ways out. The password is typed again for each, sent once, and kept nowhere. */

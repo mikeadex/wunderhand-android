@@ -51,7 +51,7 @@ class NewBookingTest {
         override suspend fun bookingSlots(serviceId: String, staffId: String, addonIds: List<String>, from: String?, outletId: String?): BookingSlotsResponse {
             calls += "slots $staffId $addonIds $from" + (outletId?.let { " at $it" } ?: ""); return times
         }
-        override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?): BookingCreated {
+        override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?, visit: com.wunderhand.core.BookingRequest.Visit?): BookingCreated {
             calls += "book $staffId $clientId $addonIds $overridePrerequisite" + (outletId?.let { " at $it" } ?: ""); return onBook(startsAt)
         }
     }

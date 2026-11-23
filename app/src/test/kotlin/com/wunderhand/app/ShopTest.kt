@@ -118,9 +118,9 @@ class ShopIndexTest : OnMain() {
         assertEquals(5, back.visit)
     }
 
-    @Test fun `only their own hours and their own login are anybody's`() {
-        val all = listOf(ShopRoute.Hours, ShopRoute.Rules, ShopRoute.Policy, ShopRoute.Reminders, ShopRoute.Team, ShopRoute.Outlets, ShopRoute.Account, ShopRoute.Close, ShopRoute.Person("p"))
-        assertEquals(listOf(ShopRoute.Hours, ShopRoute.Account), all.filter { it.isAnybodys })
+    @Test fun `only their own hours, their own calendar and their own login are anybody's`() {
+        val all = listOf(ShopRoute.Hours, ShopRoute.Rules, ShopRoute.Policy, ShopRoute.Reminders, ShopRoute.QuietTimes, ShopRoute.Offers, ShopRoute.Consent, ShopRoute.ConsentForm("patch_test"), ShopRoute.Team, ShopRoute.Outlets, ShopRoute.Calendar, ShopRoute.Account, ShopRoute.Close, ShopRoute.Person("p"))
+        assertEquals(listOf(ShopRoute.Hours, ShopRoute.Calendar, ShopRoute.Account), all.filter { it.isAnybodys })
         for (route in all) assertEquals(route, ShopRoute.of(route.raw))
         assertNull(ShopRoute.of("billing"))
     }

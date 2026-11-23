@@ -53,6 +53,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.wunderhand.core.AppointmentDetail
 import com.wunderhand.core.AppointmentResponse
+import com.wunderhand.core.ChangeWords
+import com.wunderhand.core.HistoryResponse
 import com.wunderhand.core.Bill
 import com.wunderhand.core.DiaryWords
 import com.wunderhand.core.Durations
@@ -118,6 +120,8 @@ fun AppointmentSheet(
     var isTilling by rememberSaveable(id) { mutableStateOf(false) }
 
     LaunchedEffect(id) { model.load() }
+    // Read again whenever the appointment is: whatever was just done to it is the newest line.
+    LaunchedEffect(id, state.loads) { if (state.loads > 0) model.loadHistory() }
 
     val response = state.response
     if (isRescheduling && response != null) {
@@ -202,6 +206,19 @@ private fun AppointmentActions(response: AppointmentResponse, model: Appointment
             return@Column
         }
 
+        /* Somebody else's appointment, seen by a stylist or chair renter: theirs or an owner's to move, mark or
+         * cancel. Said instead of the buttons, not beside dead ones — chairtime would refuse each of them anyway. */
+        if (!response.mayChange) {
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(WHColors.Well).padding(horizontal = 16.dp, vertical = 12.dp).semantics(mergeDescendants = true) { }.testTag("notYours"),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(response.notYoursTitle, style = WHType.Summary.copy(fontWeight = FontWeight.SemiBold), color = WHColors.Ink)
+                Text(ChangeWords.NOT_YOURS, style = WHType.Summary, color = WHColors.Neutral700)
+            }
+            return@Column
+        }
+
         val toTake = response.bill?.toTakePence
         if (Arrival.hasArrived(appt.startsAt, now)) {
             if (toTake != null) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -232,9 +249,11 @@ private fun AppointmentActions(response: AppointmentResponse, model: Appointment
                 if (Arrival.hasStarted(appt.startsAt, now)) {
                     WordsButton("Did not turn up", { confirming = CloseOutcome.NoShow }, Modifier.testTag("noShow"), color = WHColors.Accent, enabled = idle, loading = state.busy == SheetAction.NoShow)
                 }
-                WordsButton("Cancel appointment", { confirming = CloseOutcome.Cancelled }, Modifier.testTag("cancelAppointment"), color = WHColors.Accent, enabled = idle, loading = state.busy == SheetAction.Cancel)
+                // An owner can keep cancelling to themselves and the front desk; then it is not offered, and why is said below.
+                if (response.mayCancel) WordsButton("Cancel appointment", { confirming = CloseOutcome.Cancelled }, Modifier.testTag("cancelAppointment"), color = WHColors.Accent, enabled = idle, loading = state.busy == SheetAction.Cancel)
             }
         }
+        if (!response.mayCancel) Text(ChangeWords.ASK_OWNER, Modifier.testTag("askOwnerToCancel"), style = WHType.Summary, color = WHColors.Neutral700)
     }
 
     confirming?.let { outcome ->
@@ -275,11 +294,30 @@ private fun AppointmentBody(response: AppointmentResponse, model: AppointmentMod
     response.bill?.let { BillCard(it, appt, Modifier.padding(top = 20.dp)) }
     if (appt.depositState == "uncollected" && !appt.isClosed) MissedDeposit(response, Modifier.padding(top = 12.dp))
     appt.project?.let { ProjectCard(it, currency, Modifier.padding(top = 12.dp)) }
-    if (appt.clientId == null && appt.status !in setOf("cancelled", "expired", "held")) AddClientSection(model, state, Modifier.padding(top = 20.dp))
+    // A colleague's walk-in is theirs to name.
+    if (response.mayChange && appt.clientId == null && appt.status !in setOf("cancelled", "expired", "held")) AddClientSection(model, state, Modifier.padding(top = 20.dp))
     if (appt.needsConsent && appt.clientId != null && !appt.isClosed) ConsentSection(response, model, state, Modifier.padding(top = 20.dp))
     if (response.replies.isNotEmpty()) RepliesSection(response, clock, Modifier.padding(top = 20.dp))
     if (appt.standingFormula != null || appt.clientNotes != null) OnFileSection(appt, Modifier.padding(top = 20.dp))
     RepeatSection(response, model, state, Modifier.padding(top = 20.dp))
+    if (state.history.isNotEmpty()) HistorySection(state.history, clock, Modifier.padding(top = 20.dp))
+}
+
+/**
+ * What has happened to the booking (chairtime `BookingHistory.tsx`): who made
+ * it and from where, who moved or cancelled it, and the emails sent about it.
+ * The line that says where the record begins has no time of its own.
+ */
+@Composable
+private fun HistorySection(lines: List<HistoryResponse.Line>, clock: ShopClock, modifier: Modifier = Modifier) {
+    SheetSection("History", modifier.testTag("history")) {
+        for (line in lines) {
+            Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { }.testTag("historyLine"), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(line.text, Modifier.weight(1f), style = WHType.Medium14, color = WHColors.Ink)
+                if (line.showsTime) Text(clock.shortDayTime(line.at), style = WHType.Meta, color = WHColors.Neutral700)
+            }
+        }
+    }
 }
 
 @Composable
@@ -322,21 +360,10 @@ private fun WhereSection(appt: AppointmentDetail, modifier: Modifier = Modifier)
 private fun BillCard(bill: Bill, appt: AppointmentDetail, modifier: Modifier = Modifier) {
     val currency = appt.currency
     WHCard(modifier.testTag("bill")) {
-        appt.lineItems.forEachIndexed { index, item ->
-            // With a discount shown beneath it, the service is at its list
-            // price — otherwise the lines would not add up.
-            val price = if (bill.discountPence.value > 0 && appt.lineItems.size == 1) appt.listPricePence ?: item.pricePence else item.pricePence
+        // What was had, anything off, the journey, a deposit already paid: worked out in :core (Bill.lines), where it is tested.
+        bill.lines(appt).forEachIndexed { index, line ->
             if (index > 0) RowDivider()
-            BillLine(item.name, price?.formatted(currency).orEmpty(), muted = false)
-        }
-        if (bill.discountPence.value > 0) {
-            RowDivider()
-            BillLine(appt.promotionName ?: "Off-peak price", "−${bill.discountPence.formatted(currency)}", muted = true)
-        }
-        val deposit = appt.depositPence
-        if (bill.depositPaid && deposit != null) {
-            RowDivider()
-            BillLine("Deposit paid online", "−${deposit.formatted(currency)}", muted = true)
+            BillLine(line.label, line.value, line.muted, Modifier.testTag(if (line.label == Bill.TRAVEL) "billTravel" else "billLine-$index"))
         }
         RowDivider()
         Row(Modifier.fillMaxWidth().background(WHColors.Block).padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -347,9 +374,9 @@ private fun BillCard(bill: Bill, appt: AppointmentDetail, modifier: Modifier = M
 }
 
 @Composable
-private fun BillLine(label: String, value: String, muted: Boolean) {
+private fun BillLine(label: String, value: String, muted: Boolean, modifier: Modifier = Modifier) {
     val color = if (muted) WHColors.Neutral700 else WHColors.Ink
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(label, Modifier.weight(1f), style = WHType.Medium14, color = color)
         Text(value, style = if (muted) WHType.Medium14 else WHType.Semi14, color = color, maxLines = 1)
     }
@@ -471,7 +498,8 @@ private fun OnFileSection(appt: AppointmentDetail, modifier: Modifier = Modifier
 private fun RepeatSection(response: AppointmentResponse, model: AppointmentModel, state: AppointmentState, modifier: Modifier = Modifier) {
     val appt = response.appointment
     // Nothing to offer a walk-in, or an appointment that did not happen.
-    val canRepeat = appt.clientId != null && appt.status !in setOf("cancelled", "no_show", "expired", "held") && response.repeatOptions != null
+    // Nor a colleague's appointment: starting a repeat is a change, and theirs or an owner's to make.
+    val canRepeat = response.mayChange && appt.clientId != null && appt.status !in setOf("cancelled", "no_show", "expired", "held") && response.repeatOptions != null
     val series = response.series
     when {
         series != null -> SeriesCard(series, response, canRepeat, model, state, modifier)
@@ -533,10 +561,11 @@ private fun SeriesCard(series: SeriesView, response: AppointmentResponse, canRep
                 }
             }
         }
-        if (series.active) {
+        if (series.active && !response.mayChange) Unit
+        else if (series.active) {
             Column {
                 WordsButton("Stop repeating", { scope.launch { model.stopRepeat(cancelUpcoming = false) } }, Modifier.testTag("stopRepeat"), enabled = state.busy == null, loading = state.busy == SheetAction.RepeatStop)
-                if (series.after.isNotEmpty()) {
+                if (series.after.isNotEmpty() && response.mayCancel) {
                     val count = if (series.after.size == 1) "one" else "${series.after.size}"
                     WordsButton("Stop and cancel the $count booked after this", { confirmingCancel = true }, color = WHColors.Accent, enabled = state.busy == null, loading = state.busy == SheetAction.RepeatStopAndCancel)
                 }

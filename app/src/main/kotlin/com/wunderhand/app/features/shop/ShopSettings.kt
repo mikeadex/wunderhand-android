@@ -50,6 +50,7 @@ import com.wunderhand.app.app.SaveProblem
 import com.wunderhand.app.features.shell.EditorPage
 import com.wunderhand.core.HoursResponse
 import com.wunderhand.core.ReminderWords
+import com.wunderhand.core.RulesWords
 import com.wunderhand.design.Hint
 import com.wunderhand.design.NoteCard
 import com.wunderhand.design.Panel
@@ -84,11 +85,13 @@ internal val amounts = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeA
 internal fun SettingPage(
     title: String, tag: String, onBack: (() -> Unit)?, intro: String? = null, eyebrow: String = "Shop",
     save: String? = null, onSave: () -> Unit = {}, isSaving: Boolean = false, justSaved: Boolean = false,
+    /** Where back goes, when the eyebrow is the page's own name and not where it sits. */
+    closeLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val focus = LocalFocusManager.current
     EditorPage(
-        title = title, onClose = onBack, tag = tag, intro = intro, back = true, eyebrow = eyebrow, closeLabel = "Back to ${eyebrow.lowercase().let { if (it == "shop") "the shop" else "the $it" }}",
+        title = title, onClose = onBack, tag = tag, intro = intro, back = true, eyebrow = eyebrow, closeLabel = closeLabel ?: "Back to ${eyebrow.lowercase().let { if (it == "shop") "the shop" else "the $it" }}",
         footer = if (save != null) ({
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 if (justSaved) SavedLine("Saved.")
@@ -226,7 +229,7 @@ private fun NumberFields(model: NumbersViewModel, state: NumbersState) {
     }
 }
 
-/** Booking rules (chairtime `app/(pro)/shop/rules`): the six numbers that shape every time offered to a client. */
+/** Booking rules (chairtime `app/(pro)/shop/rules`): the six numbers that shape every time offered to a client, and whether the team may cancel. */
 @Composable
 internal fun RulesScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
     val model: RulesViewModel = viewModel(key = "shop-rules") { RulesViewModel(app.client, app::handle) }
@@ -238,8 +241,17 @@ internal fun RulesScreen(app: AppModel, visit: Int, onBack: (() -> Unit)?) {
     ) {
         Failure(state.failure, !state.isLoaded) { model.load() }
         Problem(state.problem, "rulesProblem")
-        if (state.isLoaded) Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { NumberFields(model, state) }
-        else if (state.failure == null) Loading("the rules", 6, 56)
+        if (state.isLoaded) Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            NumberFields(model, state)
+            // Who may cancel, in the words the web's Team page has it in. Saved with the numbers, by the one button.
+            WHCard(Modifier.padding(top = 8.dp)) {
+                SwitchRow(
+                    RulesWords.TEAM_MAY_CANCEL, state.staffMayCancel, model::teamMayCancel, Modifier.padding(horizontal = 16.dp, vertical = 8.dp).testTag("staffMayCancel"),
+                    hint = if (state.staffMayCancel) RulesWords.MAY_CANCEL_ON else RulesWords.MAY_CANCEL_OFF,
+                )
+            }
+            Hint(RulesWords.OWN_ONLY)
+        } else if (state.failure == null) Loading("the rules", 6, 56)
     }
 }
 

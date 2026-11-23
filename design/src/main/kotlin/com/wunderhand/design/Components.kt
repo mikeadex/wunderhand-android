@@ -138,6 +138,8 @@ fun WHField(
     isProblem: Boolean = false,
     /** Shown while the field is empty: what blank will mean. */
     placeholder: String? = null,
+    /** How tall a growing box may get before it scrolls inside itself. Wording that is read whole asks for more. */
+    maxLines: Int = 8,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
@@ -155,7 +157,7 @@ fun WHField(
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         if (prefix != null) Text(prefix, Modifier.clearAndSetSemantics { }, style = WHType.FieldValue, color = WHColors.Neutral700)
         Box(Modifier.weight(1f)) {
-        if (placeholder != null && value.isEmpty()) Text(placeholder, Modifier.clearAndSetSemantics { }, style = WHType.FieldValue, color = WHColors.Neutral500, maxLines = 1)
+        if (placeholder != null && value.isEmpty()) Text(placeholder, Modifier.clearAndSetSemantics { }, style = WHType.FieldValue, color = WHColors.Neutral500, maxLines = if (singleLine) 1 else 4)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -163,7 +165,7 @@ fun WHField(
             textStyle = WHType.FieldValue.copy(color = WHColors.Ink),
             singleLine = singleLine,
             minLines = if (singleLine) 1 else 2,
-            maxLines = if (singleLine) 1 else 8,
+            maxLines = if (singleLine) 1 else maxLines,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = visualTransformation,
