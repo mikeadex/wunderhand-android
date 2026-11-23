@@ -65,7 +65,7 @@ import com.wunderhand.core.HomeVisits
  */
 @Composable
 internal fun OutletsScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: OutletsViewModel = viewModel(key = "shop-outlets") { OutletsViewModel(app.client, app::handle, createSavedStateHandle()) }
+    val model: OutletsViewModel = viewModel(key = pageKey(shop.me, "outlets")) { OutletsViewModel(app.client, app::handle, createSavedStateHandle()) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -83,7 +83,7 @@ internal fun OutletsScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBac
     }
 
     if (state.isEditing) EditorSheet(onDismiss = { model.closeForm(savedOne = false) }) {
-        val form: OutletFormViewModel = viewModel(key = "outlet-form-${state.formVisit}") { OutletFormViewModel(state.editing, app.client, app::handle, createSavedStateHandle()) }
+        val form: OutletFormViewModel = viewModel(key = pageKey(shop.me, "outlet-form-${state.formVisit}")) { OutletFormViewModel(state.editing, app.client, app::handle, createSavedStateHandle()) }
         OutletForm(form, onSaved = { model.closeForm(savedOne = true) }, onClose = { model.closeForm(savedOne = false) })
     }
 }

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wunderhand.app.app.AppModel
+import com.wunderhand.core.Me
 import com.wunderhand.core.CalendarLinkResponse
 import com.wunderhand.core.CalendarWords
 import com.wunderhand.core.ConsentDocument
@@ -128,7 +129,7 @@ private fun Warning(title: String, says: String, modifier: Modifier = Modifier) 
  */
 @Composable
 internal fun ConsentScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: ConsentViewModel = viewModel(key = "shop-consent") { ConsentViewModel(app.client, app::handle) }
+    val model: ConsentViewModel = viewModel(key = pageKey(shop.me, "consent")) { ConsentViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -167,8 +168,8 @@ private fun ConsentRow(document: ConsentDocument, onOpen: () -> Unit) {
 
 /** One kind's wording: what it is for, the words, which version they are, and a save that starts the next. */
 @Composable
-internal fun ConsentFormScreen(kind: String, app: AppModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: ConsentFormViewModel = viewModel(key = "shop-consent-$kind") { ConsentFormViewModel(kind, app.client, app::handle) }
+internal fun ConsentFormScreen(kind: String, app: AppModel, me: Me, visit: Int, onBack: (() -> Unit)?) {
+    val model: ConsentFormViewModel = viewModel(key = pageKey(me, "consent-$kind")) { ConsentFormViewModel(kind, app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val document = state.document
@@ -202,7 +203,7 @@ internal fun ConsentFormScreen(kind: String, app: AppModel, visit: Int, onBack: 
  */
 @Composable
 internal fun QuietTimesScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: QuietTimesViewModel = viewModel(key = "shop-quiet") { QuietTimesViewModel(app.client, app::handle) }
+    val model: QuietTimesViewModel = viewModel(key = pageKey(shop.me, "quiet")) { QuietTimesViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -305,7 +306,7 @@ private fun WeekCell(weekday: Int, part: String, soldPercent: Int?, isQuiet: Boo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun OffersScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: OffersViewModel = viewModel(key = "shop-offers") { OffersViewModel(app.client, app::handle) }
+    val model: OffersViewModel = viewModel(key = pageKey(shop.me, "offers")) { OffersViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -450,7 +451,7 @@ private fun EndsField(iso: String?, isProblem: Boolean, onPick: () -> Unit, onCl
  */
 @Composable
 internal fun CalendarScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: CalendarViewModel = viewModel(key = "shop-calendar") { CalendarViewModel(app.client, app::handle) }
+    val model: CalendarViewModel = viewModel(key = pageKey(shop.me, "calendar")) { CalendarViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response

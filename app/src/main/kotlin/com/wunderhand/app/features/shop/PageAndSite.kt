@@ -194,7 +194,7 @@ private object PagePicture {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PageScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: PageViewModel = viewModel(key = "shop-page") { PageViewModel(app.client, app::handle) }
+    val model: PageViewModel = viewModel(key = pageKey(shop.me, "page")) { PageViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val server by app.server.collectAsStateWithLifecycle()
@@ -421,7 +421,7 @@ private fun WorkTile(photo: PageResponse.Photo, server: String, isRemoving: Bool
  */
 @Composable
 internal fun SiteScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: SiteViewModel = viewModel(key = "shop-site") { SiteViewModel(app.client, app::handle) }
+    val model: SiteViewModel = viewModel(key = pageKey(shop.me, "site")) { SiteViewModel(app.client, app::handle) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val server by app.server.collectAsStateWithLifecycle()

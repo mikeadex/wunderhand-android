@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wunderhand.app.app.AppModel
+import com.wunderhand.core.Me
 import com.wunderhand.app.features.shell.EditorPage
 import com.wunderhand.app.features.shell.EditorSheet
 import com.wunderhand.core.Employment
@@ -82,7 +83,7 @@ internal fun Pill(text: String, accent: Boolean = false, modifier: Modifier = Mo
 /** The team (chairtime `app/(pro)/shop/team`): who is on it, who logs in, who is in the diary and who sees the money. */
 @Composable
 internal fun TeamScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: TeamViewModel = viewModel(key = "shop-team") { TeamViewModel(app.client, app::handle, createSavedStateHandle()) }
+    val model: TeamViewModel = viewModel(key = pageKey(shop.me, "team")) { TeamViewModel(app.client, app::handle, createSavedStateHandle()) }
     LaunchedEffect(visit) { model.enter(visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val response = state.response
@@ -102,7 +103,7 @@ internal fun TeamScreen(app: AppModel, shop: ShopViewModel, visit: Int, onBack: 
     }
 
     if (state.isAdding) EditorSheet(onDismiss = { model.adding(false) }) {
-        val form: TeamPersonFormViewModel = viewModel(key = "person-form-${rememberSaveable { UUID.randomUUID().toString() }}") { TeamPersonFormViewModel(null, app.client, app::handle, createSavedStateHandle()) }
+        val form: TeamPersonFormViewModel = viewModel(key = pageKey(shop.me, "person-form-${rememberSaveable { UUID.randomUUID().toString() }}")) { TeamPersonFormViewModel(null, app.client, app::handle, createSavedStateHandle()) }
         // Straight to their page: inviting them to log in is one tap from there.
         TeamPersonForm(form, onSaved = { made -> model.adding(false); model.load(); shop.push(ShopRoute.Person(made.person.id)) }, onClose = { model.adding(false) })
     }
@@ -140,8 +141,8 @@ private sealed interface Asking {
  * an invitation says it adds a seat to the plan, and what a seat costs is on the web.
  */
 @Composable
-internal fun TeamPersonScreen(id: String, app: AppModel, visit: Int, onBack: (() -> Unit)?) {
-    val model: TeamPersonViewModel = viewModel(key = "shop-person") { TeamPersonViewModel(app.client, app::handle, createSavedStateHandle()) }
+internal fun TeamPersonScreen(id: String, app: AppModel, me: Me, visit: Int, onBack: (() -> Unit)?) {
+    val model: TeamPersonViewModel = viewModel(key = pageKey(me, "person")) { TeamPersonViewModel(app.client, app::handle, createSavedStateHandle()) }
     LaunchedEffect(id, visit) { model.enter(id, visit) }
     val state by model.state.collectAsStateWithLifecycle()
     val focus = LocalFocusManager.current
@@ -212,7 +213,7 @@ internal fun TeamPersonScreen(id: String, app: AppModel, visit: Int, onBack: (()
     }
 
     if (state.isEditing && r != null) EditorSheet(onDismiss = { model.editing(false) }) {
-        val form: TeamPersonFormViewModel = viewModel(key = "person-form-${rememberSaveable { UUID.randomUUID().toString() }}") { TeamPersonFormViewModel(r, app.client, app::handle, createSavedStateHandle()) }
+        val form: TeamPersonFormViewModel = viewModel(key = pageKey(me, "person-form-${rememberSaveable { UUID.randomUUID().toString() }}")) { TeamPersonFormViewModel(r, app.client, app::handle, createSavedStateHandle()) }
         TeamPersonForm(form, onSaved = model::edited, onClose = { model.editing(false) })
     }
 
