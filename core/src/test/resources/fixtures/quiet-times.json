@@ -1,0 +1,96 @@
+{
+  "demand": [
+    {
+      "weekday": 2,
+      "part": "m",
+      "soldPercent": 2
+    },
+    {
+      "weekday": 2,
+      "part": "a",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 2,
+      "part": "e",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 3,
+      "part": "m",
+      "soldPercent": 7
+    },
+    {
+      "weekday": 3,
+      "part": "a",
+      "soldPercent": 5
+    },
+    {
+      "weekday": 3,
+      "part": "e",
+      "soldPercent": 2
+    },
+    {
+      "weekday": 4,
+      "part": "m",
+      "soldPercent": 1
+    },
+    {
+      "weekday": 4,
+      "part": "a",
+      "soldPercent": 1
+    },
+    {
+      "weekday": 4,
+      "part": "e",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 5,
+      "part": "m",
+      "soldPercent": 1
+    },
+    {
+      "weekday": 5,
+      "part": "a",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 5,
+      "part": "e",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 6,
+      "part": "m",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 6,
+      "part": "a",
+      "soldPercent": 0
+    },
+    {
+      "weekday": 6,
+      "part": "e",
+      "soldPercent": 0
+    }
+  ],
+  "suggestions": [],
+  "rules": [
+    {
+      "id": "54a055d9-3bd6-4efe-9c4e-77e618704a3a",
+      "name": "Wednesday mornings",
+      "weekdays": [
+        3
+      ],
+      "from": "00:00",
+      "to": "11:59",
+      "kind": "percent",
+      "value": 20,
+      "showSaving": true,
+      "startsOn": null,
+      "endsOn": null
+    }
+  ]
+}

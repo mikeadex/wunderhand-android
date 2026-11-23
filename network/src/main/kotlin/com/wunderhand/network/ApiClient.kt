@@ -167,6 +167,7 @@ class ApiClient(
         get("api/v1/diary", if (date == null) emptyMap() else mapOf("date" to date))
 
     override suspend fun appointment(id: String): AppointmentResponse = get("api/v1/appointments/$id")
+    override suspend fun history(appointmentId: String): HistoryResponse = get("api/v1/appointments/$appointmentId/history")
 
     // Running the day
 
@@ -218,8 +219,12 @@ class ApiClient(
             outletId?.let { add("outlet" to it) }
         }, null, BookingSlotsResponse.serializer())
 
-    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?): BookingCreated =
-        post("api/v1/bookings", BookingRequest(serviceId, staffId, instant(startsAt), clientId, addonIds, overridePrerequisite, outletId))
+    override suspend fun book(serviceId: String, staffId: String, startsAt: Instant, clientId: String?, addonIds: List<String>, overridePrerequisite: Boolean, outletId: String?, visit: BookingRequest.Visit?): BookingCreated =
+        post("api/v1/bookings", BookingRequest(serviceId, staffId, instant(startsAt), clientId, addonIds, overridePrerequisite, outletId, visit))
+
+    // Somebody's home address: in a body, never in the path or the query.
+    override suspend fun visitQuote(request: VisitQuoteRequest): VisitQuote = post("api/v1/booking/visit", request)
+    override suspend fun clientVisitAddress(clientId: String): ClientVisitAddressResponse = get("api/v1/clients/$clientId/visit-address")
 
     // Clients
 
@@ -296,6 +301,55 @@ class ApiClient(
     override suspend fun addOutlet(write: OutletWrite): OutletResponse = post("api/v1/shop/outlets", write)
     override suspend fun updateOutlet(id: String, write: OutletWrite): OutletResponse = put("api/v1/shop/outlets/$id", write)
 
+    override suspend fun consent(): ConsentResponse = get("api/v1/shop/consent")
+    override suspend fun saveConsent(kind: String, body: String): ConsentDocument = put("api/v1/shop/consent/$kind", ConsentWrite(body))
+    override suspend fun quietTimes(): QuietTimesResponse = get("api/v1/shop/quiet-times")
+    override suspend fun acceptQuietTime(weekday: Int, part: String, percent: Int): QuietTimesResponse = post("api/v1/shop/quiet-times", QuietTimeAccept(weekday, part, percent))
+    override suspend fun showSaving(ruleId: String, show: Boolean): QuietTimesResponse = patch("api/v1/shop/quiet-times/$ruleId", QuietTimeUpdate(show))
+    override suspend fun stopQuietTime(ruleId: String): QuietTimesResponse = delete("api/v1/shop/quiet-times/$ruleId")
+    override suspend fun offers(): OffersResponse = get("api/v1/shop/offers")
+    override suspend fun startOffer(write: OfferWrite): OffersResponse = post("api/v1/shop/offers", write)
+    override suspend fun stopOffer(id: String): OffersResponse = delete("api/v1/shop/offers/$id")
+
+    // Your page
+
+    override suspend fun page(): PageResponse = get("api/v1/shop/page")
+    override suspend fun savePage(write: PageWrite): PageResponse = put("api/v1/shop/page", write)
+    override suspend fun publishPage(published: Boolean): PageResponse = put("api/v1/shop/page/published", PublishedWrite(published))
+    override suspend fun uploadPageImage(kind: String, image: ByteArray, type: String): PageResponse = upload("api/v1/shop/page/$kind", image, type)
+    override suspend fun removePageImage(kind: String): PageResponse = delete("api/v1/shop/page/$kind")
+    override suspend fun setAddressPrivate(outletId: String, isPrivate: Boolean): PageResponse = put("api/v1/shop/page/address/$outletId", AddressPrivateWrite(isPrivate))
+    override suspend fun addWorkPhoto(jpeg: ByteArray, caption: String?, staffId: String?): PageResponse =
+        upload("api/v1/shop/page/photos", jpeg, "image/jpeg", listOfNotNull(caption?.let { "caption" to it }, staffId?.let { "staffId" to it }))
+    override suspend fun removeWorkPhoto(id: String): PageResponse = delete("api/v1/shop/page/photos/$id")
+
+    /** A picture in `photo`, with whatever is said about it beside it. One request, no retry, as a service's photograph goes. */
+    private suspend inline fun <reified T> upload(path: String, image: ByteArray, type: String, fields: List<Pair<String, String>> = emptyList()): T {
+        val body = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("photo", if (type == "image/png") "photo.png" else "photo.jpg", image.toRequestBody(type.toMediaType()))
+            .apply { fields.forEach { (name, value) -> addFormDataPart(name, value) } }
+            .build()
+        return once("POST", path, emptyList(), body, serializer<T>())
+    }
+
+    // Your website
+
+    override suspend fun site(): SiteResponse = get("api/v1/shop/site")
+    override suspend fun chooseDesign(template: String): SiteResponse = put("api/v1/shop/site/design", DesignWrite(template))
+    override suspend fun addSide(name: String): SiteResponse = post("api/v1/shop/site/sides", SideAdd(name))
+    override suspend fun saveSide(id: String, write: SideWrite): SiteResponse = put("api/v1/shop/site/sides/$id", write)
+    override suspend fun removeSide(id: String): SiteResponse = delete("api/v1/shop/site/sides/$id")
+    override suspend fun moveSide(id: String, direction: String): SiteResponse = post("api/v1/shop/site/sides/$id/move", SideMove(direction))
+    override suspend fun addDomain(domain: String): SiteResponse = post("api/v1/shop/site/domains", DomainAdd(domain))
+    override suspend fun removeDomain(id: String): SiteResponse = delete("api/v1/shop/site/domains/$id")
+    override suspend fun checkDomain(id: String): SiteResponse = send("POST", "api/v1/shop/site/domains/$id/check", emptyList(), null, SiteResponse.serializer())
+
+    // A person's own calendar link
+
+    override suspend fun calendarLink(): CalendarLinkResponse = get("api/v1/me/calendar")
+    override suspend fun makeCalendarLink(): CalendarLinkResponse = send("POST", "api/v1/me/calendar", emptyList(), null, CalendarLinkResponse.serializer())
+    override suspend fun stopCalendarLink(): CalendarLinkResponse = delete("api/v1/me/calendar")
+
     // Leaving
 
     override suspend fun deleteLogin(password: String): LoginDeleted = post("api/v1/me/delete", PasswordWrite(password))
@@ -338,6 +392,9 @@ class ApiClient(
 
     suspend inline fun <reified B, reified T> put(path: String, body: B): T =
         send("PUT", path, emptyList(), ChairtimeJson.encodeToString(serializer<B>(), body), serializer<T>())
+
+    suspend inline fun <reified B, reified T> patch(path: String, body: B): T =
+        send("PATCH", path, emptyList(), ChairtimeJson.encodeToString(serializer<B>(), body), serializer<T>())
 
     suspend inline fun <reified T> delete(path: String, query: Map<String, String> = emptyMap()): T =
         send("DELETE", path, query.toList(), null, serializer<T>())
@@ -396,7 +453,9 @@ class ApiClient(
             /* A shape this build cannot read. Said plainly to the person, and
              * loudly to whoever is debugging — it means the API and the app
              * have drifted, which the shared fixtures exist to prevent. */
-            log("[ApiClient] could not decode ${reply.descriptor.serialName} from $path: ${error.message}")
+            // The reason quotes the JSON it tripped on, and an answer about a visit is somebody's home address.
+            val reason = if ("visit" in path) "(not printed: an address)" else error.message
+            log("[ApiClient] could not decode ${reply.descriptor.serialName} from $path: $reason")
             throw ApiError.Server(ApiError.SERVER_MESSAGE)
         }
     }

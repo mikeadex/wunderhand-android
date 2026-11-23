@@ -1,0 +1,15 @@
+{
+  "address": {
+    "addressLine1": "9 Bellenden Road",
+    "addressLine2": "Flat 1",
+    "town": "London",
+    "postcode": "BN1 1AA"
+  },
+  "feePence": 700,
+  "aboutMiles": 45,
+  "area": "London",
+  "radiusMiles": 5,
+  "travelMinutes": 30,
+  "outsideArea": true,
+  "warning": "Ade Balogun travels up to 5 miles from London; this address is about 45 miles away. It can still be booked — the travel area only limits what clients book online."
+}

@@ -2,6 +2,7 @@ package com.wunderhand.app.features.diary
 
 import com.wunderhand.core.ActionWords
 import com.wunderhand.core.AppointmentResponse
+import com.wunderhand.core.HistoryResponse
 import com.wunderhand.core.CloseOutcome
 import com.wunderhand.core.ShopClock
 import com.wunderhand.core.SlotsResponse
@@ -29,6 +30,10 @@ data class AppointmentState(
     val slots: SlotsResponse? = null,
     val slotsProblem: String? = null,
     val moving: Instant? = null,
+    /** What has happened to the booking, oldest first. Empty until it is read, and when it cannot be. */
+    val history: List<HistoryResponse.Line> = emptyList(),
+    /** Counts each time the appointment is read, so its history is read again after anything is done to it. */
+    val loads: Int = 0,
 )
 
 /**
@@ -59,11 +64,25 @@ class AppointmentModel(
     suspend fun load() {
         try {
             val response = api.appointment(id)
-            _state.update { it.copy(response = response, loadFailure = null) }
+            _state.update { it.copy(response = response, loadFailure = null, loads = it.loads + 1) }
         } catch (error: ApiError) {
             isTheAppsBusiness(error)
             // What was on screen stays there; a first load that failed says why.
             _state.update { it.copy(loadFailure = error.message) }
+        }
+    }
+
+    /**
+     * Who changed the booking, from where, and what was sent about it. Asked
+     * for apart from the appointment so it never holds the sheet up; a failure
+     * to read it leaves the sheet as it was, as on the web.
+     */
+    suspend fun loadHistory() {
+        try {
+            val lines = api.history(id).lines
+            _state.update { it.copy(history = lines) }
+        } catch (error: ApiError) {
+            isTheAppsBusiness(error)
         }
     }
 

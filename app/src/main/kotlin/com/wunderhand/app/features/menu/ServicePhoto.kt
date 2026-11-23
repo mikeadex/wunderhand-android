@@ -122,14 +122,15 @@ object ServicePhoto {
     /** A JPEG at most [MAX_EDGE] on its long side, or null for something that is not a picture. */
     fun jpeg(context: Context, uri: Uri, maxEdge: Int = MAX_EDGE, quality: Int = 80): ByteArray? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return null
+        // A bounds-only decode hands back no bitmap by design, so its answer is not the test: the size it filled in is.
+        runCatching { context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } }
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
         // Decode at a power-of-two fraction first, so a 12 MP file never sits whole in memory.
         var sample = 1
         while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxEdge) sample *= 2
-        val decoded = context.contentResolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
-        } ?: return null
+        val decoded = runCatching {
+            context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }
+        }.getOrNull() ?: return null
         return jpeg(decoded, maxEdge, quality)
     }
 

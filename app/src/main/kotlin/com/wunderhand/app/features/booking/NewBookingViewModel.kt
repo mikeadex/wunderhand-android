@@ -3,15 +3,22 @@ package com.wunderhand.app.features.booking
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wunderhand.app.app.SaveProblem
 import com.wunderhand.core.BookingCreated
+import com.wunderhand.core.BookingRequest
 import com.wunderhand.core.BookingService
 import com.wunderhand.core.BookingServiceResponse
 import com.wunderhand.core.BookingSlotsResponse
 import com.wunderhand.core.BookingStep
+import com.wunderhand.core.DraftProblem
 import com.wunderhand.core.Ineligible
 import com.wunderhand.core.IsoDay
 import com.wunderhand.core.TimeStrip
 import com.wunderhand.core.ShopClock
+import com.wunderhand.core.VisitDraft
+import com.wunderhand.core.VisitMode
+import com.wunderhand.core.VisitQuote
+import com.wunderhand.core.VisitQuoteRequest
 import com.wunderhand.network.ApiError
 import com.wunderhand.network.BookingApi
 import kotlinx.coroutines.Job
@@ -45,6 +52,29 @@ sealed interface Refusal {
     data class Problem(val message: String) : Refusal
 }
 
+/**
+ * Where it happens, for a service that can be a home visit: the choice, the
+ * address as it is typed, and what the journey costs once it has been checked.
+ *
+ * The address lives here and nowhere else — in memory while the booking is
+ * being made. It is not among the answers the system is asked to keep, and
+ * nothing prints it.
+ */
+data class VisitState(
+    /** For a service done either way: true at the client's, false at the shop, null not yet answered. */
+    val atClient: Boolean? = null,
+    val draft: VisitDraft = VisitDraft(),
+    /** The address is the one they were last visited at, untouched. */
+    val isPrefilled: Boolean = false,
+    /** The journey as chairtime priced it, for the address as it stands. Typing clears it. */
+    val quote: VisitQuote? = null,
+    val chargeTravel: Boolean = true,
+    val problem: SaveProblem? = null,
+    val isChecking: Boolean = false,
+    /** The step was left by its button, the fee seen. */
+    val isDone: Boolean = false,
+)
+
 data class NewBookingState(
     val services: List<BookingService>? = null,
     /** The chosen service's people, extras and rules. */
@@ -65,6 +95,7 @@ data class NewBookingState(
     val overridePrerequisite: Boolean = false,
     val refusal: Refusal? = null,
     val isBooking: Boolean = false,
+    val visit: VisitState = VisitState(),
 ) {
     val hasExtras: Boolean get() = !detail?.addons.isNullOrEmpty()
     /** The outlets where somebody does the service; a step only when there is more than one. */
@@ -72,11 +103,32 @@ data class NewBookingState(
     val needsOutlet: Boolean get() = detail?.needsOutlet ?: false
     val outlet: BookingServiceResponse.Outlet? get() = outlets.firstOrNull { it.id == outletId }
 
+    /** The outlet the booking goes out from: the one chosen, or the only one that does the service. */
+    val fromOutlet: BookingServiceResponse.Outlet? get() = outlet ?: outlets.singleOrNull()
+
+    /** Whether the service can be a home visit from that outlet — what decides whether there is a where step. */
+    val visitMode: VisitMode
+        get() = detail?.let { VisitMode.of(it.service.locationMode, fromOutlet?.travels ?: false) } ?: VisitMode.AtVenue
+
+    /** It is at the client's: always, for a service done only there; by choice, for one done either way. */
+    val isVisit: Boolean get() = visitMode == VisitMode.AtClient || (visitMode == VisitMode.Either && visit.atClient == true)
+
+    /** Answered by "at the shop", or by an address that was checked and whose fee was seen. */
+    val whereDone: Boolean
+        get() = !visitMode.asksWhere || (visitMode == VisitMode.Either && visit.atClient == false) || (isVisit && visit.quote != null && visit.isDone)
+
     /** Null while the chosen service's details are on their way: until then
-     *  it is not known whether there is an outlet or an extras step. */
+     *  it is not known whether there is an outlet, an extras or a where step. */
     val step: BookingStep?
         get() = if (serviceId != null && detail == null) null
-        else BookingStep.current(serviceId != null, staffId != null, hasExtras, extrasSeen, outletNeeded = needsOutlet, outletChosen = outletId != null)
+        else BookingStep.current(
+            serviceId != null, staffId != null, hasExtras, extrasSeen, outletNeeded = needsOutlet, outletChosen = outletId != null,
+            whereNeeded = visitMode.asksWhere, whereDone = whereDone,
+        )
+
+    /** "Step 3 of 4", counting only the steps this booking has. */
+    val stepNumber: Int? get() = step?.number(hasExtras, needsOutlet, visitMode.asksWhere)
+    val stepTotal: Int get() = BookingStep.total(hasExtras, needsOutlet, visitMode.asksWhere)
 
     val service: BookingService? get() = detail?.service ?: services?.firstOrNull { it.id == serviceId }
     val person: BookingServiceResponse.Performer? get() = detail?.staff?.firstOrNull { it.id == staffId }
@@ -87,7 +139,8 @@ data class NewBookingState(
 
 /**
  * A new booking, a step at a time (chairtime `app/(pro)/booking/new`):
- * service, person, extras when the service has any, then a time.
+ * service, person, extras when the service has any, where it is when the
+ * service can be a home visit, then a time.
  *
  * Every answer is kept, and going back undoes the last one — as the web's URL
  * does. Nothing is held while choosing: the time is only claimed when "Book"
@@ -113,6 +166,8 @@ class NewBookingViewModel(
             extrasSeen = saved["extrasSeen"] ?: false,
             slot = saved.get<Long>("slot")?.let(Instant::ofEpochMilli),
             from = saved["from"],
+            // Only which way was chosen. The address is never handed to the system to keep.
+            visit = VisitState(atClient = saved["atClient"]),
         ),
     )
     val state: StateFlow<NewBookingState> = _state.asStateFlow()
@@ -120,6 +175,9 @@ class NewBookingViewModel(
     /** A time chosen before the times were fetched — tapped on the team grid —
      *  kept only if it turns out to be one on offer. */
     private var wantedSlot: Instant? = start.slot
+
+    /** Their last address is asked for once a booking, not every time the step is come back to. */
+    private var prefillAsked = false
 
     private fun set(change: (NewBookingState) -> NewBookingState) {
         _state.update(change)
@@ -131,6 +189,7 @@ class NewBookingViewModel(
         saved["extrasSeen"] = s.extrasSeen
         saved["slot"] = s.slot?.toEpochMilli()
         saved["from"] = s.from
+        saved["atClient"] = s.visit.atClient
     }
 
     init {
@@ -161,8 +220,17 @@ class NewBookingViewModel(
                 // Someone tapped on the grid may not do this service, or not at this outlet: ask who is.
                 s.copy(detail = loaded, loadProblem = null, staffId = s.staffId?.takeIf { id -> loaded.staff.any { it.id == id } })
             }
-            if (_state.value.step == BookingStep.Time) loadSlots()
+            arrive()
         } catch (error: ApiError) { fail(error) }
+    }
+
+    /** What the step just reached needs fetching: the times, or where the client was last visited. */
+    private suspend fun arrive() {
+        when (_state.value.step) {
+            BookingStep.Time -> loadSlots()
+            BookingStep.Where -> if (_state.value.isVisit) prefill()
+            else -> Unit
+        }
     }
 
     suspend fun loadSlots() {
@@ -192,20 +260,20 @@ class NewBookingViewModel(
     // region Answers
 
     fun choose(service: BookingService): Job {
-        set { clearedFromExtras(it).copy(serviceId = service.id, outletId = null, detail = null, addonIds = emptyList()) }
+        set { clearedFromExtras(it).copy(serviceId = service.id, outletId = null, detail = null, addonIds = emptyList(), visit = VisitState()) }
         return viewModelScope.launch { loadDetail() }
     }
 
     /** Which outlet: the people offered next are those who work there, so
      *  the service's details are fetched again with the outlet named. */
     fun choose(outlet: BookingServiceResponse.Outlet): Job {
-        set { clearedFromExtras(it).copy(outletId = outlet.id) }
+        set { clearedFromExtras(it).copy(outletId = outlet.id, visit = VisitState()) }
         return viewModelScope.launch { loadDetail() }
     }
 
     fun choose(person: BookingServiceResponse.Performer): Job {
         set { clearedFromExtras(it).copy(staffId = person.id) }
-        return viewModelScope.launch { if (_state.value.step == BookingStep.Time) loadSlots() }
+        return viewModelScope.launch { arrive() }
     }
 
     fun toggle(addon: BookingServiceResponse.Addon) = set { s ->
@@ -215,7 +283,71 @@ class NewBookingViewModel(
 
     fun continueFromExtras(): Job {
         set { it.copy(extrasSeen = true, slots = null) }
-        return viewModelScope.launch { loadSlots() }
+        return viewModelScope.launch { arrive() }
+    }
+
+    // Where it happens
+
+    /** At the shop, or at the client's: asked only of a service done either way. */
+    fun where(atClient: Boolean): Job {
+        set { it.copy(visit = it.visit.copy(atClient = atClient, isDone = false, problem = null), slot = null, slots = null, from = null, refusal = null) }
+        return viewModelScope.launch { arrive() }
+    }
+
+    /**
+     * Where they were last visited, offered again: a regular is nearly always
+     * at the same door. Only for a booking that knows who it is for, only into
+     * an empty form, and said nothing about if it cannot be had — it is a
+     * convenience, and the form works without it.
+     */
+    private suspend fun prefill() {
+        val clientId = start.clientId ?: return
+        if (prefillAsked || !_state.value.visit.draft.isEmpty) return
+        prefillAsked = true
+        try {
+            val last = api.clientVisitAddress(clientId).address ?: return
+            set { s -> if (s.visit.draft.isEmpty) s.copy(visit = s.visit.copy(draft = VisitDraft(last), isPrefilled = true)) else s }
+        } catch (error: ApiError) {
+            if (error is ApiError.Unauthorized || error is ApiError.NotMember || error is ApiError.UpgradeRequired) handle(error)
+        }
+    }
+
+    /** Typing changes the address, so what it was quoted no longer stands. */
+    fun typeAddress(change: (VisitDraft) -> VisitDraft) =
+        set { it.copy(visit = it.visit.copy(draft = change(it.visit.draft), isPrefilled = false, quote = null, isDone = false, problem = null)) }
+
+    /** Ask chairtime what the journey is: how far, what it costs, and whether it is further than the outlet says it goes. */
+    fun checkAddress(): Job? {
+        val s = _state.value
+        val serviceId = s.serviceId ?: return null
+        if (s.visit.isChecking) return null
+        val draft = s.visit.draft
+        val address = try { draft.address() } catch (problem: DraftProblem) {
+            set { it.copy(visit = it.visit.copy(problem = SaveProblem(problem))) }
+            return null
+        }
+        set { it.copy(visit = it.visit.copy(isChecking = true, problem = null)) }
+        return viewModelScope.launch {
+            try {
+                val quote = api.visitQuote(VisitQuoteRequest(serviceId, s.fromOutlet?.id, s.staffId, address.addressLine1, address.addressLine2, address.town, address.postcode))
+                // An answer about an address that has since been retyped is nobody's answer.
+                set { now -> if (now.visit.draft != draft) now else now.copy(visit = now.visit.copy(quote = quote, draft = VisitDraft(quote.address), chargeTravel = true, isDone = false)) }
+            } catch (error: ApiError) {
+                if (error is ApiError.Unauthorized || error is ApiError.NotMember || error is ApiError.UpgradeRequired) handle(error)
+                else set { it.copy(visit = it.visit.copy(problem = SaveProblem(error))) }
+            }
+            set { it.copy(visit = it.visit.copy(isChecking = false)) }
+        }
+    }
+
+    /** Whether the journey is charged for. The fee is chairtime's; dropping it is the person doing the work's to decide. */
+    fun chargeTravel(charge: Boolean) = set { it.copy(visit = it.visit.copy(chargeTravel = charge)) }
+
+    /** On to the times, the address checked and the fee seen. Outside the travel area is a warning, not a stop. */
+    fun continueFromWhere(): Job? {
+        if (_state.value.visit.quote == null) return null
+        set { it.copy(visit = it.visit.copy(isDone = true), slots = null) }
+        return viewModelScope.launch { arrive() }
     }
 
     fun select(at: Instant) = set { it.copy(slot = at, refusal = it.refusal.takeUnless { r -> r is Refusal.Taken }) }
@@ -258,15 +390,28 @@ class NewBookingViewModel(
             }
             BookingStep.Outlet, null -> set { clearedFromExtras(it).copy(serviceId = null, outletId = null, detail = null, staffId = null, addonIds = emptyList()) }
             BookingStep.Extras -> set { clearedFromExtras(it).copy(staffId = null) }
-            BookingStep.Time ->
-                if (s.hasExtras) set { it.copy(extrasSeen = false, slot = null, slots = null, from = null, refusal = null) }
+            // Back from where: the choice is un-answered, the address typed so far is kept.
+            BookingStep.Where ->
+                if (s.hasExtras) set { clearedFromExtras(it) }
                 else set { clearedFromExtras(it).copy(staffId = null) }
+            BookingStep.Time -> when {
+                // Back to where it is, to answer it again.
+                s.visitMode.asksWhere -> set {
+                    it.copy(slot = null, slots = null, from = null, refusal = null, visit = it.visit.copy(isDone = false, atClient = it.visit.atClient.takeIf { _ -> it.isVisit }))
+                }
+                s.hasExtras -> set { it.copy(extrasSeen = false, slot = null, slots = null, from = null, refusal = null) }
+                else -> set { clearedFromExtras(it).copy(staffId = null) }
+            }
         }
         return true
     }
 
+    /** Everything after the person un-answered. The address typed so far stays; what it was quoted does not, since who is going may change. */
     private fun clearedFromExtras(s: NewBookingState) =
-        s.copy(extrasSeen = false, slot = null, slots = null, from = null, refusal = null, overridePrerequisite = false)
+        s.copy(
+            extrasSeen = false, slot = null, slots = null, from = null, refusal = null, overridePrerequisite = false,
+            visit = s.visit.copy(atClient = null, quote = null, isDone = false, problem = null, isChecking = false),
+        )
 
     // endregion
     // region Booking
@@ -278,10 +423,14 @@ class NewBookingViewModel(
         val staffId = s.staffId ?: return null
         val slot = s.slot ?: return null
         if (s.isBooking) return null
+        // A home visit goes with its address and whether the journey is charged; chairtime prices it again as it books.
+        val visit = if (!s.isVisit) null else BookingRequest.Visit(s.visit.quote?.address ?: return null, s.visit.chargeTravel)
+        // Priced from the outlet it was quoted from, named even where there was no choice to make.
+        val outletId = if (visit != null) s.fromOutlet?.id else s.outletId
         set { it.copy(isBooking = true) }
         return viewModelScope.launch {
             try {
-                val created = api.book(serviceId, staffId, slot, start.clientId, s.addonIds, s.overridePrerequisite, s.outletId)
+                val created = api.book(serviceId, staffId, slot, start.clientId, s.addonIds, s.overridePrerequisite, outletId, visit)
                 set { it.copy(refusal = null, isBooking = false) }
                 onBooked(created)
             } catch (error: ApiError) {
@@ -295,6 +444,10 @@ class NewBookingViewModel(
                     is ApiError.Ineligible -> set {
                         it.copy(refusal = Ineligible.of(error.rule)?.let { rule -> Refusal.Rule(rule, error.message) } ?: Refusal.Problem(error.message))
                     }
+                    // The address was refused as it was written: back to where it is typed, the refusal against its field.
+                    is ApiError.Validation -> if (visit != null && error.field?.startsWith("visit.") == true) set {
+                        it.copy(slot = null, slots = null, visit = it.visit.copy(isDone = false, quote = null, problem = SaveProblem(error.message, error.field?.removePrefix("visit."))))
+                    } else set { it.copy(refusal = Refusal.Problem(error.message)) }
                     else -> set { it.copy(refusal = Refusal.Problem(error.message)) }
                 }
                 set { it.copy(isBooking = false) }

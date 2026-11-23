@@ -46,6 +46,16 @@ sealed interface ShopRoute {
     data object Outlets : ShopRoute { override val raw = "outlets" }
     data object Account : ShopRoute { override val raw = "account" }
     data object Close : ShopRoute { override val raw = "close" }
+    data object QuietTimes : ShopRoute { override val raw = "quiet-times" }
+    data object Offers : ShopRoute { override val raw = "offers" }
+    data object Consent : ShopRoute { override val raw = "consent" }
+    /** One kind's wording, on top of the list of them. */
+    data class ConsentForm(val kind: String) : ShopRoute { override val raw = "consent:$kind" }
+    data object Calendar : ShopRoute { override val raw = "calendar" }
+    /** Your page: what a stranger sees. */
+    data object Page : ShopRoute { override val raw = "page" }
+    /** Your website: its design, its sides and its address. */
+    data object Site : ShopRoute { override val raw = "site" }
     data class Person(val id: String) : ShopRoute { override val raw = "person:$id" }
 
     /** What the owner-only note calls it. */
@@ -53,19 +63,23 @@ sealed interface ShopRoute {
         get() = when (this) {
             Hours -> "Working hours"; Rules -> "Booking rules"; Policy -> "Deposits and cancellation"; Reminders -> "Reminders"
             Team, is Person -> "Team"; Outlets -> "Outlets"; Account -> "Your login"; Close -> "Close this shop"
+            QuietTimes -> "Quiet times"; Offers -> "Offers"; Consent, is ConsentForm -> "Consent forms"; Calendar -> "Your calendar"
+            Page -> "Your page"; Site -> "Your website"
         }
 
     /**
      * Each of these screens is the shop's, not somebody's own day, so all of
      * them are an owner's (chairtime `lib/auth/owner.ts`) — but for their own
-     * hours, and their own login, which is one person's whoever they are.
+     * hours, their own login and the link to their own diary, which are one
+     * person's whoever they are.
      */
-    val isAnybodys: Boolean get() = this == Hours || this == Account
+    val isAnybodys: Boolean get() = this == Hours || this == Account || this == Calendar
 
     companion object {
         fun of(raw: String): ShopRoute? = when {
             raw.startsWith("person:") -> Person(raw.removePrefix("person:"))
-            else -> listOf(Hours, Rules, Policy, Reminders, Team, Outlets, Account, Close).firstOrNull { it.raw == raw }
+            raw.startsWith("consent:") -> ConsentForm(raw.removePrefix("consent:"))
+            else -> listOf(Hours, Rules, Policy, Reminders, Team, Outlets, Account, Close, QuietTimes, Offers, Consent, Calendar, Page, Site).firstOrNull { it.raw == raw }
         }
     }
 }
@@ -224,6 +238,8 @@ data class NumbersState(
     val isSaving: Boolean = false,
     /** Policy only: what a client is told when the wording is left blank. */
     val defaultWording: String = "",
+    /** Booking rules only: whether the team may cancel their own appointments. */
+    val staffMayCancel: Boolean = true,
 )
 
 data class NumberSetting(val key: String, val label: String, val hint: String? = null) {
@@ -239,7 +255,8 @@ abstract class NumbersViewModel(handle: suspend (ApiError) -> Unit) : SettingVie
 
     fun type(key: String, value: String) = _state.update { it.copy(text = it.text + (key to value), justSaved = false) }
 
-    protected fun took(text: Map<String, String>, defaultWording: String = "") = _state.update { NumbersState(isLoaded = true, text = text, defaultWording = defaultWording) }
+    protected fun took(text: Map<String, String>, defaultWording: String = "", staffMayCancel: Boolean = true) =
+        _state.update { NumbersState(isLoaded = true, text = text, defaultWording = defaultWording, staffMayCancel = staffMayCancel) }
 
     /** Every field as a whole number, or null having said which one is not. */
     protected fun numbers(): Map<String, Int>? = fields.associate { f ->
@@ -276,10 +293,16 @@ class RulesViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Uni
         NumberSetting("waitlistHoldMinutes", "Hold a waitlist offer (minutes)"),
     )
 
-    private fun show(r: BookingRules) = took(mapOf(
-        "slotIntervalMinutes" to "${r.slotIntervalMinutes}", "bufferMinutes" to "${r.bufferMinutes}", "noticeHours" to "${r.noticeHours}",
-        "horizonWeeks" to "${r.horizonWeeks}", "paymentHoldMinutes" to "${r.paymentHoldMinutes}", "waitlistHoldMinutes" to "${r.waitlistHoldMinutes}",
-    ))
+    private fun show(r: BookingRules) = took(
+        mapOf(
+            "slotIntervalMinutes" to "${r.slotIntervalMinutes}", "bufferMinutes" to "${r.bufferMinutes}", "noticeHours" to "${r.noticeHours}",
+            "horizonWeeks" to "${r.horizonWeeks}", "paymentHoldMinutes" to "${r.paymentHoldMinutes}", "waitlistHoldMinutes" to "${r.waitlistHoldMinutes}",
+        ),
+        staffMayCancel = r.staffMayCancel,
+    )
+
+    /** Saved with the numbers, by the same button: a switch that saved itself beside five fields that do not would be two rules on one screen. */
+    fun teamMayCancel(on: Boolean) = _state.update { it.copy(staffMayCancel = on, justSaved = false) }
 
     override fun load(): Job {
         _state.value = NumbersState()
@@ -288,8 +311,9 @@ class RulesViewModel(private val api: ShopApi, handle: suspend (ApiError) -> Uni
 
     override fun save(): Job? {
         val n = numbers() ?: return null
+        val mayCancel = _state.value.staffMayCancel
         return saving {
-            val savedRules = api.saveRules(BookingRules(n.getValue("slotIntervalMinutes"), n.getValue("bufferMinutes"), n.getValue("noticeHours"), n.getValue("horizonWeeks"), n.getValue("paymentHoldMinutes"), n.getValue("waitlistHoldMinutes")))
+            val savedRules = api.saveRules(BookingRules(n.getValue("slotIntervalMinutes"), n.getValue("bufferMinutes"), n.getValue("noticeHours"), n.getValue("horizonWeeks"), n.getValue("paymentHoldMinutes"), n.getValue("waitlistHoldMinutes"), mayCancel))
             show(savedRules)
         }
     }

@@ -11,6 +11,7 @@ import com.wunderhand.core.ChairtimeJson
 import com.wunderhand.core.CloseOutcome
 import com.wunderhand.core.CloseResponse
 import com.wunderhand.core.DiaryResponse
+import com.wunderhand.core.HistoryResponse
 import com.wunderhand.core.IsoDay
 import com.wunderhand.core.Me
 import com.wunderhand.core.OfflineCache
@@ -30,6 +31,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -188,6 +190,32 @@ class AppointmentModelTest {
     }
 
     private fun model(api: StubApi) = AppointmentModel(id, api, ShopClock("Europe/London"), changed = { dayReloads++ }, handle = { handled += it })
+
+    @Test fun `what has happened to it is asked for after it loads, and a failure to ask says nothing`() = runTest {
+        val lines = listOf(
+            HistoryResponse.Line(Instant.parse("2026-11-20T10:00:00Z"), "Booked online by the client", "created", 1),
+            HistoryResponse.Line(Instant.parse("2026-11-21T09:30:00Z"), "Moved by Ada, from the app", "moved", 1),
+        )
+        val api = object : Shop() {
+            override suspend fun history(appointmentId: String): HistoryResponse { calls += "history $appointmentId"; return HistoryResponse(lines) }
+        }
+        val model = model(api)
+        assertEquals(0, model.state.value.loads)
+        model.load()
+        assertEquals(1, model.state.value.loads)
+        model.loadHistory()
+        assertEquals(lines, model.state.value.history)
+        assertEquals("history $id", api.calls.last())
+
+        val failing = object : Shop() {
+            override suspend fun history(appointmentId: String): HistoryResponse = throw ApiError.Server("Something went wrong.")
+        }
+        val other = model(failing).apply { load(); loadHistory() }
+        assertTrue(other.state.value.history.isEmpty())
+        assertNull(other.state.value.loadFailure)
+        assertNotNull(other.state.value.response)
+        assertTrue(handled.isEmpty())
+    }
 
     @Test fun `cancelling says what came back, shows the appointment as it now is, and reloads the day`() = runTest {
         val api = object : Shop() {

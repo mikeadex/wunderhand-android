@@ -62,12 +62,14 @@ import com.wunderhand.design.WHType
 import com.wunderhand.design.WordsButton
 import kotlinx.coroutines.launch
 import com.wunderhand.app.app.WebLink
+import com.wunderhand.core.CalendarWords
 
 /**
  * The Shop tab (chairtime `app/(pro)/shop/page.tsx`): the web's groups, each
  * row carrying the one fact that says whether to open it. Hours, rules,
- * policy, reminders, the team and the outlets are changed here; the rest open
- * the web for an owner. Nothing here names a price.
+ * policy, reminders, quiet times, offers, consent wording, the page, the
+ * website, the team and the outlets are changed here; payments and the export
+ * open the web for an owner. Nothing here names a price.
  *
  * On a phone the index, and a screen replaces it. Unfolded, the index keeps its
  * own pane and the screen opens beside it, as the web's settings do on a laptop.
@@ -95,7 +97,7 @@ fun ShopScreen(app: AppModel, me: Me, openMenu: () -> Unit) {
                     else Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         WHIcon(WHIcons.Store, size = 30.dp, tint = WHColors.Neutral500)
                         Text("Pick something to change", style = WHType.RowName, color = WHColors.Ink)
-                        Text("Hours, rules, the team and the outlets open here.", style = WHType.Body, color = WHColors.Neutral700)
+                        Text("Hours, rules, offers, the team and the outlets open here.", style = WHType.Body, color = WHColors.Neutral700)
                     }
                 }
             }
@@ -126,6 +128,13 @@ private fun ShopDestination(route: ShopRoute, app: AppModel, shop: ShopViewModel
         ShopRoute.Outlets -> OutletsScreen(app, shop, state.visit, onBack)
         ShopRoute.Account -> AccountScreen(app, shop.me, onBack)
         ShopRoute.Close -> CloseShopScreen(app, shop.me, state.visit, onBack)
+        ShopRoute.QuietTimes -> QuietTimesScreen(app, shop, state.visit, onBack)
+        ShopRoute.Offers -> OffersScreen(app, shop, state.visit, onBack)
+        ShopRoute.Consent -> ConsentScreen(app, shop, state.visit, onBack)
+        is ShopRoute.ConsentForm -> ConsentFormScreen(route.kind, app, state.visit, onBack)
+        ShopRoute.Calendar -> CalendarScreen(app, shop, state.visit, onBack)
+        ShopRoute.Page -> PageScreen(app, shop, state.visit, onBack)
+        ShopRoute.Site -> SiteScreen(app, shop, state.visit, onBack)
     }
 }
 
@@ -184,6 +193,9 @@ private fun ShopIndex(app: AppModel, model: ShopViewModel, state: ShopState, wid
                     Rule()
                     PlainRow("Time zone", me.shop.timezone.replace('_', ' '))
                     Rule()
+                    // A person's own diary in their phone's calendar: theirs whoever they are, so it sits here and not among the shop's rows.
+                    Link(ShopRoute.Calendar, CalendarWords.TITLE, "Look", CalendarWords.ROW_HINT, "shopCalendar")
+                    Rule()
                     Link(ShopRoute.Account, "Your login", "Look", "The email you sign in with, and how to delete it", "shopAccount")
                 }
 
@@ -236,18 +248,18 @@ private fun OwnerGroups(
         Rule()
         Link(ShopRoute.Policy, "Deposits and cancellation", shop.policyValue(me.shop.currency), shop.policyHint, "shopPolicy")
         Rule()
-        Web("shop/pricing", "Quiet times", "Look", "Which hours are not selling, and what to charge for them")
+        Link(ShopRoute.QuietTimes, "Quiet times", "Look", "Which hours are not selling, and what to charge for them", "shopQuietTimes")
         Rule()
         Link(ShopRoute.Reminders, "Reminders", shop.remindersValue, shop.remindersHint, "shopReminders")
     }
     Group("What clients see") {
-        Web("shop/profile", "Your page", "Edit", "Photos, your story, the link for your bio")
+        Link(ShopRoute.Page, "Your page", "Edit", "Photos, your story, the link for your bio", "shopPage")
         Rule()
-        Web("shop/site", "Your website", shop.siteValue, shop.siteHint)
+        Link(ShopRoute.Site, "Your website", shop.siteValue, shop.siteHint, "shopSite")
         Rule()
-        Web("shop/promotions", "Offers", "Edit", "Discounts to win a client back, and what each one costs")
+        Link(ShopRoute.Offers, "Offers", "Edit", "Discounts to win a client back, and what each one costs", "shopOffers")
         Rule()
-        Web("shop/consent", "Consent forms", "Edit", "The wording clients sign, kept as it read on the day")
+        Link(ShopRoute.Consent, "Consent forms", "Edit", "The wording clients sign, kept as it read on the day", "shopConsent")
     }
     Group("Money") {
         Web("shop/payments", "Getting paid", shop.paymentsValue, shop.paymentsHint)

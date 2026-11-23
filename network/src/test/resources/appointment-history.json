@@ -1,0 +1,16 @@
+{
+  "lines": [
+    {
+      "at": "2026-11-23T06:34:11.346Z",
+      "text": "Changed outside the app",
+      "kind": "booked",
+      "count": 1
+    },
+    {
+      "at": "2026-11-23T06:34:11.521Z",
+      "text": "£60 deposit paid",
+      "kind": "payment_recorded",
+      "count": 1
+    }
+  ]
+}
