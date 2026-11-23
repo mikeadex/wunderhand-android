@@ -128,13 +128,16 @@ private fun AgendaCard(row: DiaryAppointment, who: String?, model: DiaryViewMode
 /**
  * Blocked time, hatched as the grids draw it. One person's is theirs, or an
  * owner's, to take back from here; a day off shared by several is one request
- * and is taken back where it was made, so the line says where that is.
+ * and is taken back where it was made, so the line says who is off, where
+ * that is, and whether it is the asker's to take back at all.
  */
 @Composable
 private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, model: DiaryViewModel) {
     val block = item.block
     val detail = BlockWords.detail(item, model.clock, showWho)
-    val mayRemove = model.me.staff.isOwner || item.staffIds.all { it == model.me.staff.id }
+    val isOwner = model.me.staff.isOwner
+    val isOff = model.me.staff.id in item.staffIds
+    val mayRemove = isOwner || item.staffIds.all { it == model.me.staff.id }
     var asking by remember(item.id) { mutableStateOf(false) }
     val shape = RoundedCornerShape(12.dp)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -145,7 +148,7 @@ private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, model: DiaryVi
         )
         Column(
             Modifier.weight(1f).clip(shape).background(WHColors.Break).hatch()
-                .then(if (item.isFolded || mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = if (item.isFolded) "How to take it back" else BlockWords.removeConfirm(block)) { asking = true } else Modifier)
+                .then(if (item.isFolded || mayRemove) Modifier.clickable(role = Role.Button, onClickLabel = if (item.isFolded) BlockWords.sharedTapLabel(isOwner, isOff) else BlockWords.removeConfirm(block)) { asking = true } else Modifier)
                 .semantics(mergeDescendants = true) { contentDescription = "${block.label}, $detail" }
                 .testTag("block-${block.id}")
                 .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -156,7 +159,8 @@ private fun BlockLine(item: AgendaItem.Blocked, showWho: Boolean, model: DiaryVi
         }
     }
     if (asking) {
-        if (item.isFolded) NoticeDialog(BlockWords.SHOP_OFF, BlockWords.SHOP_OFF_SAYS) { asking = false }
+        // Everybody in the diary, not everybody on screen: one person's list never folds.
+        if (item.isFolded) NoticeDialog(BlockWords.sharedTitle(item.who, isEverybody = item.staffIds.size >= model.state.value.members.size), BlockWords.sharedSays(isOwner, isOff)) { asking = false }
         else ConfirmDialog(
             title = BlockWords.removeTitle(block, model.clock), message = BlockWords.removeMessage(block), confirm = BlockWords.removeConfirm(block),
             onConfirm = { model.unblock(block) }, onDismiss = { asking = false },

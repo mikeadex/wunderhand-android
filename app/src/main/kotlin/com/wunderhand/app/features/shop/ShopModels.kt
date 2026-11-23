@@ -155,12 +155,19 @@ abstract class SettingViewModel(protected val handle: suspend (ApiError) -> Unit
     private var visit: Int? = null
 
     fun enter(visit: Int) {
-        if (this.visit == visit) return
+        if (this.visit == visit) return cameBack()
         this.visit = visit
         load()
     }
 
     abstract fun load(): Job
+
+    /**
+     * On screen again without having been left: from another tab, or the phone
+     * turned. Nothing to do for a screen only it can change; one that shows
+     * what the diary changes reads again here.
+     */
+    protected open fun cameBack() {}
 
     protected suspend fun attempt(onRefused: (ApiError) -> Unit, act: suspend () -> Unit) {
         try { act() } catch (error: ApiError) { if (error.isTheApps()) handle(error) else onRefused(error) }

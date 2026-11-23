@@ -10,6 +10,7 @@ import com.wunderhand.core.AppointmentResponse
 import com.wunderhand.core.ChairtimeJson
 import com.wunderhand.core.CloseOutcome
 import com.wunderhand.core.CloseResponse
+import com.wunderhand.core.DiaryBreak
 import com.wunderhand.core.DiaryResponse
 import com.wunderhand.core.HistoryResponse
 import com.wunderhand.core.IsoDay
@@ -149,6 +150,22 @@ class DiaryChangesTest {
         assertEquals(member.id, start.staffId)
         val step = member.day.slotIntervalMinutes
         assertEquals(opens.plusSeconds((52 / step * step) * 60L), start.slot)
+    }
+
+    /** Found on the emulator, 23 November 2026: a colleague's day off, tapped by somebody who is not the owner, opened New booking. */
+    @Test fun `a tap on blocked time books nobody, and the minute it ends is free again`() = runTest {
+        val working = day.team.members.first { it.day.open.isNotEmpty() }
+        val opens = working.day.open.first().start
+        val lunch = DiaryBreak("b1", "break", opens.plusSeconds(60 * 60L), opens.plusSeconds(120 * 60L))
+        val member = working.copy(day = working.day.copy(breaks = listOf(lunch)))
+        val model = DiaryViewModel(me, Shop(), OfflineCache(File(folder.root, "offline")), handle = {}, io = dispatcher, now = { Instant.parse("2020-01-01T00:00:00Z") })
+
+        model.bookAt(member, minutesFromGridStart = 60, gridStart = opens)
+        model.bookAt(member, minutesFromGridStart = 119, gridStart = opens)
+        assertNull(model.state.value.newBooking)
+
+        model.bookAt(member, minutesFromGridStart = 120, gridStart = opens)
+        assertEquals(member.id, model.state.value.newBooking?.staffId)
     }
 
     @Test fun `a tap on time that has passed, or that they do not work, brings only the person`() = runTest {

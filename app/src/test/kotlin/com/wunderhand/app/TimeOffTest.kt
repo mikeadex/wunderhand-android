@@ -11,6 +11,7 @@ import com.wunderhand.core.TimeOffResponse
 import com.wunderhand.core.TimeOffWords
 import com.wunderhand.core.TimeOffWrite
 import com.wunderhand.network.ApiError
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -115,6 +116,68 @@ class TimeOffTest {
         model.save()
         assertEquals(listOf("timeOff", "check", "check"), api.calls)
         assertEquals("2028-04-06", api.writes.last().to)
+    }
+
+    /** Found on the emulator, 23 November 2026: an hour blocked in the diary was not on the page until it was left and opened again. */
+    @Test fun `come back to from another tab, the list is read again, what was said is not said twice, and the form keeps its days`() {
+        var served = list
+        val api = object : Shop() {
+            override suspend fun timeOff(): TimeOffResponse { calls += "timeOff"; return served }
+        }
+        val model = model(api)
+        model.adding(true)
+        model.save()
+        assertEquals(TimeOffWords.SAVED, model.state.value.notice)
+
+        served = list.copy(entries = emptyList())
+        model.enter(1)
+        assertEquals("timeOff", api.calls.last())
+        assertEquals(0, model.state.value.response?.entries?.size)
+        assertNull(model.state.value.notice)
+
+        model.adding(true)
+        model.edit { it.withFrom("2028-04-10").withTo("2028-04-12") }
+        served = list
+        model.enter(1)
+        val state = model.state.value
+        assertEquals(2, state.response?.entries?.size)
+        assertTrue(state.isAdding)
+        assertEquals("2028-04-12", state.draft?.to)
+
+        // Opened again from the index: a new screen, the form shut.
+        model.enter(2)
+        assertFalse(model.state.value.isAdding)
+    }
+
+    @Test fun `a list read across a save says nothing about what the save left`() {
+        val reading = CompletableDeferred<TimeOffResponse>()
+        var held = false
+        val api = object : Shop() {
+            override suspend fun timeOff(): TimeOffResponse { calls += "timeOff"; return if (held) reading.await() else list }
+        }
+        val model = model(api)
+        held = true
+        model.enter(1)
+        model.adding(true)
+        model.save()
+        assertEquals(1, model.state.value.response?.entries?.size)
+
+        reading.complete(list)
+        assertEquals(1, model.state.value.response?.entries?.size)
+        assertEquals(TimeOffWords.SAVED, model.state.value.notice)
+    }
+
+    @Test fun `a list that never arrived is asked for again on coming back`() {
+        var down = true
+        val api = object : Shop() {
+            override suspend fun timeOff(): TimeOffResponse { calls += "timeOff"; if (down) throw ApiError.Offline(); return list }
+        }
+        val model = model(api)
+        assertNull(model.state.value.response)
+        down = false
+        model.enter(1)
+        assertEquals(2, model.state.value.response?.entries?.size)
+        assertNull(model.state.value.failure)
     }
 
     @Test fun `days chairtime refuses are said against the form, which stays open`() {

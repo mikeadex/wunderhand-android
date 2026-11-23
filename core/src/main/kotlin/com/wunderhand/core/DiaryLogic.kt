@@ -240,9 +240,33 @@ object BlockWords {
 
     fun removeConfirm(block: DiaryBreak): String = if (block.allDay) "Take it back" else "Remove it"
 
-    /** A day off shared by several people is not one tap's to undo. */
-    const val SHOP_OFF = "The shop is off this day"
-    const val SHOP_OFF_SAYS = "To take days back, open Shop, then Time off."
+    /**
+     * A day off shared by several people is not one tap's to undo, so the line
+     * says who is off. "The shop" only when that is everybody in the diary:
+     * once somebody has taken their own day back, it is the others who are off.
+     */
+    fun sharedTitle(who: List<String>, isEverybody: Boolean): String {
+        val names = who.map { it.substringBefore(' ') }
+        return when {
+            isEverybody -> "The shop is off this day"
+            names.size in 2..3 -> "${names.dropLast(1).joinToString(", ")} and ${names.last()} are off this day"
+            else -> "${names.size} people are off this day"
+        }
+    }
+
+    /**
+     * Where the day is taken back, by whoever is asking: an owner anybody's,
+     * anyone else only their own (chairtime `removeTimeOff`), and nothing at
+     * all once they are not one of the people off.
+     */
+    fun sharedSays(isOwner: Boolean, isOff: Boolean): String = when {
+        isOwner -> "To take days back, open Shop, then Time off."
+        isOff -> "To take your own day back, open Shop, then Time off. Only the owner of the shop can take back anyone else’s."
+        else -> "Only the owner of the shop can take these days back."
+    }
+
+    /** What a tap on the shared line is for, said to somebody who cannot see it. */
+    fun sharedTapLabel(isOwner: Boolean, isOff: Boolean): String = if (isOwner || isOff) "How to take it back" else "Who can take it back"
 }
 
 object DiaryWords {

@@ -63,9 +63,26 @@ class TimeOffViewModel(
     private val _state = MutableStateFlow(TimeOffState())
     val state: StateFlow<TimeOffState> = _state.asStateFlow()
 
+    /** Saves and removals, begun and ended: a list read across one says nothing about what came after. */
+    private var writes = 0
+
     override fun load(): Job {
         _state.value = TimeOffState()
         return viewModelScope.launch { attempt({ e -> _state.update { it.copy(failure = e.message) } }) { api.timeOff().let { r -> _state.update { it.copy(response = r) } } } }
+    }
+
+    /**
+     * Back from the diary, where an hour may just have been blocked or taken
+     * back: the list is read again behind what is on screen, so a form half
+     * filled in keeps what was typed. "Saved." was said once already. A list
+     * that never arrived is asked for again; one still on its way is waited for.
+     */
+    override fun cameBack() {
+        val now = _state.value
+        if (now.response == null) { if (now.failure != null) load(); return }
+        _state.update { it.copy(notice = null) }
+        val before = writes
+        viewModelScope.launch { attempt({ }) { api.timeOff().let { r -> if (writes == before) _state.update { it.copy(response = r) } } } }
     }
 
     /**
@@ -91,6 +108,7 @@ class TimeOffViewModel(
         val write = now.draft?.write() ?: return null
         if (now.isSaving) return null
         _state.update { it.copy(isSaving = true, problem = null, notice = null) }
+        writes++
         return viewModelScope.launch {
             attempt({ e -> _state.update { it.copy(problem = SaveProblem(e)) } }) {
                 if (now.check == null) {
@@ -103,6 +121,7 @@ class TimeOffViewModel(
                 val r = api.takeTimeOff(write)
                 _state.update { it.copy(response = r, notice = TimeOffWords.SAVED, isAdding = false, draft = null, check = null) }
             }
+            writes++
             _state.update { it.copy(isSaving = false) }
         }
     }
@@ -111,6 +130,7 @@ class TimeOffViewModel(
     fun remove(entry: TimeOffEntry): Job? {
         if (_state.value.removing != null) return null
         _state.update { it.copy(removing = entry.key, notice = null, problem = null) }
+        writes++
         return viewModelScope.launch {
             attempt({ e -> _state.update { it.copy(problem = SaveProblem(e.message)) } }) {
                 val blockId = entry.blockId
@@ -118,6 +138,7 @@ class TimeOffViewModel(
                 else api.removeTimeOff(entry.seriesId.orEmpty(), entry.from, entry.to, entry.staffIdToRemove)
                 _state.update { it.copy(response = r, notice = TimeOffWords.REMOVED) }
             }
+            writes++
             _state.update { it.copy(removing = null) }
         }
     }

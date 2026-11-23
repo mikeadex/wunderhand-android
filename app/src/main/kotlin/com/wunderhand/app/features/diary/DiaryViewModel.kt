@@ -311,9 +311,15 @@ class DiaryViewModel(
      * down to the shop's grid, as the web's column click is. The time comes
      * along only if they are working then and it has not passed — otherwise
      * the booking starts with just the person.
+     *
+     * Blocked time is not an empty stretch. A block takes its own tap only
+     * from whoever may take it back, so a colleague's day off let the tap
+     * through to here, and New booking opened on a day nobody can book.
      */
     fun bookAt(member: DiaryMember, minutesFromGridStart: Int, gridStart: Instant) {
         if (_state.value.response?.team?.isClosed == true) return
+        val tapped = gridStart.plusSeconds(maxOf(minutesFromGridStart, 0) * 60L)
+        if (member.day.breaks.any { it.startsAt <= tapped && tapped < it.endsAt }) return
         val interval = maxOf(member.day.slotIntervalMinutes, 1)
         val at = gridStart.plusSeconds((maxOf(minutesFromGridStart, 0) / interval * interval) * 60L)
         val working = member.day.open.any { it.start <= at && at < it.end }
