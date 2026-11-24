@@ -494,3 +494,30 @@ who does it, and shows as soon as there is one.
 Known and not fixed in this build:
 - Somebody who is not an owner can take their own day out of a closure the owner made for
   everyone. The server allows it on purpose; the owner's list then names who is still off.
+
+## 1.4 (versionCode 8): what to paste when promoting it
+
+Written 23 November 2026, after versionCode 8 reached internal testing. Play has no notes-to-the-
+reviewer field for an ordinary release: what a reviewer reads is the release notes, the App access
+instructions and the declarations. 1.3 was never promoted, so this release carries it too.
+
+**Release notes** (428 characters of 500): the text in the 1.4 (versionCode 5) entry above, with
+"Also new" kept.
+
+**App content → App access → instructions** (447 characters; the field takes 500). Same
+login as section 3; the words say what is new and that no code is asked for:
+
+```
+This is the owner of a demo shop, Fold Barbers, with six staff. All of its data is invented. The account stays live for future reviews and does not use two-step sign-in, so no code is asked for after the password. Accounts are created on our website; there is no registration, and nothing to buy, in the app. No other set-up is needed. New in this release: Shop > Time off, which takes whole days out of the diary for one person or the whole shop.
+```
+
+**Before promoting to production** (none of these can be seen from this Mac):
+- [ ] The release being promoted is versionCode 8, not 5, 6 or 7.
+- [ ] Kit's login signs in on production with the copy installed from the Play Store, and has not
+      switched two-step sign-in on.
+- [ ] Data safety: add **Photos and videos → Photos** (collected, not shared, App functionality,
+      optional). Section 3 says "no photos", which stopped being true in 1.2 when a service's
+      photograph could be added from the phone; 1.3 adds the page's photographs, cover and logo.
+- [ ] Data safety: the account deletion URL is `https://wunderhand.com/delete-account`.
+- [ ] Still open from section 6: a TalkBack pass, and an install from the Play Store on a real phone.
+- [ ] Staged: 20%, then 100%.
